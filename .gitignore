@@ -1,0 +1,43 @@
+# Secrets / local config
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Backend runtime artifacts
+backend/storage/
+storage/
+
+# Node / Next.js (for when the frontend is wired in)
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
