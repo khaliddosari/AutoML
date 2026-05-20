@@ -14,6 +14,34 @@ export interface RunStatus {
   error?: string;
 }
 
+export interface ModelScore {
+  name: string;
+  test_accuracy?: number;
+  test_r2?: number;
+  cv_mean: number;
+  cv_std: number;
+}
+
+export interface FeatureImportance {
+  feature: string;
+  importance: number;
+}
+
+export interface ResultExtra {
+  train_accuracy?: number;
+  train_r2?: number;
+  overfit_gap?: number;
+  f1_macro?: number;
+  cv_accuracy_mean?: number;
+  cv_r2_mean?: number;
+  rmse?: number;
+  mae?: number;
+  n_classes?: number;
+  test_size?: number;
+  all_models?: ModelScore[];
+  top_features?: FeatureImportance[];
+}
+
 export interface RunResult {
   run_id: string;
   status: string;
@@ -23,6 +51,8 @@ export interface RunResult {
   score_metric?: string;
   plot_path?: string;
   justification?: string;
+  model_name?: string;
+  extra?: ResultExtra;
   error?: string;
 }
 

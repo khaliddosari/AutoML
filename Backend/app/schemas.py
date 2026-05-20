@@ -38,7 +38,6 @@ class EDAReport(BaseModel):
 
 class FeatureEngineeringReport(BaseModel):
     dropped_columns: list[str]
-    imputed_columns: list[str]
     encoded_columns: list[str]
     final_feature_count: int
 

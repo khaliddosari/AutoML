@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, Table2 } from "lucide-react";
+import { Loader2, Target, Table2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { startRun } from "@/lib/api";
 
@@ -47,101 +47,113 @@ export default function PreviewPage() {
   if (!data) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 size={28} className="animate-spin text-brand-primary" />
+        <Loader2 size={24} className="animate-spin text-brand-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row gap-0 overflow-hidden">
-      {/* Left — target picker */}
+    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      {/* Left sidebar — target picker */}
       <motion.aside
-        initial={{ opacity: 0, x: -20 }}
+        initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-white/[0.06] p-6 flex flex-col gap-6 shrink-0"
+        transition={{ duration: 0.35 }}
+        className="w-full lg:w-72 bg-white border-b lg:border-b-0 lg:border-r border-surface-border p-6 flex flex-col gap-6 shrink-0"
       >
-        <div>
-          <h2 className="font-heading text-sm font-semibold text-slate-300 uppercase tracking-widest mb-1">
-            Target column
-          </h2>
-          <p className="text-xs text-slate-500">
-            Pick the column the model should predict.
+        {/* Header */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-brand-primary mb-3">
+            <Target size={16} />
+            <span className="text-sm font-semibold">Pick a target column</span>
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            The target is the column you want to predict. ModelForge will figure out
+            whether it&apos;s a classification or regression problem automatically.
           </p>
         </div>
 
-        <div className="flex flex-col gap-1.5 overflow-y-auto max-h-96 lg:max-h-none pr-1">
+        {/* Column list */}
+        <div className="flex flex-col gap-1 overflow-y-auto flex-1 -mr-1 pr-1">
           {data.columns.map((col) => (
             <button
               key={col}
               onClick={() => setTarget(col)}
               className={cn(
-                "text-left px-3 py-2.5 rounded-lg text-sm font-heading transition-all duration-150 cursor-pointer",
+                "text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer font-mono truncate",
                 target === col
-                  ? "bg-brand-primary/20 text-brand-primary border border-brand-primary/40 glow-blue"
-                  : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200 border border-transparent"
+                  ? "bg-brand-light text-brand-primary border border-brand-border shadow-sm"
+                  : "text-slate-600 hover:bg-surface-elevated hover:text-slate-900 border border-transparent"
               )}
             >
               {col}
+              {target === col && (
+                <span className="ml-2 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded-full font-sans">
+                  target
+                </span>
+              )}
             </button>
           ))}
         </div>
 
         {error && (
-          <p className="text-xs text-red-400" role="alert">{error}</p>
+          <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+            {error}
+          </p>
         )}
 
-        <motion.button
+        <button
           onClick={handleStart}
           disabled={!target || starting}
           className={cn(
-            "mt-auto py-3 rounded-xl font-heading font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer",
+            "py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer",
             target && !starting
-              ? "bg-brand-accent text-white hover:brightness-110 glow-amber"
-              : "bg-white/[0.06] text-slate-500 cursor-not-allowed"
+              ? "bg-brand-primary text-white hover:bg-brand-dark shadow-sm hover:shadow-md"
+              : "bg-surface-elevated text-slate-400 cursor-not-allowed"
           )}
-          whileTap={target && !starting ? { scale: 0.97 } : {}}
         >
           {starting ? (
-            <><Loader2 size={15} className="animate-spin" /> Starting…</>
+            <><Loader2 size={15} className="animate-spin" />Starting…</>
           ) : (
-            "Run AutoML →"
+            <><ArrowRight size={15} />Run AutoML</>
           )}
-        </motion.button>
+        </button>
       </motion.aside>
 
-      {/* Right — data preview */}
+      {/* Main — data preview table */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.15 }}
-        className="flex-1 overflow-auto p-6"
+        transition={{ duration: 0.35, delay: 0.1 }}
+        className="flex-1 overflow-auto p-6 bg-surface"
       >
         <div className="flex items-center gap-2 mb-4">
-          <Table2 size={16} className="text-slate-500" />
-          <h2 className="font-heading text-sm font-semibold text-slate-300">
-            Preview{" "}
-            <span className="text-slate-500 font-normal">
-              ({data.preview.length} rows · {data.n_columns} columns)
-            </span>
-          </h2>
+          <Table2 size={14} className="text-slate-400" />
+          <span className="text-sm font-semibold text-slate-700">
+            Data Preview
+          </span>
+          <span className="text-xs text-slate-400 bg-surface-elevated border border-surface-border px-2 py-0.5 rounded-full">
+            {data.preview.length} rows shown · {data.n_columns} columns
+          </span>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
-          <table className="w-full text-xs font-heading">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
+        <div className="overflow-x-auto rounded-xl border border-surface-border shadow-card bg-white">
+          <table className="w-full text-xs font-mono">
+            <thead className="bg-surface-elevated">
+              <tr className="border-b border-surface-border">
                 {data.columns.map((col) => (
                   <th
                     key={col}
                     className={cn(
                       "px-4 py-3 text-left font-semibold whitespace-nowrap transition-colors",
-                      col === target ? "text-brand-primary" : "text-slate-400"
+                      col === target
+                        ? "text-brand-primary bg-brand-light/50"
+                        : "text-slate-500"
                     )}
                   >
                     {col}
                     {col === target && (
-                      <span className="ml-1.5 text-[10px] bg-brand-primary/20 text-brand-primary px-1.5 py-0.5 rounded-full">
+                      <span className="ml-1.5 text-[10px] bg-brand-primary text-white px-1.5 py-0.5 rounded-full font-sans">
                         target
                       </span>
                     )}
@@ -153,14 +165,14 @@ export default function PreviewPage() {
               {data.preview.map((row, i) => (
                 <tr
                   key={i}
-                  className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
+                  className="border-b border-surface-border/50 last:border-0 hover:bg-surface-hover transition-colors"
                 >
                   {data.columns.map((col) => (
                     <td
                       key={col}
                       className={cn(
                         "px-4 py-2.5 whitespace-nowrap",
-                        col === target ? "text-brand-primary/80" : "text-slate-400"
+                        col === target ? "text-brand-primary font-medium" : "text-slate-600"
                       )}
                     >
                       {String(row[col] ?? "—")}

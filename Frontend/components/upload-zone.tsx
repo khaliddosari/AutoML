@@ -2,13 +2,20 @@
 
 import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud, FileText, X, Loader2 } from "lucide-react";
+import { UploadCloud, FileText, X, Loader2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadCSV, type UploadResponse } from "@/lib/api";
 
 interface Props {
   onUploaded: (res: UploadResponse) => void;
 }
+
+const FILE_TYPES = [
+  { ext: ".csv", label: "CSV", supported: true },
+  { ext: ".xlsx", label: "Excel", supported: false },
+  { ext: ".tsv", label: "TSV", supported: false },
+  { ext: ".parquet", label: "Parquet", supported: false },
+];
 
 export function UploadZone({ onUploaded }: Props) {
   const [dragging, setDragging] = useState(false);
@@ -18,7 +25,7 @@ export function UploadZone({ onUploaded }: Props) {
 
   const handleFile = useCallback((f: File) => {
     if (!f.name.endsWith(".csv")) {
-      setError("Only .csv files are accepted.");
+      setError("Only .csv files are supported right now.");
       return;
     }
     setFile(f);
@@ -35,11 +42,6 @@ export function UploadZone({ onUploaded }: Props) {
     [handleFile]
   );
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) handleFile(f);
-  };
-
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
@@ -54,41 +56,61 @@ export function UploadZone({ onUploaded }: Props) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-xl mx-auto">
+    <div className="flex flex-col items-center gap-5 w-full max-w-xl mx-auto">
+      {/* File type badges */}
+      <div className="flex items-center gap-2 flex-wrap justify-center">
+        <span className="text-xs text-slate-500 mr-1">Supported formats:</span>
+        {FILE_TYPES.map(({ ext, label, supported }) => (
+          <span
+            key={ext}
+            className={cn(
+              "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium font-mono border transition-colors",
+              supported
+                ? "bg-brand-light text-brand-primary border-brand-border"
+                : "bg-surface-elevated text-slate-400 border-surface-border"
+            )}
+          >
+            {supported && <CheckCircle2 size={10} className="text-brand-primary" />}
+            {ext}
+            {!supported && (
+              <span className="text-[10px] text-slate-400 ml-0.5 font-sans">soon</span>
+            )}
+          </span>
+        ))}
+      </div>
+
       {/* Drop zone */}
       <motion.label
         htmlFor="csv-input"
         className={cn(
-          "w-full cursor-pointer rounded-2xl border-2 border-dashed p-10 flex flex-col items-center gap-4 transition-all duration-200",
+          "w-full cursor-pointer rounded-2xl border-2 border-dashed p-10 flex flex-col items-center gap-4 transition-all duration-200 select-none",
           dragging
-            ? "border-brand-primary bg-brand-primary/10 glow-blue"
-            : "border-white/10 hover:border-brand-primary/50 hover:bg-white/[0.02]"
+            ? "border-brand-primary bg-brand-light/60 shadow-focus"
+            : "border-surface-border bg-white hover:border-brand-muted hover:bg-brand-light/20"
         )}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        animate={dragging ? { scale: 1.02 } : { scale: 1 }}
+        animate={dragging ? { scale: 1.015 } : { scale: 1 }}
         transition={{ duration: 0.15 }}
       >
         <motion.div
-          animate={dragging ? { y: -4 } : { y: 0 }}
+          animate={dragging ? { y: -6, scale: 1.1 } : { y: 0, scale: 1 }}
           transition={{ duration: 0.2 }}
+          className={cn(
+            "w-14 h-14 rounded-xl flex items-center justify-center transition-colors duration-200",
+            dragging ? "bg-brand-primary text-white" : "bg-surface-elevated text-slate-400"
+          )}
         >
-          <UploadCloud
-            size={48}
-            className={cn(
-              "transition-colors duration-200",
-              dragging ? "text-brand-primary" : "text-slate-500"
-            )}
-          />
+          <UploadCloud size={26} />
         </motion.div>
 
-        <div className="text-center">
-          <p className="text-slate-200 font-medium">
+        <div className="text-center space-y-1">
+          <p className="text-slate-700 font-medium text-sm">
             Drop your CSV here, or{" "}
-            <span className="text-brand-primary underline underline-offset-2">browse</span>
+            <span className="text-brand-primary font-semibold">browse files</span>
           </p>
-          <p className="text-xs text-slate-500 mt-1">CSV files only · max 1M rows</p>
+          <p className="text-xs text-slate-400">Up to 1 million rows · UTF-8 encoded</p>
         </div>
 
         <input
@@ -96,7 +118,7 @@ export function UploadZone({ onUploaded }: Props) {
           type="file"
           accept=".csv"
           className="sr-only"
-          onChange={onInputChange}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
         />
       </motion.label>
 
@@ -104,25 +126,27 @@ export function UploadZone({ onUploaded }: Props) {
       <AnimatePresence>
         {file && (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            className="w-full glass rounded-xl px-4 py-3 flex items-center gap-3"
+            initial={{ opacity: 0, y: 6, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: 6, height: 0 }}
+            className="w-full overflow-hidden"
           >
-            <FileText size={18} className="text-brand-primary shrink-0" />
-            <span className="text-sm text-slate-200 truncate flex-1 font-heading">
-              {file.name}
-            </span>
-            <span className="text-xs text-slate-500 shrink-0">
-              {(file.size / 1024).toFixed(0)} KB
-            </span>
-            <button
-              onClick={() => { setFile(null); setError(null); }}
-              className="text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
-              aria-label="Remove file"
-            >
-              <X size={16} />
-            </button>
+            <div className="card px-4 py-3 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center shrink-0">
+                <FileText size={15} className="text-brand-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-800 truncate font-mono">{file.name}</p>
+                <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(0)} KB</p>
+              </div>
+              <button
+                onClick={() => { setFile(null); setError(null); }}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-surface-elevated transition-colors cursor-pointer"
+                aria-label="Remove file"
+              >
+                <X size={14} />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -131,12 +155,13 @@ export function UploadZone({ onUploaded }: Props) {
       <AnimatePresence>
         {error && (
           <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="text-sm text-red-400"
+            className="text-sm text-red-500 flex items-center gap-1.5"
             role="alert"
           >
+            <span className="w-4 h-4 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-[10px] font-bold text-red-500 shrink-0">!</span>
             {error}
           </motion.p>
         )}
@@ -147,12 +172,12 @@ export function UploadZone({ onUploaded }: Props) {
         onClick={handleUpload}
         disabled={!file || uploading}
         className={cn(
-          "w-full py-3 rounded-xl font-heading font-semibold text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
+          "w-full py-3 rounded-xl font-semibold text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer",
           file && !uploading
-            ? "bg-brand-primary text-white hover:bg-blue-400 glow-blue"
-            : "bg-white/[0.06] text-slate-500 cursor-not-allowed"
+            ? "bg-brand-primary text-white hover:bg-brand-dark shadow-sm hover:shadow-md"
+            : "bg-surface-elevated text-slate-400 cursor-not-allowed"
         )}
-        whileTap={file && !uploading ? { scale: 0.97 } : {}}
+        whileTap={file && !uploading ? { scale: 0.98 } : {}}
       >
         {uploading ? (
           <>

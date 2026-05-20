@@ -13,9 +13,7 @@ def feature_engineer(run_id: str, target: str) -> dict:
     if target not in df.columns:
         raise ValueError(f"Target column '{target}' not found.")
 
-    n = len(df)
     dropped: list[str] = []
-    imputed: list[str] = []
     encoded: list[str] = []
 
     # 1. Drop columns with too many missing values (excluding target).
@@ -26,29 +24,19 @@ def feature_engineer(run_id: str, target: str) -> dict:
             df = df.drop(columns=[c])
             dropped.append(f"{c} (>{int(HIGH_MISSING_THRESHOLD*100)}% missing)")
 
-    # 2. Drop ID-like columns (unique == n).
+    # 2. Drop rows where target is missing (must precede ID-like check so n is correct).
+    df = df.dropna(subset=[target]).reset_index(drop=True)
+    n = len(df)
+
+    # 3. Drop ID-like columns (>=95% unique values, any dtype).
     for c in list(df.columns):
         if c == target:
             continue
-        if df[c].nunique(dropna=True) == n and not is_numeric_dtype(df[c]):
+        if df[c].nunique(dropna=True) >= 0.95 * n:
             df = df.drop(columns=[c])
             dropped.append(f"{c} (id-like)")
 
-    # 3. Drop rows where target is missing.
-    df = df.dropna(subset=[target]).reset_index(drop=True)
-
-    # 4. Impute remaining missing values.
-    for c in df.columns:
-        if c == target or df[c].isna().sum() == 0:
-            continue
-        if is_numeric_dtype(df[c]):
-            df[c] = df[c].fillna(df[c].median())
-        else:
-            mode = df[c].mode(dropna=True)
-            df[c] = df[c].fillna(mode.iloc[0] if not mode.empty else "missing")
-        imputed.append(c)
-
-    # 5. Encode categorical features.
+    # 4. Encode categorical features (done on full dataset for consistent dummy columns).
     feature_cols = [c for c in df.columns if c != target]
     for c in feature_cols:
         if is_numeric_dtype(df[c]):
@@ -65,7 +53,6 @@ def feature_engineer(run_id: str, target: str) -> dict:
     df.to_csv(storage.engineered_path(run_id), index=False)
     report = {
         "dropped_columns": dropped,
-        "imputed_columns": imputed,
         "encoded_columns": encoded,
         "final_feature_count": int(df.shape[1] - 1),
         "final_row_count": int(len(df)),

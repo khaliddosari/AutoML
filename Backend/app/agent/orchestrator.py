@@ -96,6 +96,7 @@ def run_agent(run_id: str, target: str) -> dict:
         result = executor.invoke({"run_id": run_id, "target": target})
         parsed = _extract_json(result.get("output", ""))
 
+        metrics = storage.read_json(run_id, "metrics.json") or {}
         final = {
             "run_id": run_id,
             "status": "succeeded",
@@ -105,6 +106,8 @@ def run_agent(run_id: str, target: str) -> dict:
             "score_metric": parsed.get("score_metric"),
             "plot_path": parsed.get("plot_path"),
             "justification": parsed.get("justification"),
+            "model_name": metrics.get("model_name"),
+            "extra": metrics.get("extra", {}),
         }
         storage.write_json(run_id, "result.json", final)
         storage.write_status(run_id, "succeeded")
