@@ -4,7 +4,7 @@ import re
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from app.config import settings
-from app.pipeline.train import train_champion_with_params, _feature_importances
+from app.pipeline.train import train_champion_with_params, _feature_importances, save_model_bundle
 from app import storage
 
 log = logging.getLogger(__name__)
@@ -237,6 +237,17 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
                 "extra": extra_metrics
             }
             storage.write_json(run_id, "metrics.json", final_metrics)
+
+            # Overwrite the baseline bundle with the optimized winner so /deploy serves it.
+            save_model_bundle(
+                run_id,
+                model=best_model,
+                imputer=current_best_model_data["imputer"],
+                feature_cols=feature_cols,
+                problem_type=problem_type,
+                model_name=champion_model,
+                class_labels=current_best_model_data.get("class_labels"),
+            )
             
             # Update return dictionary
             baseline_results["score"] = best_score

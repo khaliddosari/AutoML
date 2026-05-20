@@ -89,3 +89,65 @@ export async function getResult(runId: string): Promise<RunResult> {
 export function plotUrl(runId: string): string {
   return `${BASE}/runs/${runId}/plot`;
 }
+
+export interface Deployment {
+  run_id: string;
+  status: "not_deployed" | "deploying" | "succeeded" | "failed";
+  app_name?: string;
+  predict_url?: string | null;
+  schema_url?: string | null;
+  all_urls?: string[];
+  error?: string | null;
+  started_at?: string;
+  finished_at?: string;
+  elapsed_seconds?: number;
+}
+
+export async function startDeploy(runId: string): Promise<Deployment> {
+  const res = await fetch(`${BASE}/runs/${runId}/deploy`, { method: "POST" });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getDeployment(runId: string): Promise<Deployment> {
+  const res = await fetch(`${BASE}/runs/${runId}/deployment`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export interface ModelSchema {
+  run_id: string;
+  model_name?: string;
+  problem_type?: "regression" | "classification";
+  feature_cols: string[];
+  class_labels?: string[] | null;
+  sample: Record<string, number | string | null>;
+}
+
+export interface PredictionResponse {
+  predictions?: (number | string)[];
+  predicted_labels?: (string | null)[];
+  probabilities?: number[][];
+  class_labels?: string[];
+  model?: string;
+  error?: string;
+}
+
+export async function getModelSchema(runId: string): Promise<ModelSchema> {
+  const res = await fetch(`${BASE}/runs/${runId}/model_schema`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function predict(
+  runId: string,
+  payload: { features: Record<string, number | string | null> } | { rows: (number | string | null)[][] },
+): Promise<PredictionResponse> {
+  const res = await fetch(`${BASE}/runs/${runId}/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

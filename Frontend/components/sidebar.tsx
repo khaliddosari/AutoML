@@ -9,11 +9,12 @@ const NAV_ITEMS = [
   { key: "overview", icon: "analytics", label: "Dataset Overview", pattern: /\/preview$/ },
   { key: "training", icon: "model_training", label: "Model Training", pattern: /\/running$/ },
   { key: "analytics", icon: "insights", label: "Analytics", pattern: /\/result$/ },
+  { key: "inference", icon: "rocket_launch", label: "Inference", pattern: /\/inference$/ },
 ];
 
 function getRunId(pathname: string): string | null {
   const parts = pathname.split("/").filter(Boolean);
-  if (parts.length > 0 && !["preview", "running", "result"].includes(parts[0])) {
+  if (parts.length > 0 && !["preview", "running", "result", "inference"].includes(parts[0])) {
     return parts[0];
   }
   return null;
@@ -25,6 +26,7 @@ function getNavHref(key: string, runId: string | null): string {
   if (key === "overview") return `/${runId}/preview`;
   if (key === "training") return `/${runId}/running`;
   if (key === "analytics") return `/${runId}/result`;
+  if (key === "inference") return `/${runId}/inference`;
   return "#";
 }
 

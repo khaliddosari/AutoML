@@ -1,3 +1,4 @@
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -33,6 +34,27 @@ def _inner_estimator(model):
     return model
 
 
+def save_model_bundle(
+    run_id: str,
+    model,
+    imputer: SimpleImputer,
+    feature_cols: list[str],
+    problem_type: str,
+    model_name: str,
+    class_labels: list | None,
+) -> None:
+    """Pickle the fitted model + preprocessing so it can be served from Modal."""
+    bundle = {
+        "model": model,
+        "imputer": imputer,
+        "feature_cols": feature_cols,
+        "problem_type": problem_type,
+        "model_name": model_name,
+        "class_labels": class_labels,
+    }
+    joblib.dump(bundle, storage.run_dir(run_id) / "model.joblib")
+
+
 def _feature_importances(model, columns: list[str]) -> list[dict]:
     """Extract top-10 feature importances from tree or linear models."""
     est = _inner_estimator(model)
@@ -56,9 +78,11 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
     y = df[target]
     feature_cols = X.columns.tolist()
 
+    class_labels: list | None = None
     if problem_type == "classification":
         if not np.issubdtype(y.dtype, np.number):
-            y, _ = pd.factorize(y)
+            y, labels = pd.factorize(y)
+            class_labels = labels.tolist()
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
@@ -171,6 +195,15 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
 
     metrics["extra"]["top_features"] = _feature_importances(best_model, feature_cols)
     storage.write_json(run_id, "metrics.json", metrics)
+    save_model_bundle(
+        run_id,
+        model=best_model,
+        imputer=imputer,
+        feature_cols=feature_cols,
+        problem_type=problem_type,
+        model_name=best_name,
+        class_labels=class_labels,
+    )
     return metrics
 
 
@@ -278,9 +311,11 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
     y = df[target]
     feature_cols = X.columns.tolist()
 
+    class_labels: list | None = None
     if problem_type == "classification":
         if not np.issubdtype(y.dtype, np.number):
-            y, _ = pd.factorize(y)
+            y, labels = pd.factorize(y)
+            class_labels = labels.tolist()
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
@@ -305,7 +340,9 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
             "cv_std": round(cv_std, 4),
             "test_score": round(test_acc, 4),
             "model": model,
+            "imputer": imputer,
             "feature_cols": feature_cols,
+            "class_labels": class_labels,
             "y_test": y_test,
             "preds": model.predict(X_test),
             "train_score": float(accuracy_score(y_train, model.predict(X_train))),
@@ -335,7 +372,9 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
             "cv_std": round(cv_std, 4),
             "test_score": round(test_r2, 4),
             "model": model,
+            "imputer": imputer,
             "feature_cols": feature_cols,
+            "class_labels": None,
             "y_test": y_test,
             "preds": model.predict(X_test),
             "train_score": float(r2_score(y_train, model.predict(X_train))),

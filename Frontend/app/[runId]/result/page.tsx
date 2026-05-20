@@ -1,9 +1,16 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { getResult, plotUrl, type RunResult, type FeatureImportance, type ModelScore } from "@/lib/api";
+import {
+  getResult,
+  getStatus,
+  plotUrl,
+  type RunResult,
+  type FeatureImportance,
+  type ModelScore,
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /* ─── Metric card ── */
@@ -213,8 +220,6 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
   );
 }
 
-/* Production Code Export Drawer removed for simplification */
-
 /* ─── Result page ── */
 export default function ResultPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -226,10 +231,40 @@ export default function ResultPage() {
   const [justificationExpanded, setJustificationExpanded] = useState(false);
 
   useEffect(() => {
-    getResult(runId).then((r) => {
-      setResult(r);
-      setLoading(false);
-    });
+    let cancelled = false;
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const tryFetch = async () => {
+      try {
+        const r = await getResult(runId);
+        if (cancelled) return;
+        setResult(r);
+        setLoading(false);
+        if (interval) clearInterval(interval);
+      } catch {
+        // Result not ready yet — fall back to polling status. The run might still be
+        // queued/running, in which case we wait and retry.
+        try {
+          const s = await getStatus(runId);
+          if (cancelled) return;
+          if (s.status === "failed") {
+            setResult({ run_id: runId, status: "failed", error: s.error ?? "Run failed" });
+            setLoading(false);
+            if (interval) clearInterval(interval);
+          }
+          // otherwise keep polling — loading state stays on
+        } catch {
+          /* transient, keep polling */
+        }
+      }
+    };
+
+    tryFetch();
+    interval = setInterval(tryFetch, 2000);
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
   }, [runId]);
 
   if (loading) {
@@ -362,6 +397,26 @@ export default function ResultPage() {
             </div>
           </div>
         </motion.section>
+
+        {/* Inference CTA — deep link to the dedicated inference page */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.07 }}
+          onClick={() => router.push(`/${runId}/inference`)}
+          className="w-full bg-surface-container-lowest rounded-xl border border-outline-variant p-6 card-shadow text-left hover:border-primary/40 hover:bg-surface-purple-tint/20 transition-all group cursor-pointer flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-surface-purple-tint flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <span className="material-symbols-outlined text-primary" style={{ fontSize: "26px" }}>rocket_launch</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-headline-md font-bold text-on-background">Deploy & try this model</h3>
+            <p className="text-xs font-medium text-on-surface-variant mt-0.5">
+              Push the winning model to Modal as an API and run live predictions from the Inference page.
+            </p>
+          </div>
+          <span className="material-symbols-outlined text-primary shrink-0 group-hover:translate-x-1 transition-transform" style={{ fontSize: "24px" }}>arrow_forward</span>
+        </motion.button>
 
         {/* Key Metrics Bento Grid */}
         <motion.section
