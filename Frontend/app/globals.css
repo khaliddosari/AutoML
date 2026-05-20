@@ -89,3 +89,27 @@ input[type=range]::-webkit-slider-runnable-track {
   background: #cac4d6;
   border-radius: 2px;
 }
+
+/* Sidebar transition and collapse overrides */
+.ml-64 {
+  transition: margin-left 0.3s cubic-bezier(0.32, 0.94, 0.6, 1);
+}
+
+body.sidebar-collapsed .ml-64 {
+  margin-left: 76px !important;
+}
+
+/* Custom shimmer keyframe for gradient buttons */
+@keyframes shimmer-effect {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer-effect 2s infinite linear;
+}
+
