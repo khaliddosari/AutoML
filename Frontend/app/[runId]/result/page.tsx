@@ -109,7 +109,7 @@ function FeatureImportanceCard({ features }: { features: FeatureImportance[] }) 
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
-                    className="absolute top-10 left-0 right-0 bg-inverse-surface text-inverse-on-surface text-[10px] rounded-lg p-2.5 z-30 shadow-md leading-relaxed"
+                    className="absolute top-10 left-0 right-0 bg-inverse-surface text-inverse-on-surface text-xs font-medium rounded-xl p-4 z-30 shadow-lg leading-relaxed border border-outline/10"
                   >
                     {getFeatureExplanation(f.feature)}
                   </motion.div>
@@ -213,137 +213,7 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
   );
 }
 
-/* ─── Production Code Export Drawer ── */
-function ExportDrawer({
-  isOpen,
-  onClose,
-  modelName,
-  target,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  modelName: string;
-  target?: string;
-}) {
-  const [copied, setCopied] = useState(false);
-  const codeRef = useRef<HTMLPreElement>(null);
-
-  const pythonCode = `import pandas as pd
-import numpy as np
-import joblib
-
-# 1. Load the serialized AutoML Forge champion model pipeline
-pipeline = joblib.load("storage/models/champion_model.joblib")
-print(f"Loaded Champion Pipeline: {pipeline}")
-
-# 2. Compile raw prediction samples matching schema
-sample_data = pd.DataFrame({
-    # Target column to predict: '${target || "label"}'
-    # Ensure raw features map to encoding vectors
-    "feature_0": [0.45],
-    "feature_1": ["categoric_label"],
-    "feature_2": [12.8]
-})
-
-# 3. Execute model inference scoring
-predictions = pipeline.predict(sample_data)
-probs = pipeline.predict_proba(sample_data) if hasattr(pipeline, "predict_proba") else None
-
-print("Model Inference Output Predictions:", predictions)
-if probs is not None:
-    print("Class Probabilities:", probs)`;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(pythonCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop blur */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-background/50 backdrop-blur-sm z-50 cursor-pointer"
-          />
-
-          {/* Drawer container */}
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed top-0 right-0 h-screen w-[480px] bg-surface-container-lowest border-l border-outline-variant shadow-2xl z-50 p-6 flex flex-col justify-between text-left select-none"
-          >
-            <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex justify-between items-center border-b border-outline-variant pb-4 mb-4">
-                <div>
-                  <h3 className="text-headline-md font-bold text-on-surface">Export Pipeline Code</h3>
-                  <p className="text-xs text-on-surface-variant">Production-ready script to load and predict</p>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="text-outline hover:text-primary hover:bg-surface-container p-1 rounded-full transition-colors cursor-pointer"
-                >
-                  <span className="material-symbols-outlined block">close</span>
-                </button>
-              </div>
-
-              <div className="flex-1 flex flex-col min-h-0 space-y-4">
-                <div className="bg-surface-purple-tint/20 border border-primary/10 rounded-xl p-3.5 flex gap-2.5">
-                  <span className="material-symbols-outlined text-primary shrink-0" style={{ fontSize: "20px" }}>workspace_premium</span>
-                  <div className="text-xs">
-                    <p className="font-bold text-primary mb-0.5">Model Exported Successfully</p>
-                    <p className="text-on-surface-variant font-medium">Recreate predictions locally utilizing <code className="font-mono bg-white px-1 py-0.5 rounded border border-outline-variant font-semibold text-primary">{modelName}</code></p>
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-col min-h-0 bg-[#1e1e24] rounded-xl overflow-hidden relative">
-                  <button
-                    onClick={handleCopy}
-                    className="absolute top-3 right-3 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-bold font-sans transition-all flex items-center gap-1 cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>
-                      {copied ? "check" : "content_copy"}
-                    </span>
-                    {copied ? "Copied!" : "Copy Code"}
-                  </button>
-                  <span className="absolute top-3 left-4 text-[9px] font-black font-sans text-slate-500 uppercase">production_predict.py</span>
-                  
-                  <div className="flex-1 overflow-auto p-4 pt-10 text-xs font-mono text-slate-300">
-                    <pre ref={codeRef} className="whitespace-pre leading-relaxed select-all">
-                      {pythonCode}
-                    </pre>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-outline-variant flex gap-3 shrink-0">
-              <button
-                onClick={handleCopy}
-                className="flex-1 bg-primary-container text-on-primary font-bold text-xs py-3 rounded-lg hover:bg-primary hover:shadow-sm transition-colors text-center"
-              >
-                Copy to Clipboard
-              </button>
-              <button
-                onClick={onClose}
-                className="flex-1 bg-surface-container border border-outline-variant font-bold text-xs py-3 rounded-lg hover:bg-surface-container-high transition-colors text-center text-on-surface"
-              >
-                Close Drawer
-              </button>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
+/* Production Code Export Drawer removed for simplification */
 
 /* ─── Result page ── */
 export default function ResultPage() {
@@ -353,7 +223,6 @@ export default function ResultPage() {
   const [loading, setLoading] = useState(true);
 
   // Advanced UI Toggles
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [justificationExpanded, setJustificationExpanded] = useState(false);
 
   useEffect(() => {
@@ -405,14 +274,6 @@ export default function ResultPage() {
 
   return (
     <div className="flex-1 overflow-y-auto p-gutter relative select-none">
-      
-      {/* Code Export slide-out Drawer */}
-      <ExportDrawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        modelName={modelName}
-        target={result.target}
-      />
 
       <div className="max-w-[1280px] mx-auto w-full space-y-8">
         
@@ -434,13 +295,6 @@ export default function ResultPage() {
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>check_circle</span>
               Pipeline Ready
             </span>
-            <button
-              onClick={() => setDrawerOpen(true)}
-              className="text-xs font-bold text-on-primary bg-primary-container px-4 py-2 rounded-lg hover:bg-primary hover:shadow-sm transition-all flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>download</span>
-              Export Code
-            </button>
             <button
               onClick={() => router.push("/")}
               className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5"
@@ -514,7 +368,7 @@ export default function ResultPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
           {/* Accuracy */}
           <MetricCard
@@ -545,27 +399,6 @@ export default function ResultPage() {
                 )}
               </div>
             )}
-          </MetricCard>
-
-          {/* Model score */}
-          <MetricCard
-            title="Cross-Validation Mean"
-            value={score.toFixed(4)}
-            accent="blue"
-            icon="balance"
-            trend="flat"
-            trendVal="Stable Folds"
-          >
-            <div className="mt-4 flex gap-1 bg-surface-container rounded-full p-0.5">
-              {[100, 80, 60, 40, 20].map((op, i) => (
-                <div
-                  key={i}
-                  className="h-2 flex-1 bg-info-blue rounded-full transition-opacity duration-300"
-                  style={{ opacity: op / 100 }}
-                  title={`Fold ${i + 1}`}
-                />
-              ))}
-            </div>
           </MetricCard>
 
           {/* Winning Model type */}
@@ -623,15 +456,15 @@ export default function ResultPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse font-sans text-xs">
+              <table className="w-full text-left border-collapse font-sans text-sm">
                 <thead>
                   <tr className="bg-surface-container-low text-label-md text-on-surface-variant font-bold border-b border-outline-variant">
-                    <th className="p-4 text-[10px] uppercase tracking-wider w-16">Rank</th>
-                    <th className="p-4 text-[10px] uppercase tracking-wider">Model Estimator</th>
-                    <th className="p-4 text-[10px] uppercase tracking-wider text-right">CV Mean Score</th>
-                    <th className="p-4 text-[10px] uppercase tracking-wider text-right">CV Std Variance</th>
-                    <th className="p-4 text-[10px] uppercase tracking-wider text-right">Test Accuracy</th>
-                    <th className="p-4 text-[10px] uppercase tracking-wider w-28 text-center">Status</th>
+                    <th className="p-5 text-xs uppercase tracking-wider w-20">Rank</th>
+                    <th className="p-5 text-xs uppercase tracking-wider">Model Estimator</th>
+                    <th className="p-5 text-xs uppercase tracking-wider text-right">CV Mean Score</th>
+                    <th className="p-5 text-xs uppercase tracking-wider text-right">CV Std Variance</th>
+                    <th className="p-5 text-xs uppercase tracking-wider text-right">Test Accuracy</th>
+                    <th className="p-5 text-xs uppercase tracking-wider w-32 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -646,20 +479,20 @@ export default function ResultPage() {
                           isWinner ? "bg-surface-purple-tint/10 font-semibold" : ""
                         )}
                       >
-                        <td className="p-4 font-mono font-bold">{i + 1}</td>
-                        <td className="p-4 font-mono font-bold text-on-surface flex items-center gap-2">
+                        <td className="p-5 font-mono font-bold">{i + 1}</td>
+                        <td className="p-5 font-mono font-bold text-on-surface flex items-center gap-2">
                           <span className="material-symbols-outlined text-[16px] text-outline">
                             {isWinner ? "workspace_premium" : "developer_board"}
                           </span>
                           {m.name}
                         </td>
-                        <td className="p-4 text-right font-mono text-on-surface-variant">{(m.cv_mean * 100).toFixed(2)}%</td>
-                        <td className="p-4 text-right font-mono text-on-surface-variant">± {(m.cv_std).toFixed(4)}</td>
-                        <td className="p-4 text-right font-mono text-on-surface-variant">{(testScore * 100).toFixed(1)}%</td>
-                        <td className="p-4">
+                        <td className="p-5 text-right font-mono text-on-surface-variant">{(m.cv_mean * 100).toFixed(2)}%</td>
+                        <td className="p-5 text-right font-mono text-on-surface-variant">± {(m.cv_std).toFixed(4)}</td>
+                        <td className="p-5 text-right font-mono text-on-surface-variant">{(testScore * 100).toFixed(1)}%</td>
+                        <td className="p-5">
                           <div className="flex justify-center">
                             <span className={cn(
-                              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest font-mono shrink-0",
+                              "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest font-mono shrink-0",
                               isWinner ? "bg-surface-purple-tint text-primary border border-primary/20 animate-pulse" : "bg-surface-container text-outline"
                             )}>
                               {isWinner ? "Winner" : "Runner Up"}

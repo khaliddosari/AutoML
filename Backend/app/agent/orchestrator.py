@@ -97,17 +97,32 @@ def run_agent(run_id: str, target: str) -> dict:
         parsed = _extract_json(result.get("output", ""))
 
         metrics = storage.read_json(run_id, "metrics.json") or {}
+        
+        # Trigger dynamic hyperparameter scanning and agentic justification loop!
+        from app.agent.optimization import run_fine_tuning_loop
+        optimized = run_fine_tuning_loop(
+            run_id=run_id,
+            target=target,
+            problem_type=parsed.get("problem_type"),
+            baseline_results={
+                "model_name": metrics.get("model_name"),
+                "score": parsed.get("accuracy_score"),
+                "score_metric": parsed.get("score_metric"),
+                "extra": metrics.get("extra", {}),
+            }
+        )
+
         final = {
             "run_id": run_id,
             "status": "succeeded",
             "target": target,
             "problem_type": parsed.get("problem_type"),
-            "accuracy_score": parsed.get("accuracy_score"),
+            "accuracy_score": optimized.get("score"),
             "score_metric": parsed.get("score_metric"),
             "plot_path": parsed.get("plot_path"),
-            "justification": parsed.get("justification"),
-            "model_name": metrics.get("model_name"),
-            "extra": metrics.get("extra", {}),
+            "justification": optimized.get("justification"),
+            "model_name": optimized.get("model_name"),
+            "extra": optimized.get("extra", {}),
         }
         storage.write_json(run_id, "result.json", final)
         storage.write_status(run_id, "succeeded")

@@ -1,8 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -34,36 +33,12 @@ export function Sidebar() {
   const router = useRouter();
   const runId = getRunId(pathname);
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  // Sync collapsed state to document body for global layout shifts
-  useEffect(() => {
-    if (isCollapsed) {
-      document.body.classList.add("sidebar-collapsed");
-    } else {
-      document.body.classList.remove("sidebar-collapsed");
-    }
-  }, [isCollapsed]);
-
   return (
-    <motion.nav
-      animate={{ width: isCollapsed ? 76 : 256 }}
-      transition={{ duration: 0.3, ease: [0.32, 0.94, 0.6, 1] }}
-      className="h-screen flex flex-col fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-50 overflow-hidden select-none"
+    <nav
+      className="w-64 h-screen flex flex-col fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-50 overflow-hidden select-none"
     >
       <div className="flex flex-col h-full justify-between py-base relative">
         
-        {/* Toggle Collapse Button */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-0 top-6 w-5 h-10 bg-surface-container-low border border-r-0 border-outline-variant hover:border-primary rounded-l-md flex items-center justify-center text-outline hover:text-primary transition-all duration-200 hover:w-6 group"
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          <span className="material-symbols-outlined transition-transform duration-300 group-hover:scale-110" style={{ fontSize: "14px" }}>
-            {isCollapsed ? "chevron_right" : "chevron_left"}
-          </span>
-        </button>
-
         <div className="px-4 py-4 flex-1 flex flex-col">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-3 mb-6 px-2 overflow-hidden shrink-0">
@@ -75,20 +50,9 @@ export function Sidebar() {
               <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>settings_input_component</span>
             </motion.div>
             
-            <AnimatePresence initial={false}>
-              {!isCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col"
-                >
-                  <h1 className="text-body-md text-primary font-bold leading-tight">AutoML Forge</h1>
-                  <p className="text-[10px] text-on-surface-variant font-mono">v1.0.4 · Active</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="flex flex-col justify-center">
+              <h1 className="text-lg font-bold text-primary tracking-wide leading-none">Model Forge</h1>
+            </div>
           </div>
 
           {/* Create Button */}
@@ -98,7 +62,7 @@ export function Sidebar() {
               whileTap={{ scale: 0.98 }}
               onClick={() => router.push("/")}
               className={cn(
-                "relative overflow-hidden w-full bg-gradient-to-r from-primary-container to-primary text-on-primary text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow-md transition-shadow group shrink-0"
+                "relative overflow-hidden w-full bg-gradient-to-r from-primary-container to-primary text-white text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow-md transition-shadow group shrink-0"
               )}
             >
               {/* Shimmer overlay */}
@@ -106,16 +70,9 @@ export function Sidebar() {
               
               <span className="material-symbols-outlined z-10" style={{ fontSize: "18px", fontVariationSettings: "'FILL' 1" }}>add</span>
               
-              {!isCollapsed && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="z-10 text-sm font-semibold whitespace-nowrap"
-                >
-                  Create New Model
-                </motion.span>
-              )}
+              <span className="z-10 text-sm font-semibold whitespace-nowrap text-white">
+                Create New Model
+              </span>
             </motion.button>
           </div>
 
@@ -143,7 +100,6 @@ export function Sidebar() {
                         ? "text-outline opacity-40 cursor-not-allowed"
                         : "text-on-surface-variant hover:text-primary hover:bg-surface-container-low"
                     )}
-                    title={isCollapsed ? label : undefined}
                   >
                     {/* Animated Sliding Background Active Pill */}
                     {isActive && (
@@ -167,15 +123,9 @@ export function Sidebar() {
                       {icon}
                     </span>
 
-                    {!isCollapsed && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-sm font-medium z-10 whitespace-nowrap"
-                      >
-                        {label}
-                      </motion.span>
-                    )}
+                    <span className="text-sm font-medium z-10 whitespace-nowrap">
+                      {label}
+                    </span>
                   </a>
                 </li>
               );
@@ -183,25 +133,9 @@ export function Sidebar() {
           </ul>
         </div>
 
-        {/* Footer Support/Settings */}
-        <div className="px-4 pb-4 shrink-0">
-          <ul className="flex flex-col gap-1 border-t border-outline-variant pt-4">
-            <li>
-              <a href="#" className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-all group" title={isCollapsed ? "Settings" : undefined}>
-                <span className="material-symbols-outlined transition-transform duration-200 group-hover:rotate-45" style={{ fontSize: "18px" }}>settings</span>
-                {!isCollapsed && <span className="text-sm font-medium">Settings</span>}
-              </a>
-            </li>
-            <li>
-              <a href="#" className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-all group" title={isCollapsed ? "Support" : undefined}>
-                <span className="material-symbols-outlined transition-transform duration-200 group-hover:scale-110" style={{ fontSize: "18px" }}>help</span>
-                {!isCollapsed && <span className="text-sm font-medium">Support</span>}
-              </a>
-            </li>
-          </ul>
-        </div>
+
 
       </div>
-    </motion.nav>
+    </nav>
   );
 }

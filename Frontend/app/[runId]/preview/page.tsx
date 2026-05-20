@@ -414,7 +414,7 @@ export default function PreviewPage() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[600px] border-b border-outline-variant">
             {viewMode === "data" ? (
               // RAW DATATABLE PREVIEW
               <table className="w-full text-left border-collapse">
@@ -435,7 +435,7 @@ export default function PreviewPage() {
                           {col}
                         </div>
                         {col === target && (
-                          <span className="ml-1.5 text-[8px] bg-primary text-on-primary px-1.5 py-0.5 rounded-full font-sans uppercase tracking-widest font-black">
+                          <span className="ml-1.5 text-[8px] bg-primary text-white px-1.5 py-0.5 rounded-full font-sans uppercase tracking-widest font-black">
                             Target
                           </span>
                         )}
@@ -444,8 +444,8 @@ export default function PreviewPage() {
                   </tr>
                 </thead>
                 <tbody className="text-body-md text-on-background font-mono text-xs">
-                  {paginatedRows.length > 0 ? (
-                    paginatedRows.map((row, i) => (
+                  {filteredRows.length > 0 ? (
+                    filteredRows.map((row, i) => (
                       <tr
                         key={i}
                         className="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/40 last:border-0"
@@ -502,7 +502,7 @@ export default function PreviewPage() {
                         </span>
                         {stat.column}
                         {stat.column === target && (
-                          <span className="text-[8px] bg-primary text-on-primary px-1.5 py-0.5 rounded-full font-sans uppercase font-black tracking-widest shrink-0 ml-1">Target</span>
+                          <span className="text-[8px] bg-primary text-white px-1.5 py-0.5 rounded-full font-sans uppercase font-black tracking-widest shrink-0 ml-1">Target</span>
                         )}
                       </td>
                       <td className="p-4">
@@ -525,45 +525,6 @@ export default function PreviewPage() {
               </table>
             )}
           </div>
-
-          {/* Table Pagination - only active in Data mode */}
-          {viewMode === "data" && totalPages > 1 && (
-            <div className="p-4 border-t border-outline-variant flex items-center justify-between bg-surface-bright flex-wrap gap-2 select-none">
-              <span className="text-xs text-on-surface-variant font-medium">
-                Showing <strong className="text-on-surface">{(currentPage - 1) * pageSize + 1}</strong> to <strong className="text-on-surface">{Math.min(currentPage * pageSize, filteredRows.length)}</strong> of <strong className="text-on-surface">{filteredRows.length}</strong> matching records
-              </span>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-xs font-bold transition-all disabled:opacity-40 disabled:hover:bg-transparent"
-                >
-                  Previous
-                </button>
-                {[...Array(totalPages)].map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentPage(idx + 1)}
-                    className={cn(
-                      "w-8 h-8 rounded-lg text-xs font-bold transition-all",
-                      currentPage === idx + 1
-                        ? "bg-primary text-on-primary shadow-sm"
-                        : "border border-transparent hover:border-outline-variant hover:bg-surface-container text-on-surface-variant"
-                    )}
-                  >
-                    {idx + 1}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-xs font-bold transition-all disabled:opacity-40 disabled:hover:bg-transparent"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
 
         </div>
       </div>

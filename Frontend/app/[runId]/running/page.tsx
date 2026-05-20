@@ -637,8 +637,8 @@ export default function RunningPage() {
       </motion.aside>
 
       {/* Main Notebook Console */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-        <div className="max-w-2xl mx-auto flex flex-col gap-3">
+      <div className="flex-1 flex flex-col overflow-hidden p-4 lg:p-6">
+        <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col gap-3 overflow-hidden">
           
           {/* Jupyter Notebook top toolbar bar */}
           <div className="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 card-shadow shrink-0 select-none">
@@ -699,26 +699,28 @@ export default function RunningPage() {
             )}
           </div>
 
-          {/* Staggered cells notebooks content */}
-          {STEPS.map((step, i) => {
-            const status: StepStatus =
-              failed && activeStep === i ? "error" :
-              activeStep > i ? "done" :
-              activeStep === i ? "active" : "waiting";
-            return (
-              <PipelineCell
-                key={step.key}
-                step={step}
-                index={i}
-                status={status}
-                cellNumber={i + 1}
-                elapsedAtDone={status === "done" ? stepElapsed[i] : undefined}
-                expanded={expandedCells.has(i)}
-                onToggle={() => toggleCell(i)}
-                logFilter={logFilter}
-              />
-            );
-          })}
+          {/* Staggered cells notebooks content - Scrollable Container */}
+          <div className="flex-1 overflow-y-auto w-full min-h-0 flex flex-col gap-3 pr-1.5">
+            {STEPS.map((step, i) => {
+              const status: StepStatus =
+                failed && activeStep === i ? "error" :
+                activeStep > i ? "done" :
+                activeStep === i ? "active" : "waiting";
+              return (
+                <PipelineCell
+                  key={step.key}
+                  step={step}
+                  index={i}
+                  status={status}
+                  cellNumber={i + 1}
+                  elapsedAtDone={status === "done" ? stepElapsed[i] : undefined}
+                  expanded={expandedCells.has(i)}
+                  onToggle={() => toggleCell(i)}
+                  logFilter={logFilter}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
