@@ -504,7 +504,8 @@ export default function RunningPage() {
   const [elapsed, setElapsed] = useState(0);
   const [stepElapsed, setStepElapsed] = useState<number[]>([]);
   const [expandedCells, setExpandedCells] = useState<Set<number>>(new Set());
-  
+  const [isComplete, setIsComplete] = useState(false);
+
   // Custom Log filter
   const [logFilter, setLogFilter] = useState<"all" | "success" | "system">("all");
 
@@ -556,7 +557,7 @@ export default function RunningPage() {
         if (s.status === "succeeded") {
           clearInterval(poll); clearTimeout(stepTimer);
           setActiveStep(STEPS.length);
-          setTimeout(() => router.push(`/${runId}/result`), 700);
+          setIsComplete(true);
         } else if (s.status === "failed") {
           clearInterval(poll); clearTimeout(stepTimer);
           setFailed(true);
@@ -620,6 +621,34 @@ export default function RunningPage() {
         {/* Compute diagnostics metrics widget */}
         <div className="flex flex-col gap-4">
           <ServerDiagnosticsWidget />
+
+          {/* Pipeline complete - Next button */}
+          {isComplete && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-surface-green-tint border border-success-green/30 rounded-xl px-4 py-4 space-y-3 text-left font-sans"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-success-green" style={{ fontSize: "18px" }}>check_circle</span>
+                <p className="text-xs font-bold text-success-green">Pipeline Complete!</p>
+              </div>
+              <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                All 6 stages finished successfully. Your champion model is ready.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => router.push(`/${runId}/result`)}
+                className="w-full bg-primary text-white text-sm font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>insights</span>
+                View Results
+                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>arrow_forward</span>
+              </motion.button>
+            </motion.div>
+          )}
 
           {failed && (
             <div className="bg-error-container border border-error/20 rounded-xl px-4 py-3 space-y-1.5 text-left font-sans animate-scale">
@@ -691,10 +720,10 @@ export default function RunningPage() {
                 Running Node
               </span>
             )}
-            {allDone && (
+            {isComplete && (
               <span className="flex items-center gap-1.5 text-xs text-success-green font-bold shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-success-green" />
-                Execution Done
+                <span className="w-1.5 h-1.5 rounded-full bg-success-green animate-pulse" />
+                Ready · View Results ↓
               </span>
             )}
           </div>
@@ -720,6 +749,38 @@ export default function RunningPage() {
                 />
               );
             })}
+
+            {/* Pipeline complete - inline completion card */}
+            <AnimatePresence>
+              {isComplete && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.35 }}
+                  className="bg-surface-green-tint/25 border border-success-green/30 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-surface-green-tint border border-success-green/30 flex items-center justify-center shrink-0">
+                      <span className="material-symbols-outlined text-success-green" style={{ fontSize: "22px", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-on-surface">All pipeline stages completed</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">Champion model selected and metrics ready. Proceed when ready.</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => router.push(`/${runId}/result`)}
+                    className="bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm shrink-0"
+                  >
+                    View Results
+                    <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>arrow_forward</span>
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

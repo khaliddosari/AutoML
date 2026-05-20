@@ -4,7 +4,8 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\khali\\\\Downloads\\\\AutoML\\\\Stitch\\\\stitch_automl_analysis_dashboard\" -Recurse -Force)",
       "Bash(Select-Object FullName, PSIsContainer)",
       "Bash(Sort-Object FullName)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(python -m py_compile app/pipeline/train.py app/pipeline/models/classifiers.py app/pipeline/models/regressors.py app/agent/optimization.py)"
     ]
   }
 }

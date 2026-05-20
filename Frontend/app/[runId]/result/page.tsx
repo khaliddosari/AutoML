@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { getResult, plotUrl, type RunResult, type FeatureImportance, type ModelScore } from "@/lib/api";
+import { getResult, plotUrl, type RunResult, type FeatureImportance, type ModelScore, type TuningTrial } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /* ─── Metric card ── */
@@ -213,7 +213,188 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
   );
 }
 
-/* Production Code Export Drawer removed for simplification */
+/* ─── Hyperparameter Tuning Before/After Card ── */
+function TuningResultsCard({
+  trials,
+  baseline,
+  optimized,
+  metric,
+  modelName,
+}: {
+  trials: TuningTrial[];
+  baseline: number;
+  optimized: number;
+  metric: string;
+  modelName: string;
+}) {
+  const improved = optimized > baseline + 0.0001;
+  const deltaPct = ((optimized - baseline) * 100).toFixed(2);
+  const sign = improved ? "+" : "";
+  const tuningTrials = trials.filter((t) => t.trial > 0);
+
+  return (
+    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden card-shadow text-left">
+      {/* Header */}
+      <div className="p-5 border-b border-outline-variant flex flex-wrap justify-between items-center gap-3 bg-surface-bright">
+        <div>
+          <h3 className="text-headline-md font-bold text-on-background">Hyperparameter Tuning</h3>
+          <p className="text-xs text-on-surface-variant mt-0.5 font-mono">
+            Agentic optimization loop · {tuningTrials.length} trial{tuningTrials.length !== 1 ? "s" : ""} on <strong className="text-primary">{modelName}</strong>
+          </p>
+        </div>
+        <span className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border shrink-0",
+          improved
+            ? "bg-surface-green-tint text-success-green border-success-green/20"
+            : "bg-surface-container text-outline border-outline-variant"
+        )}>
+          <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+            {improved ? "trending_up" : "horizontal_rule"}
+          </span>
+          {improved ? `Improved ${sign}${deltaPct}%` : "No Improvement Found"}
+        </span>
+      </div>
+
+      {/* Before vs After panels */}
+      <div className="grid grid-cols-2 divide-x divide-outline-variant border-b border-outline-variant">
+        {/* Before */}
+        <div className="p-6 flex flex-col gap-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-outline font-mono mb-1">
+            ◎ Before Tuning
+          </span>
+          <span className="text-4xl font-black font-mono text-on-surface-variant">
+            {(baseline * 100).toFixed(2)}
+            <span className="text-base font-bold text-outline ml-1">%</span>
+          </span>
+          <span className="text-[11px] text-on-surface-variant font-mono mt-0.5">
+            Baseline {metric.toUpperCase()} · default params
+          </span>
+          <div className="mt-3 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+            <div className="h-full bg-outline/30 rounded-full" style={{ width: `${Math.min(baseline * 100, 100)}%` }} />
+          </div>
+        </div>
+        {/* After */}
+        <div className="p-6 flex flex-col gap-1 relative">
+          <span className="text-[10px] font-black uppercase tracking-widest font-mono mb-1 text-success-green">
+            ✦ After Tuning
+          </span>
+          <span className={cn(
+            "text-4xl font-black font-mono",
+            improved ? "text-success-green" : "text-on-background"
+          )}>
+            {(optimized * 100).toFixed(2)}
+            <span className="text-base font-bold text-on-surface-variant ml-1">%</span>
+          </span>
+          <span className="text-[11px] text-on-surface-variant font-mono mt-0.5">
+            Optimized {metric.toUpperCase()} · best params
+          </span>
+          <div className="mt-3 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-success-green rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(optimized * 100, 100)}%` }}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+            />
+          </div>
+          {improved && (
+            <span className="absolute top-5 right-5 text-[11px] font-black text-success-green font-mono bg-surface-green-tint px-2.5 py-1 rounded-full border border-success-green/20">
+              {sign}{deltaPct}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Trial history table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse font-sans">
+          <thead>
+            <tr className="bg-surface-container-low border-b border-outline-variant text-on-surface-variant">
+              <th className="p-4 text-[10px] font-black uppercase tracking-wider w-16">Trial</th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-wider">Parameters Tested</th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-wider text-right w-28">Score</th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-wider">Outcome</th>
+            </tr>
+          </thead>
+          <tbody>
+            {trials.map((t, idx) => {
+              const isBaseline = t.trial === 0;
+              const isBest = !isBaseline && Math.abs(t.score - optimized) < 0.00005 && improved;
+
+              let paramsLabel = t.parameters;
+              if (!isBaseline) {
+                try {
+                  const obj = JSON.parse(t.parameters) as Record<string, unknown>;
+                  paramsLabel = Object.entries(obj)
+                    .map(([k, v]) => `${k}=${v}`)
+                    .join("  ·  ");
+                } catch {
+                  paramsLabel = t.parameters;
+                }
+              }
+
+              return (
+                <tr
+                  key={idx}
+                  className={cn(
+                    "border-b border-outline-variant/40 last:border-0 transition-colors",
+                    isBaseline && "bg-surface-container-low/40",
+                    isBest && "bg-surface-green-tint/20",
+                    !isBaseline && !isBest && "hover:bg-surface-container-low/40"
+                  )}
+                >
+                  {/* Trial # */}
+                  <td className="p-4">
+                    {isBaseline ? (
+                      <span className="inline-block text-[9px] font-black uppercase tracking-widest text-outline bg-surface-container px-2 py-0.5 rounded-full border border-outline-variant font-mono">
+                        Base
+                      </span>
+                    ) : isBest ? (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-success-green bg-surface-green-tint px-2 py-0.5 rounded-full border border-success-green/20 font-mono">
+                        <span className="material-symbols-outlined" style={{ fontSize: "10px" }}>star</span>
+                        #{t.trial}
+                      </span>
+                    ) : (
+                      <span className="font-mono font-bold text-xs text-on-surface-variant">#{t.trial}</span>
+                    )}
+                  </td>
+                  {/* Params */}
+                  <td className="p-4 font-mono text-[11px] text-on-surface-variant max-w-xs">
+                    <span className="truncate block" title={paramsLabel}>{paramsLabel}</span>
+                  </td>
+                  {/* Score */}
+                  <td className="p-4 text-right font-mono font-bold text-sm">
+                    <span className={cn(
+                      isBest ? "text-success-green" :
+                      isBaseline ? "text-on-surface-variant" : "text-on-surface"
+                    )}>
+                      {(t.score * 100).toFixed(2)}%
+                    </span>
+                  </td>
+                  {/* Outcome */}
+                  <td className="p-4 text-xs max-w-xs">
+                    <span className={cn(
+                      "font-medium leading-relaxed",
+                      isBaseline && "text-primary font-semibold",
+                      t.result.toLowerCase().includes("new champion") && "text-success-green font-bold",
+                      t.result.toLowerCase().includes("error") && "text-error",
+                      !isBaseline && !t.result.toLowerCase().includes("new champion") && !t.result.toLowerCase().includes("error") && "text-on-surface-variant"
+                    )}>
+                      {isBaseline
+                        ? "Baseline: champion from initial leaderboard sweep"
+                        : t.result.length > 80
+                        ? t.result.slice(0, 77) + "…"
+                        : t.result}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 /* ─── Result page ── */
 export default function ResultPage() {
@@ -315,7 +496,7 @@ export default function ResultPage() {
           <div className="absolute -left-10 -top-10 w-44 h-44 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           
           <div className="flex items-center gap-4 flex-1 min-w-0 relative z-10">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-container to-primary text-on-primary flex items-center justify-center shrink-0 shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-container to-primary text-white flex items-center justify-center shrink-0 shadow-md">
               <span className="material-symbols-outlined text-[32px] fill">workspace_premium</span>
             </div>
             <div className="min-w-0">
@@ -442,12 +623,29 @@ export default function ResultPage() {
           <ResultPlotCard runId={runId} problemType={result.problem_type} />
         </motion.section>
 
+        {/* Hyperparameter Tuning Before/After Results */}
+        {extra.tuning_trials && extra.tuning_trials.length > 1 && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+          >
+            <TuningResultsCard
+              trials={extra.tuning_trials}
+              baseline={extra.tuning_trials[0].score}
+              optimized={score}
+              metric={metric}
+              modelName={modelName}
+            />
+          </motion.section>
+        )}
+
         {/* Interactive Side-by-Side Model Comparison Grid */}
         {models.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18 }}
+            transition={{ delay: 0.24 }}
             className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden card-shadow text-left select-none"
           >
             <div className="p-5 border-b border-outline-variant flex justify-between items-center bg-surface-bright">

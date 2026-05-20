@@ -72,27 +72,27 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         min_class_count = int(np.bincount(y_train.astype(int)).min())
         n_splits = max(2, min(5, min_class_count))
 
-        # Evaluate all candidates. Select by CV mean (not raw test score) to avoid
-        # test-set shopping bias. Each candidate is cloned so module-level templates
-        # are never mutated and concurrent runs don't corrupt each other.
+        # Sweep: rank all candidates by 5-fold CV only (no wasted initial fit).
+        # Each template is cloned so module-level definitions are never mutated
+        # and concurrent runs don't corrupt each other.
         all_scores: list[dict] = []
-        best_name, best_model, best_cv_mean = None, None, -1.0
+        best_name, best_template, best_cv_mean = None, None, -1.0
 
         for name, template in CLASSIFIERS:
-            fitted = clone(template)
-            fitted.fit(X_train, y_train)
-            test_acc = float(accuracy_score(y_test, fitted.predict(X_test)))
-            cv = cross_val_score(clone(fitted), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
+            cv = cross_val_score(clone(template), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
             all_scores.append({
                 "name": name,
-                "test_accuracy": round(test_acc, 4),
                 "cv_mean": round(float(cv.mean()), 4),
                 "cv_std": round(float(cv.std()), 4),
             })
             if cv.mean() > best_cv_mean:
                 best_cv_mean = float(cv.mean())
                 best_name = name
-                best_model = fitted
+                best_template = template
+
+        # Single final fit of the winner on the full training set.
+        best_model = clone(best_template)
+        best_model.fit(X_train, y_train)
 
         preds = best_model.predict(X_test)
         best_test_acc = float(accuracy_score(y_test, preds))
@@ -127,24 +127,25 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         # Cap CV folds by training set size to avoid degenerate folds on tiny datasets.
         n_splits = max(2, min(5, len(X_train) // 10))
 
+        # Sweep: rank all candidates by 5-fold CV only (no wasted initial fit).
         all_scores: list[dict] = []
-        best_name, best_model, best_cv_mean = None, None, float("-inf")
+        best_name, best_template, best_cv_mean = None, None, float("-inf")
 
         for name, template in REGRESSORS:
-            fitted = clone(template)
-            fitted.fit(X_train, y_train)
-            test_r2 = float(r2_score(y_test, fitted.predict(X_test)))
-            cv = cross_val_score(clone(fitted), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
+            cv = cross_val_score(clone(template), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
             all_scores.append({
                 "name": name,
-                "test_r2": round(test_r2, 4),
                 "cv_mean": round(float(cv.mean()), 4),
                 "cv_std": round(float(cv.std()), 4),
             })
             if cv.mean() > best_cv_mean:
                 best_cv_mean = float(cv.mean())
                 best_name = name
-                best_model = fitted
+                best_template = template
+
+        # Single final fit of the winner on the full training set.
+        best_model = clone(best_template)
+        best_model.fit(X_train, y_train)
 
         preds = best_model.predict(X_test)
         best_test_r2 = float(r2_score(y_test, preds))

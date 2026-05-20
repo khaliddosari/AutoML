@@ -27,6 +27,13 @@ export interface FeatureImportance {
   importance: number;
 }
 
+export interface TuningTrial {
+  trial: number;
+  parameters: string;
+  score: number;
+  result: string;
+}
+
 export interface ResultExtra {
   train_accuracy?: number;
   train_r2?: number;
@@ -40,6 +47,7 @@ export interface ResultExtra {
   test_size?: number;
   all_models?: ModelScore[];
   top_features?: FeatureImportance[];
+  tuning_trials?: TuningTrial[];
 }
 
 export interface RunResult {

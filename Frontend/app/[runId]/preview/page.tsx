@@ -88,7 +88,7 @@ export default function PreviewPage() {
       const values = data.preview.map(row => row[col]);
       const validNums = values.map(v => Number(v)).filter(n => !isNaN(n) && n !== null && n !== undefined);
       
-      const nullsCount = values.filter(v => v === null || v === undefined || v === "" || String(v).trim() === "—").length;
+      const nullsCount = values.filter(v => v === null || v === undefined || v === "" || String(v).trim() === "-").length;
       const nullPct = ((nullsCount / values.length) * 100).toFixed(1);
       const uniqueVals = new Set(values.filter(v => v !== null && v !== undefined && v !== "")).size;
 
@@ -353,7 +353,7 @@ export default function PreviewPage() {
                 onClick={handleStart}
                 disabled={!target || starting}
                 className={cn(
-                  "bg-primary-container text-on-primary text-label-md px-6 py-3 rounded-lg shadow-sm font-bold hover:bg-primary transition-all flex items-center gap-2",
+                  "bg-primary-container text-white text-label-md px-6 py-3 rounded-lg shadow-sm font-bold hover:bg-primary transition-all flex items-center gap-2",
                   (!target || starting) && "opacity-50 cursor-not-allowed"
                 )}
               >
@@ -458,7 +458,7 @@ export default function PreviewPage() {
                               col === target ? "text-primary font-bold bg-surface-purple-tint/10 border-x border-primary/5" : ""
                             )}
                           >
-                            {String(row[col] ?? "—")}
+                            {String(row[col] ?? "-")}
                           </td>
                         ))}
                       </tr>

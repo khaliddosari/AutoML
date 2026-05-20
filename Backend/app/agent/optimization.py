@@ -116,7 +116,7 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
             {"trial": 0, "parameters": "Baseline Settings", "score": baseline_score, "result": "Champion baseline"}
         ]
         
-        max_loops = 3
+        max_loops = 2
         current_best_model_data = None
         
         allowed_params_text = ALLOWED_PARAMS.get(champion_model, "- No adjustable parameters available.")

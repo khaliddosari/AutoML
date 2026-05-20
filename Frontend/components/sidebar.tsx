@@ -45,7 +45,7 @@ export function Sidebar() {
             <motion.div
               whileHover={{ rotate: 15, scale: 1.08 }}
               transition={{ type: "spring", stiffness: 300, damping: 12 }}
-              className="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-on-primary shrink-0 shadow-sm"
+              className="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-white shrink-0 shadow-sm"
             >
               <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>settings_input_component</span>
             </motion.div>
