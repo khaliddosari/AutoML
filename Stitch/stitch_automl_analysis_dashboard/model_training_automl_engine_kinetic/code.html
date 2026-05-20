@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Model Training - NeuralEngine_v2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#f0f0f2",
+                        "surface-container": "#eeeef0",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#ccbdff",
+                        "on-secondary-fixed-variant": "#564500",
+                        "inverse-surface": "#2f3132",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#feda5f",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-primary-fixed": "#1f0060",
+                        "surface-container-highest": "#e2e2e4",
+                        "surface-dim": "#d9dadc",
+                        "surface-green-tint": "#d3f5d5",
+                        "tertiary": "#582200",
+                        "surface-purple-tint": "#e7ddff",
+                        "primary": "#38009d",
+                        "on-background": "#1a1c1d",
+                        "on-tertiary-fixed": "#341100",
+                        "surface-container-low": "#f3f3f5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#4d26b5",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f9f9fb",
+                        "error": "#ba1a1a",
+                        "success-green": "#80d882",
+                        "surface-variant": "#e2e2e4",
+                        "tertiary-container": "#7c3300",
+                        "secondary": "#725c00",
+                        "surface-container-high": "#e8e8ea",
+                        "secondary-fixed-dim": "#e6c44b",
+                        "on-secondary-fixed": "#231b00",
+                        "outline-variant": "#cac4d6",
+                        "primary-container": "#4f29b7",
+                        "on-tertiary": "#ffffff",
+                        "info-blue": "#4c96fe",
+                        "warning-orange": "#f4a664",
+                        "surface-tint": "#6543cd",
+                        "primary-fixed": "#e7deff",
+                        "on-secondary-container": "#755f00",
+                        "surface": "#f9f9fb",
+                        "on-surface-variant": "#484554",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "on-primary-container": "#bfadff",
+                        "background": "#f9f9fb",
+                        "error-pink": "#ff8081",
+                        "outline": "#797585",
+                        "on-tertiary-container": "#ffa170",
+                        "secondary-fixed": "#ffe07e",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#ccbdff",
+                        "on-surface": "#1a1c1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-xl": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "label-md": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom Slider Styling */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #4f29b7;
+            cursor: pointer;
+            margin-top: -8px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cac4d6;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="w-64 h-full flex flex-col fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-50">
+<div class="h-screen flex flex-col justify-between py-base">
+<div>
+<div class="px-6 py-4 flex items-center gap-3 border-b border-outline-variant">
+<div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center text-on-primary font-bold">
+                        AF
+                    </div>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary font-bold">AutoML Forge</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">V1.0.4 - Active</p>
+</div>
+</div>
+<div class="px-4 py-6">
+<button class="w-full bg-primary-container text-on-primary py-2 px-4 rounded font-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Create New Model
+                    </button>
+</div>
+<nav class="px-3 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">upload_file</span>
+<span class="font-label-md text-label-md">Data Ingestion</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Dataset Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-purple-tint" href="#">
+<span class="material-symbols-outlined">model_training</span>
+<span class="font-label-md text-label-md">Model Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+</nav>
+</div>
+<div class="px-3 flex flex-col gap-1 border-t border-outline-variant pt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="h-16 flex items-center sticky top-0 z-40 bg-surface border-b border-outline-variant px-gutter justify-between">
+<div class="flex items-center gap-6">
+<h2 class="font-headline-md text-headline-md text-primary font-bold">Project: NeuralEngine_v2</h2>
+<nav class="hidden md:flex gap-6 h-full items-center">
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1 h-full flex items-center pt-1" href="#">Models</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all h-full flex items-center" href="#">Experiments</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all h-full flex items-center" href="#">Deployments</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-2 border border-outline-variant rounded-full bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-64" placeholder="Search resources..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-primary border border-outline-variant px-4 py-1.5 rounded transition-colors">Export</button>
+<button class="font-label-md text-label-md bg-primary-container text-on-primary px-4 py-1.5 rounded hover:opacity-90 transition-opacity">Deploy</button>
+</div>
+</header>
+<!-- Canvas -->
+<div class="p-margin-desktop flex-1">
+<div class="max-w-[container-max] mx-auto">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-2">Configure Training Job</h2>
+<p class="text-on-surface-variant font-body-md">Define target variables, architecture, and compute resources for your next run.</p>
+</div>
+<button class="bg-primary-container text-on-primary px-6 py-3 rounded font-label-md hover:bg-[#3f2095] transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined">play_arrow</span>
+                        Start Training
+                    </button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Left Column: Config -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<!-- Target Variable Selection -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-info-blue"></div>
+<h3 class="font-headline-md text-headline-md mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-info-blue">data_object</span>
+                                Target Variable
+                            </h3>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Dataset</label>
+<select class="w-full border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary bg-surface text-on-surface">
+<option>customer_churn_q3.csv</option>
+<option>sales_data_2023.csv</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Target Column</label>
+<select class="w-full border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary bg-surface text-on-surface">
+<option>churn_probability</option>
+<option>lifetime_value</option>
+</select>
+</div>
+</div>
+<div class="bg-surface-container-low rounded p-4 border border-outline-variant border-dashed">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-md text-label-md text-on-surface">Data Distribution</span>
+<span class="bg-surface-purple-tint text-primary px-2 py-0.5 rounded text-xs font-semibold">Continuous</span>
+</div>
+<div class="w-full h-24 bg-surface-container-highest rounded relative flex items-end px-2 gap-1 pb-1">
+<!-- Fake Histogram -->
+<div class="w-full h-[20%] bg-outline-variant rounded-t"></div>
+<div class="w-full h-[40%] bg-outline-variant rounded-t"></div>
+<div class="w-full h-[70%] bg-primary-fixed-dim rounded-t"></div>
+<div class="w-full h-[90%] bg-primary-container rounded-t"></div>
+<div class="w-full h-[100%] bg-primary-container rounded-t"></div>
+<div class="w-full h-[80%] bg-primary-container rounded-t"></div>
+<div class="w-full h-[50%] bg-primary-fixed-dim rounded-t"></div>
+<div class="w-full h-[30%] bg-outline-variant rounded-t"></div>
+<div class="w-full h-[15%] bg-outline-variant rounded-t"></div>
+</div>
+</div>
+</section>
+<!-- Model Architecture -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-surface-tint"></div>
+<h3 class="font-headline-md text-headline-md mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-surface-tint">architecture</span>
+                                Model Architecture
+                            </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Option 1 -->
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="architecture" type="radio"/>
+<div class="border-2 border-outline-variant rounded-lg p-4 hover:bg-surface-container transition-colors peer-checked:border-primary peer-checked:bg-surface-purple-tint h-full flex flex-col">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Gradient Boosting</span>
+<span class="material-symbols-outlined text-primary hidden peer-checked:block">check_circle</span>
+</div>
+<p class="text-sm text-on-surface-variant flex-1">XGBoost implementation optimized for tabular data. Fast training, high accuracy.</p>
+<div class="mt-4 flex gap-2">
+<span class="text-xs bg-surface-container-high px-2 py-1 rounded text-on-surface-variant">Tabular</span>
+<span class="text-xs bg-surface-container-high px-2 py-1 rounded text-on-surface-variant">Fast</span>
+</div>
+</div>
+</label>
+<!-- Option 2 -->
+<label class="cursor-pointer">
+<input class="peer sr-only" name="architecture" type="radio"/>
+<div class="border-2 border-outline-variant rounded-lg p-4 hover:bg-surface-container transition-colors peer-checked:border-primary peer-checked:bg-surface-purple-tint h-full flex flex-col">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Deep Neural Net</span>
+<span class="material-symbols-outlined text-primary hidden peer-checked:block">check_circle</span>
+</div>
+<p class="text-sm text-on-surface-variant flex-1">Multi-layer perceptron with automatic hyperparameter tuning. Better for complex non-linear patterns.</p>
+<div class="mt-4 flex gap-2">
+<span class="text-xs bg-surface-container-high px-2 py-1 rounded text-on-surface-variant">Complex</span>
+<span class="text-xs bg-surface-container-high px-2 py-1 rounded text-on-surface-variant">Auto-Tune</span>
+</div>
+</div>
+</label>
+</div>
+</section>
+</div>
+<!-- Right Column: Compute -->
+<div class="flex flex-col gap-6">
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 relative overflow-hidden h-full">
+<div class="absolute top-0 left-0 w-full h-1 bg-success-green"></div>
+<h3 class="font-headline-md text-headline-md mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-success-green">memory</span>
+                                Compute Allocation
+                            </h3>
+<div class="space-y-8">
+<!-- CPU Slider -->
+<div>
+<div class="flex justify-between items-end mb-2">
+<label class="font-label-md text-label-md text-on-surface">CPU Cores</label>
+<span class="font-headline-md text-primary" id="cpu-val">8</span>
+</div>
+<input class="w-full appearance-none bg-transparent" max="32" min="2" oninput="document.getElementById('cpu-val').innerText = this.value" type="range" value="8"/>
+<div class="flex justify-between text-xs text-on-surface-variant mt-1">
+<span>2</span>
+<span>32</span>
+</div>
+</div>
+<!-- RAM Slider -->
+<div>
+<div class="flex justify-between items-end mb-2">
+<label class="font-label-md text-label-md text-on-surface">Memory (GB)</label>
+<span class="font-headline-md text-primary" id="ram-val">32</span>
+</div>
+<input class="w-full appearance-none bg-transparent" max="128" min="8" oninput="document.getElementById('ram-val').innerText = this.value" step="8" type="range" value="32"/>
+<div class="flex justify-between text-xs text-on-surface-variant mt-1">
+<span>8GB</span>
+<span>128GB</span>
+</div>
+</div>
+<!-- Accelerator -->
+<div>
+<label class="font-label-md text-label-md text-on-surface block mb-2">Hardware Accelerator</label>
+<select class="w-full border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary bg-surface text-on-surface">
+<option>None (CPU Only)</option>
+<option>1x NVIDIA T4</option>
+<option>1x NVIDIA V100</option>
+<option>2x NVIDIA V100</option>
+</select>
+</div>
+<div class="bg-surface-container pt-4 border-t border-outline-variant mt-8">
+<div class="flex justify-between items-center mb-1">
+<span class="text-on-surface-variant text-sm">Estimated Cost</span>
+<span class="font-bold text-on-surface">$1.24 / hr</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant text-sm">Est. Duration</span>
+<span class="font-bold text-on-surface">~45 mins</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Performance Analytics - NeuralEngine_v2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#f0f0f2",
+                        "surface-container": "#eeeef0",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#ccbdff",
+                        "on-secondary-fixed-variant": "#564500",
+                        "inverse-surface": "#2f3132",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#feda5f",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-primary-fixed": "#1f0060",
+                        "surface-container-highest": "#e2e2e4",
+                        "surface-dim": "#d9dadc",
+                        "surface-green-tint": "#d3f5d5",
+                        "tertiary": "#582200",
+                        "surface-purple-tint": "#e7ddff",
+                        "primary": "#38009d",
+                        "on-background": "#1a1c1d",
+                        "on-tertiary-fixed": "#341100",
+                        "surface-container-low": "#f3f3f5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#4d26b5",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f9f9fb",
+                        "error": "#ba1a1a",
+                        "success-green": "#80d882",
+                        "surface-variant": "#e2e2e4",
+                        "tertiary-container": "#7c3300",
+                        "secondary": "#725c00",
+                        "surface-container-high": "#e8e8ea",
+                        "secondary-fixed-dim": "#e6c44b",
+                        "on-secondary-fixed": "#231b00",
+                        "outline-variant": "#cac4d6",
+                        "primary-container": "#4f29b7",
+                        "on-tertiary": "#ffffff",
+                        "info-blue": "#4c96fe",
+                        "warning-orange": "#f4a664",
+                        "surface-tint": "#6543cd",
+                        "primary-fixed": "#e7deff",
+                        "on-secondary-container": "#755f00",
+                        "surface": "#f9f9fb",
+                        "on-surface-variant": "#484554",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "on-primary-container": "#bfadff",
+                        "background": "#f9f9fb",
+                        "error-pink": "#ff8081",
+                        "outline": "#797585",
+                        "on-tertiary-container": "#ffa170",
+                        "secondary-fixed": "#ffe07e",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#ccbdff",
+                        "on-surface": "#1a1c1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-xl": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "label-md": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Subtle ghost border for depth */
+        .ghost-border {
+            border: 1px solid rgba(56, 0, 157, 0.1); /* Primary color at 10% opacity */
+        }
+        
+        /* Ambient shadow for featured cards */
+        .ambient-shadow {
+            box-shadow: 0 10px 30px -10px rgba(79, 41, 183, 0.15); /* Primary container color shadow */
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-inverse-surface w-64 h-screen flex flex-col fixed left-0 top-0 border-r border-outline-variant dark:border-outline py-base z-50">
+<div class="px-gutter mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container text-on-primary rounded flex items-center justify-center font-bold text-xl">
+                    K
+                </div>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-inverse-primary font-bold">AutoML Forge</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">V1.0.4 - Active</p>
+</div>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary-container text-on-primary rounded py-2 px-4 font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors">
+<span class="material-symbols-outlined">add</span>
+                Create New Model
+            </button>
+</div>
+<ul class="flex-1 px-4 space-y-1 font-label-md text-label-md">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-on-surface-variant transition-colors duration-200 scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined">upload_file</span>
+                    Data Ingestion
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-on-surface-variant transition-colors duration-200 scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                    Dataset Overview
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-on-surface-variant transition-colors duration-200 scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined">model_training</span>
+                    Model Training
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-primary dark:text-primary-fixed-dim font-bold border-r-4 border-primary dark:border-primary-fixed-dim bg-surface-purple-tint dark:bg-primary-container scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined fill">insights</span>
+                    Analytics
+                </a>
+</li>
+</ul>
+<div class="px-4 mt-auto">
+<ul class="space-y-1 font-label-md text-label-md border-t border-outline-variant pt-4">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-on-surface-variant transition-colors duration-200 scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined">settings</span>
+                        Settings
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:bg-surface-container dark:hover:bg-on-surface-variant transition-colors duration-200 scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined">help</span>
+                        Support
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-background h-16 flex items-center sticky top-0 z-40 border-b border-outline-variant dark:border-outline w-full px-gutter justify-between">
+<div class="flex items-center gap-6">
+<h2 class="font-headline-md text-headline-md text-primary dark:text-inverse-primary font-bold">Project: NeuralEngine_v2</h2>
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container rounded-full border-none focus:ring-1 focus:ring-primary text-sm w-64" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<nav class="hidden md:flex items-center gap-6 font-label-md text-label-md">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-all Active: opacity-80" href="#">Models</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-all Active: opacity-80" href="#">Experiments</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-all Active: opacity-80" href="#">Deployments</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-primary hover:bg-surface-purple-tint px-4 py-1.5 rounded font-label-md text-label-md transition-colors">Export</button>
+<button class="bg-primary-container text-on-primary px-4 py-1.5 rounded font-label-md text-label-md hover:bg-on-primary-fixed-variant transition-colors">Deploy</button>
+<div class="flex items-center gap-2 border-l border-outline-variant pl-4 ml-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Canvas / Main Content -->
+<main class="flex-1 p-margin-desktop max-w-container-max mx-auto w-full space-y-section-gap">
+<!-- Page Header -->
+<div class="flex justify-between items-end">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-background mb-2">Performance Analytics</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Detailed evaluation metrics and feature analysis for the current champion model variant (v2.4.1-prod).</p>
+</div>
+<div class="flex gap-3">
+<span class="bg-surface-green-tint text-tertiary-container px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                        Status: Healthy
+                    </span>
+<span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">update</span>
+                        Last updated: 10 mins ago
+                    </span>
+</div>
+</div>
+<!-- Bento Grid: Key Metrics -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Accuracy Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 ghost-border ambient-shadow relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-success-green"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="bg-surface-green-tint p-2 rounded-lg text-success-green">
+<span class="material-symbols-outlined">target</span>
+</div>
+<span class="flex items-center text-success-green font-label-md text-label-md gap-1">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+                            +2.4%
+                        </span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-1">Overall Accuracy</h3>
+<div class="font-headline-xl text-headline-xl text-on-background">94.8%</div>
+<div class="mt-4 w-full bg-surface-variant h-2 rounded-full overflow-hidden">
+<div class="bg-success-green h-full rounded-full" style="width: 94.8%"></div>
+</div>
+</div>
+<!-- F1-Score Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 ghost-border relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-info-blue"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="bg-surface-container p-2 rounded-lg text-info-blue">
+<span class="material-symbols-outlined">balance</span>
+</div>
+<span class="flex items-center text-on-surface-variant font-label-md text-label-md gap-1">
+<span class="material-symbols-outlined text-[16px]">horizontal_rule</span>
+                            0.0%
+                        </span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-1">Macro F1-Score</h3>
+<div class="font-headline-xl text-headline-xl text-on-background">0.921</div>
+<div class="mt-4 flex gap-1">
+<div class="h-2 flex-1 bg-info-blue rounded-l-full opacity-100"></div>
+<div class="h-2 flex-1 bg-info-blue opacity-80"></div>
+<div class="h-2 flex-1 bg-info-blue opacity-60"></div>
+<div class="h-2 flex-1 bg-info-blue opacity-40"></div>
+<div class="h-2 flex-1 bg-surface-variant rounded-r-full"></div>
+</div>
+</div>
+<!-- ROC-AUC Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 ghost-border relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="bg-surface-purple-tint p-2 rounded-lg text-primary">
+<span class="material-symbols-outlined">area_chart</span>
+</div>
+<span class="flex items-center text-error font-label-md text-label-md gap-1">
+<span class="material-symbols-outlined text-[16px]">trending_down</span>
+                            -0.1%
+                        </span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-1">ROC-AUC</h3>
+<div class="font-headline-xl text-headline-xl text-on-background">0.976</div>
+<!-- Faux Sparkline -->
+<div class="mt-4 h-8 flex items-end gap-1">
+<div class="w-full bg-primary-fixed-dim rounded-t h-[40%]"></div>
+<div class="w-full bg-primary-fixed-dim rounded-t h-[50%]"></div>
+<div class="w-full bg-primary-fixed-dim rounded-t h-[45%]"></div>
+<div class="w-full bg-primary-fixed-dim rounded-t h-[60%]"></div>
+<div class="w-full bg-primary-fixed-dim rounded-t h-[75%]"></div>
+<div class="w-full bg-primary rounded-t h-[90%]"></div>
+<div class="w-full bg-primary rounded-t h-[95%]"></div>
+<div class="w-full bg-primary rounded-t h-[100%]"></div>
+</div>
+</div>
+</section>
+<!-- Complex Analysis Section -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Feature Importance -->
+<div class="bg-surface-container-lowest rounded-xl ghost-border p-6 flex flex-col h-full">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-on-background">Feature Importance (SHAP)</h3>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="flex-1 space-y-4">
+<!-- Bar 1 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-background">transaction_amount_7d_avg</span>
+<span class="text-on-surface-variant">0.245</span>
+</div>
+<div class="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<!-- Bar 2 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-background">user_account_age_days</span>
+<span class="text-on-surface-variant">0.182</span>
+</div>
+<div class="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+<div class="bg-info-blue h-full rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<!-- Bar 3 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-background">failed_login_attempts_24h</span>
+<span class="text-on-surface-variant">0.150</span>
+</div>
+<div class="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+<div class="bg-warning-orange h-full rounded-full" style="width: 45%"></div>
+</div>
+</div>
+<!-- Bar 4 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-background">ip_velocity_1h</span>
+<span class="text-on-surface-variant">0.095</span>
+</div>
+<div class="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+<div class="bg-secondary-fixed-dim h-full rounded-full" style="width: 30%"></div>
+</div>
+</div>
+<!-- Bar 5 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-background">device_fingerprint_match</span>
+<span class="text-on-surface-variant">0.052</span>
+</div>
+<div class="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+<div class="bg-outline h-full rounded-full" style="width: 15%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Confusion Matrix -->
+<div class="bg-surface-container-lowest rounded-xl ghost-border p-6 flex flex-col h-full">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-on-background">Confusion Matrix</h3>
+<div class="flex gap-2">
+<span class="bg-surface-container text-on-surface-variant px-2 py-0.5 rounded font-label-sm text-label-sm">Absolute</span>
+<span class="text-primary px-2 py-0.5 rounded font-label-sm text-label-sm cursor-pointer">Normalized</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col justify-center">
+<div class="grid grid-cols-[auto_1fr_1fr] grid-rows-[auto_1fr_1fr] gap-1 text-center">
+<!-- Corner Empty -->
+<div class="p-2"></div>
+<!-- Column Headers (Predicted) -->
+<div class="p-2 font-label-md text-label-md text-on-surface-variant border-b border-outline-variant">Pred: Negative</div>
+<div class="p-2 font-label-md text-label-md text-on-surface-variant border-b border-outline-variant">Pred: Positive</div>
+<!-- Row 1 (Actual Negative) -->
+<div class="p-2 font-label-md text-label-md text-on-surface-variant flex items-center justify-end border-r border-outline-variant pr-4">Actual: Neg</div>
+<!-- True Negative (High) -->
+<div class="bg-surface-purple-tint p-4 rounded flex flex-col justify-center items-center h-24">
+<span class="font-headline-lg text-headline-lg text-primary">8,452</span>
+<span class="font-label-sm text-label-sm text-primary-container">TN</span>
+</div>
+<!-- False Positive (Low) -->
+<div class="bg-error-container p-4 rounded flex flex-col justify-center items-center h-24">
+<span class="font-headline-lg text-headline-lg text-on-error-container">124</span>
+<span class="font-label-sm text-label-sm text-error">FP</span>
+</div>
+<!-- Row 2 (Actual Positive) -->
+<div class="p-2 font-label-md text-label-md text-on-surface-variant flex items-center justify-end border-r border-outline-variant pr-4">Actual: Pos</div>
+<!-- False Negative (Med) -->
+<div class="bg-surface-container-high p-4 rounded flex flex-col justify-center items-center h-24">
+<span class="font-headline-lg text-headline-lg text-on-surface-variant">342</span>
+<span class="font-label-sm text-label-sm text-outline">FN</span>
+</div>
+<!-- True Positive (High) -->
+<div class="bg-primary-container p-4 rounded flex flex-col justify-center items-center h-24">
+<span class="font-headline-lg text-headline-lg text-on-primary">1,082</span>
+<span class="font-label-sm text-label-sm text-primary-fixed">TP</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

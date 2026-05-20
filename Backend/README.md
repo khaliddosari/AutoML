@@ -2,6 +2,19 @@
 
 LangChain-orchestrated AutoML backend. See [../Docs/PRD.md](../Docs/PRD.md) for the full product spec and [../Docs/AGENTS.md](../Docs/AGENTS.md) for agent operating rules.
 
+---
+### For me
+Backend:
+cd "c:\Users\khali\Downloads\AutoML\Backend"
+.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --port 8000
+
+Frontend:
+cd "c:\Users\khali\Downloads\AutoML\Frontend"
+npm run dev
+
+---
+
 ## What this slice does
 
 End-to-end pipeline for a single CSV → single best model:

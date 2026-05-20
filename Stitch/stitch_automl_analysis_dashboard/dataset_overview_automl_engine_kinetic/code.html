@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dataset Overview - AutoML Forge</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#f0f0f2",
+                      "surface-container": "#eeeef0",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-fixed-dim": "#ccbdff",
+                      "on-secondary-fixed-variant": "#564500",
+                      "inverse-surface": "#2f3132",
+                      "on-error-container": "#93000a",
+                      "secondary-container": "#feda5f",
+                      "tertiary-fixed": "#ffdbcb",
+                      "on-primary-fixed": "#1f0060",
+                      "surface-container-highest": "#e2e2e4",
+                      "surface-dim": "#d9dadc",
+                      "surface-green-tint": "#d3f5d5",
+                      "tertiary": "#582200",
+                      "surface-purple-tint": "#e7ddff",
+                      "primary": "#38009d",
+                      "on-background": "#1a1c1d",
+                      "on-tertiary-fixed": "#341100",
+                      "surface-container-low": "#f3f3f5",
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed-variant": "#4d26b5",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#f9f9fb",
+                      "error": "#ba1a1a",
+                      "success-green": "#80d882",
+                      "surface-variant": "#e2e2e4",
+                      "tertiary-container": "#7c3300",
+                      "secondary": "#725c00",
+                      "surface-container-high": "#e8e8ea",
+                      "secondary-fixed-dim": "#e6c44b",
+                      "on-secondary-fixed": "#231b00",
+                      "outline-variant": "#cac4d6",
+                      "primary-container": "#4f29b7",
+                      "on-tertiary": "#ffffff",
+                      "info-blue": "#4c96fe",
+                      "warning-orange": "#f4a664",
+                      "surface-tint": "#6543cd",
+                      "primary-fixed": "#e7deff",
+                      "on-secondary-container": "#755f00",
+                      "surface": "#f9f9fb",
+                      "on-surface-variant": "#484554",
+                      "on-tertiary-fixed-variant": "#783100",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "on-primary-container": "#bfadff",
+                      "background": "#f9f9fb",
+                      "error-pink": "#ff8081",
+                      "outline": "#797585",
+                      "on-tertiary-container": "#ffa170",
+                      "secondary-fixed": "#ffe07e",
+                      "error-container": "#ffdad6",
+                      "inverse-primary": "#ccbdff",
+                      "on-surface": "#1a1c1d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin-desktop": "40px",
+                      "section-gap": "80px",
+                      "margin-mobile": "16px",
+                      "base": "8px",
+                      "gutter": "24px",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "IBM Plex Sans"
+                      ],
+                      "label-sm": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-xl": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-lg": [
+                              "IBM Plex Sans"
+                      ],
+                      "body-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-lg-mobile": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "label-md": [
+                              "IBM Plex Sans"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .ghost-border {
+            border: 1px solid rgba(56, 0, 157, 0.1);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(56, 0, 157, 0.05);
+        }
+      </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="w-64 h-full flex flex-col fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant h-screen justify-between py-base z-50">
+<div>
+<div class="px-6 py-8 flex flex-col gap-2">
+<span class="font-headline-md text-headline-md text-primary font-bold">AutoML Forge</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">V1.0.4 - Active</span>
+</div>
+<div class="px-3 flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+<span class="font-label-md text-label-md">Data Ingestion</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-purple-tint scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" data-weight="fill" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-label-md text-label-md">Dataset Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="model_training">model_training</span>
+<span class="font-label-md text-label-md">Model Training</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+</div>
+</div>
+<div class="px-3">
+<button class="w-full bg-primary-container text-on-primary py-3 rounded-lg font-label-md text-label-md mb-6 hover:bg-primary transition-colors">
+                Create New Model
+            </button>
+<div class="border-t border-outline-variant pt-4 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 w-[calc(100%-16rem)] flex flex-col">
+<!-- TopAppBar -->
+<header class="h-16 flex items-center sticky top-0 z-40 bg-surface border-b border-outline-variant px-gutter justify-between">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md text-primary font-bold">Project: NeuralEngine_v2</span>
+<!-- Search Bar (on_left configuration) -->
+<div class="relative hidden lg:block w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Search datasets..." type="text"/>
+</div>
+</div>
+<nav class="hidden md:flex gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Models</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Experiments</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Deployments</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="font-label-md text-label-md text-primary border border-outline-variant px-4 py-2 rounded hover:bg-surface-container transition-colors">Export</button>
+<button class="font-label-md text-label-md bg-primary-container text-on-primary px-4 py-2 rounded hover:bg-primary transition-colors">Deploy</button>
+<div class="flex gap-2 ml-4 border-l border-outline-variant pl-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="account_circle">account_circle</span></button>
+</div>
+</div>
+</header>
+<!-- Page Content Canvas -->
+<div class="p-margin-desktop flex-1">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-background mb-2">Dataset: customer_churn.csv</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Diagnostic overview and health metrics for predictive modeling readiness.</p>
+</div>
+<div class="flex gap-3">
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-surface-green-tint text-success-green rounded-full font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+                        Verified
+                    </span>
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-surface-purple-tint text-primary rounded-full font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm" data-icon="update">update</span>
+                        Synced 2h ago
+                    </span>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-section-gap">
+<!-- Hero Metric Card - Image Based -->
+<div class="col-span-1 lg:col-span-7 bg-surface-container-lowest rounded-xl ghost-border overflow-hidden card-shadow relative min-h-[320px] flex items-end p-6">
+<img alt="Dataset Overview Background" class="absolute inset-0 w-full h-full object-cover z-0 opacity-20" data-alt="A highly structured, modern data visualization center with glowing blue and green geometric patterns superimposed over a clean, high-tech architectural background. The scene is brightly lit, emphasizing clarity and precision in a light-mode tech environment. The mood is analytical and forward-looking, perfectly suited for an enterprise data science platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKBkLMrKjIyBG7DTDfTxRJTew-UI2WN_fpdR04bumqtKrjNOz6V0b1tZtkGfJ7gzXnLVyYXwSBcUfDntb2_aMg5YpfXqCFm-zuBZzQhW4jqP0DAg4qtL3vDj24ixQhJFiupA32KyD7dwgrOCqFcYYmlI2GLxjFpEUF8egwxKNVatRdaqpd68EzhgEhR0A8csT36GF4SnFN7gq839zbZy6yAFGfChWEmv4v_YCI1txdEISQJxN_Jz4Hu3Yz_UfWJldMdX_KoBZkUhSd"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/80 to-transparent z-10"></div>
+<div class="relative z-20 w-full">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-md text-label-md text-primary mb-1 block">Primary Target</span>
+<h2 class="font-headline-lg text-headline-lg text-on-background">Churn_Status</h2>
+</div>
+<div class="text-right">
+<span class="font-headline-xl text-headline-xl text-primary font-bold">14,293</span>
+<span class="font-body-md text-body-md text-on-surface-variant block">Total Rows Analyzed</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Metrics Column -->
+<div class="col-span-1 lg:col-span-5 flex flex-col gap-gutter">
+<!-- Data Health Card -->
+<div class="flex-1 bg-surface-green-tint/30 rounded-xl ghost-border p-6 flex flex-col justify-between card-shadow border-t-4 border-t-success-green">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-headline-md text-on-background">Data Health</h3>
+<span class="material-symbols-outlined text-success-green text-3xl" data-icon="health_and_safety">health_and_safety</span>
+</div>
+<div>
+<div class="flex items-baseline gap-2 mb-2">
+<span class="font-headline-xl text-headline-xl text-success-green">98.5%</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Completeness</span>
+</div>
+<!-- Progress Bar -->
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-success-green w-[98.5%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Features Card -->
+<div class="flex-1 bg-surface-container-lowest rounded-xl ghost-border p-6 flex flex-col justify-between card-shadow border-t-4 border-t-info-blue">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-headline-md text-on-background">Feature Space</h3>
+<span class="material-symbols-outlined text-info-blue text-3xl" data-icon="category">category</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<span class="font-headline-lg text-headline-lg text-info-blue">24</span>
+<span class="font-body-md text-body-md text-on-surface-variant block">Total Features</span>
+</div>
+<div class="flex gap-2">
+<span class="px-2 py-1 bg-surface-container text-on-surface-variant rounded font-label-sm text-label-sm">18 Num</span>
+<span class="px-2 py-1 bg-surface-container text-on-surface-variant rounded font-label-sm text-label-sm">6 Cat</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Distribution Chart Section placeholder -->
+<div class="mb-section-gap">
+<h3 class="font-headline-lg text-headline-lg text-on-background mb-6">Key Distributions</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Chart Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl ghost-border card-shadow h-64 flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface-purple-tint/40 to-transparent z-0"></div>
+<div class="relative z-10 text-center">
+<span class="material-symbols-outlined text-4xl text-primary mb-2 opacity-50" data-icon="bar_chart">bar_chart</span>
+<p class="font-label-md text-label-md text-on-surface-variant">Monthly Charges Distribution</p>
+<p class="font-label-sm text-label-sm text-primary mt-2">Interactive chart rendered here</p>
+</div>
+</div>
+<!-- Chart Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl ghost-border card-shadow h-64 flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface-green-tint/40 to-transparent z-0"></div>
+<div class="relative z-10 text-center">
+<span class="material-symbols-outlined text-4xl text-success-green mb-2 opacity-50" data-icon="pie_chart">pie_chart</span>
+<p class="font-label-md text-label-md text-on-surface-variant">Contract Type Breakdown</p>
+<p class="font-label-sm text-label-sm text-success-green mt-2">Interactive chart rendered here</p>
+</div>
+</div>
+<!-- Chart Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl ghost-border card-shadow h-64 flex items-center justify-center relative overflow-hidden">
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-100/40 to-transparent z-0"></div>
+<div class="relative z-10 text-center">
+<span class="material-symbols-outlined text-4xl text-info-blue mb-2 opacity-50" data-icon="scatter_plot">scatter_plot</span>
+<p class="font-label-md text-label-md text-on-surface-variant">Tenure vs Charges</p>
+<p class="font-label-sm text-label-sm text-info-blue mt-2">Interactive chart rendered here</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Preview Table -->
+<div class="bg-surface-container-lowest rounded-xl ghost-border card-shadow overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface">
+<h3 class="font-headline-md text-headline-md text-on-background">Data Preview (Top 5 Rows)</h3>
+<button class="font-label-md text-label-md text-primary flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm" data-icon="open_in_full">open_in_full</span>
+                        View Full Dataset
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low font-label-md text-label-md text-on-surface-variant">
+<th class="p-4 border-b border-outline-variant font-semibold">CustomerID</th>
+<th class="p-4 border-b border-outline-variant font-semibold">Tenure (Mos)</th>
+<th class="p-4 border-b border-outline-variant font-semibold">Contract</th>
+<th class="p-4 border-b border-outline-variant font-semibold">MonthlyCharges</th>
+<th class="p-4 border-b border-outline-variant font-semibold">TotalCharges</th>
+<th class="p-4 border-b border-outline-variant font-semibold text-right">Churn_Status</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-background">
+<tr class="hover:bg-surface-container-low transition-colors border-b border-outline-variant/50">
+<td class="p-4">7590-VHVEG</td>
+<td class="p-4 text-right">1</td>
+<td class="p-4"><span class="px-2 py-1 bg-surface-container text-on-surface-variant rounded text-sm">Month-to-month</span></td>
+<td class="p-4 text-right">$29.85</td>
+<td class="p-4 text-right">$29.85</td>
+<td class="p-4 text-right"><span class="text-error font-medium">Yes</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors border-b border-outline-variant/50">
+<td class="p-4">5575-GNVDE</td>
+<td class="p-4 text-right">34</td>
+<td class="p-4"><span class="px-2 py-1 bg-surface-container text-on-surface-variant rounded text-sm">One year</span></td>
+<td class="p-4 text-right">$56.95</td>
+<td class="p-4 text-right">$1889.50</td>
+<td class="p-4 text-right"><span class="text-on-surface-variant">No</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors border-b border-outline-variant/50">
+<td class="p-4">3668-QPYBK</td>
+<td class="p-4 text-right">2</td>
+<td class="p-4"><span class="px-2 py-1 bg-surface-container text-on-surface-variant rounded text-sm">Month-to-month</span></td>
+<td class="p-4 text-right">$53.85</td>
+<td class="p-4 text-right">$108.15</td>
+<td class="p-4 text-right"><span class="text-error font-medium">Yes</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors border-b border-outline-variant/50">
+<td class="p-4">7795-CFOCW</td>
+<td class="p-4 text-right">45</td>
+<td class="p-4"><span class="px-2 py-1 bg-surface-container text-on-surface-variant rounded text-sm">One year</span></td>
+<td class="p-4 text-right">$42.30</td>
+<td class="p-4 text-right">$1840.75</td>
+<td class="p-4 text-right"><span class="text-on-surface-variant">No</span></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4">9237-HQITU</td>
+<td class="p-4 text-right">2</td>
+<td class="p-4"><span class="px-2 py-1 bg-surface-container text-on-surface-variant rounded text-sm">Month-to-month</span></td>
+<td class="p-4 text-right">$70.70</td>
+<td class="p-4 text-right">$151.65</td>
+<td class="p-4 text-right"><span class="text-error font-medium">Yes</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>

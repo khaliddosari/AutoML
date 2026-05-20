@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AutoML Forge - Data Ingestion</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-on-surface": "#f0f0f2",
+                        "surface-container": "#eeeef0",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#ccbdff",
+                        "on-secondary-fixed-variant": "#564500",
+                        "inverse-surface": "#2f3132",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#feda5f",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-primary-fixed": "#1f0060",
+                        "surface-container-highest": "#e2e2e4",
+                        "surface-dim": "#d9dadc",
+                        "surface-green-tint": "#d3f5d5",
+                        "tertiary": "#582200",
+                        "surface-purple-tint": "#e7ddff",
+                        "primary": "#38009d",
+                        "on-background": "#1a1c1d",
+                        "on-tertiary-fixed": "#341100",
+                        "surface-container-low": "#f3f3f5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#4d26b5",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f9f9fb",
+                        "error": "#ba1a1a",
+                        "success-green": "#80d882",
+                        "surface-variant": "#e2e2e4",
+                        "tertiary-container": "#7c3300",
+                        "secondary": "#725c00",
+                        "surface-container-high": "#e8e8ea",
+                        "secondary-fixed-dim": "#e6c44b",
+                        "on-secondary-fixed": "#231b00",
+                        "outline-variant": "#cac4d6",
+                        "primary-container": "#4f29b7",
+                        "on-tertiary": "#ffffff",
+                        "info-blue": "#4c96fe",
+                        "warning-orange": "#f4a664",
+                        "surface-tint": "#6543cd",
+                        "primary-fixed": "#e7deff",
+                        "on-secondary-container": "#755f00",
+                        "surface": "#f9f9fb",
+                        "on-surface-variant": "#484554",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "on-primary-container": "#bfadff",
+                        "background": "#f9f9fb",
+                        "error-pink": "#ff8081",
+                        "outline": "#797585",
+                        "on-tertiary-container": "#ffa170",
+                        "secondary-fixed": "#ffe07e",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#ccbdff",
+                        "on-surface": "#1a1c1d"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "margin-desktop": "40px",
+                        "section-gap": "80px",
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "container-max": "1280px"
+                    },
+                    fontFamily: {
+                        "body-lg": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-xl": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "label-md": ["IBM Plex Sans"]
+                    },
+                    fontSize: {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for inner lists */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cac4d6;
+            border-radius: 20px;
+        }
+        /* Dropzone hover effect */
+        .dropzone-active {
+            border-color: #4f29b7;
+            background-color: #e7ddff;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- SideNavBar (Shared Component) -->
+<nav class="w-64 h-full flex flex-col fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-50">
+<div class="h-screen flex flex-col justify-between py-base">
+<!-- Header -->
+<div class="px-6 py-4">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center text-on-primary font-bold">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary font-bold">AutoML Forge</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">V1.0.4 - Active</p>
+</div>
+</div>
+<button class="w-full bg-primary-container text-on-primary font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary transition-colors duration-200 mb-6 scale-95 active:scale-100 transition-transform">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">add</span>
+                    Create New Model
+                </button>
+<!-- Navigation Tabs -->
+<ul class="flex flex-col gap-1">
+<!-- Active Tab: Data Ingestion -->
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-r-full text-primary font-bold border-r-4 border-primary bg-surface-purple-tint scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">upload_file</span>
+<span class="font-label-md text-label-md">Data Ingestion</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-r-full text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Dataset Overview</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-r-full text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined">model_training</span>
+<span class="font-label-md text-label-md">Model Training</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-r-full text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200 scale-95 active:scale-100 transition-transform" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+</li>
+</ul>
+</div>
+<!-- Footer -->
+<div class="px-6 pb-4">
+<ul class="flex flex-col gap-1 border-t border-outline-variant pt-4">
+<li>
+<a class="flex items-center gap-3 px-4 py-2 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<!-- Main Content Area Wrapper -->
+<div class="ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar (Shared Component) -->
+<header class="h-16 flex items-center sticky top-0 z-40 bg-surface border-b border-outline-variant w-full px-gutter">
+<div class="w-full flex justify-between items-center">
+<!-- Search (Left) -->
+<div class="flex-1 flex items-center">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full py-1.5 pl-10 pr-4 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search datasets..." type="text"/>
+</div>
+</div>
+<!-- Product Name / Navigation (Center-ish) -->
+<div class="flex-1 flex justify-center items-center gap-6">
+<h2 class="font-headline-md text-headline-md text-primary font-bold mr-4 hidden lg:block">Project: NeuralEngine_v2</h2>
+<nav class="hidden md:flex gap-4">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Models</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Experiments</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all" href="#">Deployments</a>
+</nav>
+</div>
+<!-- Trailing Actions (Right) -->
+<div class="flex-1 flex justify-end items-center gap-4">
+<button class="font-label-md text-label-md text-primary border border-outline-variant px-4 py-1.5 rounded hover:bg-surface-purple-tint transition-all active:opacity-80">Export</button>
+<button class="font-label-md text-label-md bg-primary text-on-primary px-4 py-1.5 rounded hover:bg-on-primary-fixed-variant transition-all active:opacity-80">Deploy</button>
+<div class="flex items-center gap-2 border-l border-outline-variant pl-4 ml-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant hover:border-primary transition-colors relative bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">account_circle</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 p-gutter max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Data Ingestion</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Upload and configure raw datasets for model training.</p>
+</div>
+<div class="flex gap-2">
+<span class="inline-flex items-center gap-1 bg-surface-container-high px-3 py-1 rounded-full font-label-sm text-label-sm text-on-surface-variant border border-outline-variant">
+<span class="material-symbols-outlined text-[16px]">storage</span>
+                        Storage: 45% used
+                    </span>
+</div>
+</div>
+<!-- Main Layout Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+<!-- Left Column: Upload & Settings (Spans 2 cols on large screens) -->
+<div class="xl:col-span-2 flex flex-col gap-6">
+<!-- Drag & Drop Zone -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Upload CSV</h3>
+<button class="text-primary hover:bg-surface-purple-tint p-1 rounded transition-colors text-sm font-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">link</span> Import via URL
+                            </button>
+</div>
+<div class="border-2 border-dashed border-outline-variant hover:border-primary bg-surface transition-colors duration-200 rounded-lg p-12 flex flex-col items-center justify-center cursor-pointer group" id="dropzone">
+<div class="w-16 h-16 rounded-full bg-surface-purple-tint flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">cloud_upload</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-2">Drag &amp; Drop files here</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 text-center max-w-md">Supported formats: CSV, TSV, JSON (up to 500MB). Files will be securely parsed and validated upon upload.</p>
+<button class="bg-surface-container-high text-on-surface font-label-md text-label-md px-6 py-2 rounded border border-outline-variant group-hover:border-primary group-hover:text-primary transition-colors">
+                                Browse Files
+                            </button>
+</div>
+</div>
+<!-- Ingestion Settings Bento Box -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">tune</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Ingestion Configuration</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Target Column -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Target Column (Prediction Goal)</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low border border-outline-variant rounded py-2 px-3 appearance-none font-body-md text-body-md text-on-surface-variant cursor-not-allowed opacity-70" disabled="">
+<option>Awaiting dataset upload...</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Select the variable the model will predict.</p>
+</div>
+<!-- Missing Value Strategy -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2">Missing Value Strategy</label>
+<div class="relative">
+<select class="w-full bg-surface border border-outline-variant rounded py-2 px-3 appearance-none font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+<option value="mean">Impute with Mean (Numeric)</option>
+<option value="median">Impute with Median (Numeric)</option>
+<option value="mode">Impute with Mode (Categorical)</option>
+<option value="drop_rows">Drop Rows</option>
+<option value="flag">Flag as Missing (Indicator Column)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Default behavior for nulls during preprocessing.</p>
+</div>
+<!-- Advanced Options Toggle -->
+<div class="md:col-span-2 pt-4 border-t border-surface-container-high flex items-center justify-between">
+<div class="flex items-center gap-2">
+<input checked="" class="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4 bg-surface" id="auto-detect" type="checkbox"/>
+<label class="font-body-md text-body-md text-on-surface" for="auto-detect">Auto-detect datatypes</label>
+</div>
+<button class="bg-primary-container text-on-primary font-label-md text-label-md px-6 py-2 rounded shadow-sm hover:bg-primary transition-colors opacity-50 cursor-not-allowed flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                                    Start Ingestion
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Recent Uploads -->
+<div class="xl:col-span-1 bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col shadow-sm max-h-[800px]">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright rounded-t-xl">
+<h3 class="font-headline-md text-headline-md text-on-surface">Recent Uploads</h3>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-2">
+<ul class="flex flex-col gap-2">
+<!-- Item 1: Success -->
+<li class="bg-surface p-4 rounded-lg border border-transparent hover:border-outline-variant transition-colors group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-green-tint flex items-center justify-center text-success-green">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface truncate w-40" title="customer_churn_Q3.csv">customer_churn_Q3.csv</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">12.4 MB • 2 hrs ago</p>
+</div>
+</div>
+<button class="text-outline opacity-0 group-hover:opacity-100 hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="inline-flex items-center gap-1 bg-surface-green-tint text-success-green px-2 py-0.5 rounded font-label-sm text-[11px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Ready
+                                    </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">15,420 rows</span>
+</div>
+</li>
+<!-- Item 2: Processing -->
+<li class="bg-surface p-4 rounded-lg border border-transparent hover:border-outline-variant transition-colors group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined animate-spin" style="font-variation-settings: 'wght' 300;">sync</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface truncate w-40" title="sensor_telemetry_raw.csv">sensor_telemetry_raw.csv</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">450.2 MB • Just now</p>
+</div>
+</div>
+<button class="text-outline opacity-0 group-hover:opacity-100 hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="inline-flex items-center gap-1 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-[11px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]">hourglass_empty</span> Profiling...
+                                    </span>
+<div class="w-24 bg-surface-container-high rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 45%"></div>
+</div>
+</div>
+</li>
+<!-- Item 3: Failed -->
+<li class="bg-surface p-4 rounded-lg border border-transparent hover:border-outline-variant transition-colors group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined">broken_image</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface truncate w-40" title="legacy_logs_2022.csv">legacy_logs_2022.csv</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">8.1 MB • Yesterday</p>
+</div>
+</div>
+<button class="text-outline opacity-0 group-hover:opacity-100 hover:text-error transition-all">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="inline-flex items-center gap-1 bg-error-container text-error px-2 py-0.5 rounded font-label-sm text-[11px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]">error</span> Parsing Error
+                                    </span>
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="#">View Log</a>
+</div>
+</li>
+<!-- Item 4: Success older -->
+<li class="bg-surface p-4 rounded-lg border border-transparent hover:border-outline-variant transition-colors group flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-green-tint flex items-center justify-center text-success-green">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface truncate w-40" title="product_catalog_v2.csv">product_catalog_v2.csv</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">2.3 MB • Oct 24</p>
+</div>
+</div>
+<button class="text-outline opacity-0 group-hover:opacity-100 hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="inline-flex items-center gap-1 bg-surface-green-tint text-success-green px-2 py-0.5 rounded font-label-sm text-[11px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Ready
+                                    </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">850 rows</span>
+</div>
+</li>
+</ul>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface-bright rounded-b-xl text-center">
+<a class="font-label-md text-label-md text-primary hover:text-on-primary-fixed-variant transition-colors" href="#">View All Datasets</a>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+        // Simple drag and drop visual feedback script
+        const dropzone = document.getElementById('dropzone');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropzone.classList.add('border-primary', 'bg-surface-purple-tint');
+            dropzone.classList.remove('border-outline-variant', 'bg-surface');
+        }
+
+        function unhighlight(e) {
+            dropzone.classList.remove('border-primary', 'bg-surface-purple-tint');
+            dropzone.classList.add('border-outline-variant', 'bg-surface');
+        }
+    </script>
+</body></html>

@@ -3,301 +3,181 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, RotateCcw, AlertTriangle, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { getResult, plotUrl, type RunResult, type FeatureImportance, type ModelScore } from "@/lib/api";
 
-/* ─── Chart: horizontal bar ─────────────────────────────────────────────── */
+/* ─── Metric card ── */
 
-function HBar({
-  label,
+function MetricCard({
+  title,
   value,
-  max,
-  highlight,
-  suffix = "%",
-  delay = 0,
+  unit,
+  accent,
+  icon,
+  trend,
+  trendVal,
+  children,
 }: {
-  label: string;
-  value: number;
-  max: number;
-  highlight?: boolean;
-  suffix?: string;
-  delay?: number;
+  title: string;
+  value: string;
+  unit?: string;
+  accent: "green" | "blue" | "purple";
+  icon: string;
+  trend?: "up" | "down" | "flat";
+  trendVal?: string;
+  children?: React.ReactNode;
 }) {
-  const pct = max > 0 ? (value / max) * 100 : 0;
-  return (
-    <div className="flex items-center gap-3 group">
-      <span
-        className={cn(
-          "text-xs w-32 truncate text-right shrink-0 font-mono",
-          highlight ? "text-brand-primary font-semibold" : "text-slate-500"
-        )}
-        title={label}
-      >
-        {label}
-      </span>
-      <div className="flex-1 bg-surface-elevated rounded-full h-2 overflow-hidden">
-        <motion.div
-          className={cn("h-full rounded-full", highlight ? "bg-brand-primary" : "bg-slate-300")}
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.7, delay, ease: "easeOut" }}
-        />
-      </div>
-      <span
-        className={cn(
-          "text-xs w-14 shrink-0 font-mono tabular-nums",
-          highlight ? "text-brand-primary font-semibold" : "text-slate-400"
-        )}
-      >
-        {(value * (suffix === "%" ? 100 : 1)).toFixed(1)}{suffix}
-      </span>
-    </div>
-  );
-}
-
-/* ─── Chart 1: Score card ───────────────────────────────────────────────── */
-
-function ScoreChart({
-  score,
-  metric,
-  trainScore,
-  overfitGap,
-  problemType,
-}: {
-  score: number;
-  metric: string;
-  trainScore?: number;
-  overfitGap?: number;
-  problemType?: string;
-}) {
-  const pct = Math.max(0, Math.min(100, score * 100));
-  const scoreColor =
-    pct >= 85 ? "text-emerald-600" : pct >= 65 ? "text-amber-600" : "text-red-500";
-  const isRegression = metric === "r2";
-  const isOverfit = (overfitGap ?? 0) > 0.12;
-
-  const plainExplanation = isRegression
-    ? pct >= 85
-      ? `An R² of ${pct.toFixed(0)}% means the model explains ${pct.toFixed(0)}% of the variation in ${problemType === "regression" ? "the target value" : "your data"}. That's a strong fit.`
-      : pct >= 60
-      ? `An R² of ${pct.toFixed(0)}% means the model captures most of the pattern in the data, but there's still room to improve.`
-      : `An R² of ${pct.toFixed(0)}% is below average. The model is struggling to capture the pattern — the data may need more informative features.`
-    : pct >= 85
-    ? `The model correctly predicted ${pct.toFixed(0)} out of every 100 examples it hadn't seen before. That's a strong result.`
-    : pct >= 65
-    ? `The model correctly predicted ${pct.toFixed(0)} out of every 100 new examples. Decent, but there's room to improve.`
-    : `The model correctly predicted ${pct.toFixed(0)} out of every 100 new examples. This is below average — consider adding more data or better features.`;
+  const accentMap = {
+    green: { bar: "bg-success-green", iconBg: "bg-surface-green-tint", iconColor: "text-success-green", trendColor: "text-success-green" },
+    blue: { bar: "bg-info-blue", iconBg: "bg-surface-container", iconColor: "text-info-blue", trendColor: "text-info-blue" },
+    purple: { bar: "bg-primary", iconBg: "bg-surface-purple-tint", iconColor: "text-primary", trendColor: "text-primary" },
+  };
+  const a = accentMap[accent];
 
   return (
-    <div className="card p-6 flex flex-col gap-5">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            How Accurate Is It?
-          </p>
-          <div className="flex items-end gap-2">
-            <span className={cn("text-5xl font-bold tabular-nums leading-none", scoreColor)}>
-              {pct.toFixed(1)}
+    <div className="bg-surface-container-lowest rounded-xl p-6 ghost-border ambient-shadow relative overflow-hidden">
+      <div className={`absolute top-0 left-0 w-full h-1 ${a.bar}`} />
+      <div className="flex justify-between items-start mb-4">
+        <div className={`${a.iconBg} p-2 rounded-lg ${a.iconColor}`}>
+          <span className="material-symbols-outlined">{icon}</span>
+        </div>
+        {trend && trendVal && (
+          <span className={`flex items-center text-label-md gap-1 ${trend === "down" ? "text-error" : trend === "up" ? a.trendColor : "text-on-surface-variant"}`}>
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+              {trend === "up" ? "trending_up" : trend === "down" ? "trending_down" : "horizontal_rule"}
             </span>
-            <span className="text-xl text-slate-400 mb-0.5">%</span>
-          </div>
-          <p className="text-xs text-slate-400 mt-1">
-            {isRegression ? "R² on held-out test set" : "Accuracy on held-out test set"}
-          </p>
-        </div>
-
-        {/* Train vs test */}
-        {trainScore !== undefined && (
-          <div className="text-right shrink-0">
-            <p className="text-xs text-slate-400 mb-1">Train</p>
-            <p className="text-sm font-semibold font-mono text-slate-600">
-              {(trainScore * 100).toFixed(1)}%
-            </p>
-          </div>
+            {trendVal}
+          </span>
         )}
       </div>
-
-      {/* Score bar */}
-      <div>
-        <div className="w-full bg-surface-elevated rounded-full h-3 overflow-hidden">
-          <motion.div
-            className={cn(
-              "h-full rounded-full",
-              pct >= 85 ? "bg-emerald-400" : pct >= 65 ? "bg-amber-400" : "bg-red-400"
-            )}
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
-          />
-        </div>
-        <div className="flex justify-between text-[10px] text-slate-300 mt-1 font-mono">
-          <span>0%</span><span>50%</span><span>100%</span>
-        </div>
+      <h3 className="text-label-md text-on-surface-variant mb-1">{title}</h3>
+      <div className="text-headline-xl text-on-background">
+        {value}
+        {unit && <span className="text-body-lg text-on-surface-variant ml-1">{unit}</span>}
       </div>
-
-      {/* Overfit warning */}
-      {isOverfit && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-          <AlertTriangle size={13} className="text-amber-500 mt-0.5 shrink-0" />
-          <p className="text-xs text-amber-700 leading-relaxed">
-            <span className="font-semibold">Possible overfitting:</span> The model scored{" "}
-            {((overfitGap ?? 0) * 100).toFixed(1)}% higher on training data than on new data.
-            This means it may have memorised the training examples rather than learned the underlying pattern.
-          </p>
-        </div>
-      )}
-
-      <p className="text-xs text-slate-500 leading-relaxed border-t border-surface-border pt-4">
-        {plainExplanation}
-      </p>
+      {children}
     </div>
   );
 }
 
-/* ─── Chart 2: Feature importance ──────────────────────────────────────── */
+/* ─── Feature importance ── */
 
-function FeatureImportanceChart({ features }: { features: FeatureImportance[] }) {
-  const max = Math.max(...features.map((f) => f.importance));
-  const top = features.slice(0, 8);
+function FeatureImportanceCard({ features }: { features: FeatureImportance[] }) {
+  const top = features.slice(0, 5);
+  const max = Math.max(...top.map((f) => f.importance));
+  const COLORS = ["bg-primary", "bg-info-blue", "bg-warning-orange", "bg-secondary-fixed-dim", "bg-outline"];
 
   return (
-    <div className="card p-6 flex flex-col gap-5">
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-          What Mattered Most?
-        </p>
-        <p className="text-sm font-semibold text-slate-800">Feature Importance</p>
+    <div className="bg-surface-container-lowest rounded-xl ghost-border p-6 flex flex-col h-full">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-headline-md text-on-background">Feature Importance (SHAP)</h3>
+        <button className="text-on-surface-variant hover:text-primary transition-colors">
+          <span className="material-symbols-outlined">more_vert</span>
+        </button>
       </div>
-
-      <div className="space-y-2.5">
-        {top.map((f, i) => (
-          <HBar
-            key={f.feature}
-            label={f.feature}
-            value={f.importance}
-            max={max}
-            highlight={i === 0}
-            suffix="%"
-            delay={i * 0.06}
-          />
-        ))}
-      </div>
-
-      <div className="flex items-start gap-2 bg-brand-light/60 border border-brand-border/50 rounded-xl px-3 py-2.5">
-        <Info size={12} className="text-brand-primary mt-0.5 shrink-0" />
-        <p className="text-xs text-slate-600 leading-relaxed">
-          These are the columns from your data that had the biggest influence on predictions.
-          The longer the bar, the more the model relied on that feature to make its decisions.
-          Short bars mean the model mostly ignored that column.
-        </p>
+      <div className="flex-1 space-y-4">
+        {top.map((f, i) => {
+          const pct = max > 0 ? (f.importance / max) * 100 : 0;
+          return (
+            <div key={f.feature}>
+              <div className="flex justify-between text-label-md mb-1">
+                <span className="text-on-background truncate mr-2">{f.feature}</span>
+                <span className="text-on-surface-variant shrink-0">{f.importance.toFixed(3)}</span>
+              </div>
+              <div className="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+                <motion.div
+                  className={`${COLORS[i]} h-full rounded-full`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.65, delay: i * 0.06, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-/* ─── Chart 3: Model comparison ─────────────────────────────────────────── */
+/* ─── Model comparison ── */
 
-function ModelComparisonChart({
-  models,
-  winner,
-  metric,
-}: {
-  models: ModelScore[];
-  winner: string;
-  metric: string;
-}) {
-  const isClassification = metric !== "r2";
+function ModelComparisonCard({ models, winner }: { models: ModelScore[]; winner: string }) {
   const sorted = [...models].sort((a, b) => b.cv_mean - a.cv_mean);
   const max = Math.max(...sorted.map((m) => m.cv_mean));
 
   return (
-    <div className="card p-6 flex flex-col gap-5">
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-          How Did All 5 Models Do?
-        </p>
-        <p className="text-sm font-semibold text-slate-800">Model Comparison</p>
+    <div className="bg-surface-container-lowest rounded-xl ghost-border p-6 flex flex-col h-full">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-headline-md text-on-background">Model Comparison (5-fold CV)</h3>
+        <span className="text-label-sm text-on-surface-variant">All models ranked</span>
       </div>
-
-      <div className="space-y-2.5">
-        {sorted.map((m, i) => (
-          <HBar
-            key={m.name}
-            label={m.name}
-            value={m.cv_mean}
-            max={max}
-            highlight={m.name === winner}
-            suffix="%"
-            delay={i * 0.07}
-          />
-        ))}
-      </div>
-
-      <div className="flex items-start gap-2 bg-brand-light/60 border border-brand-border/50 rounded-xl px-3 py-2.5">
-        <Info size={12} className="text-brand-primary mt-0.5 shrink-0" />
-        <p className="text-xs text-slate-600 leading-relaxed">
-          We tested 5 different algorithms on your data. Each bar shows its average
-          {isClassification ? " accuracy" : " R² score"} across 5 rounds of cross-validation —
-          which is a more reliable measure than a single test run. The{" "}
-          <span className="text-brand-primary font-semibold">{winner}</span> model was selected
-          as the winner because it scored highest by this measure.
-        </p>
+      <div className="flex-1 space-y-4">
+        {sorted.map((m, i) => {
+          const pct = max > 0 ? (m.cv_mean / max) * 100 : 0;
+          const isWinner = m.name === winner;
+          return (
+            <div key={m.name}>
+              <div className="flex justify-between text-label-md mb-1">
+                <span className={`truncate mr-2 ${isWinner ? "text-primary font-bold" : "text-on-background"}`}>
+                  {m.name}
+                  {isWinner && (
+                    <span className="ml-1.5 text-[10px] bg-primary text-on-primary px-1.5 py-0.5 rounded-full uppercase tracking-wider">winner</span>
+                  )}
+                </span>
+                <span className="text-on-surface-variant shrink-0">{(m.cv_mean * 100).toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+                <motion.div
+                  className={isWinner ? "bg-primary h-full rounded-full" : "bg-outline h-full rounded-full"}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 0.65, delay: i * 0.05, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-/* ─── Chart 4: Result plot ──────────────────────────────────────────────── */
+/* ─── Result plot ── */
 
-function ResultPlot({
-  runId,
-  problemType,
-}: {
-  runId: string;
-  problemType?: string;
-}) {
+function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: string }) {
   const [loaded, setLoaded] = useState(false);
   const isClassification = problemType === "classification";
 
   return (
-    <div className="card p-6 flex flex-col gap-5">
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-          Prediction Results
-        </p>
-        <p className="text-sm font-semibold text-slate-800">
+    <div className="bg-surface-container-lowest rounded-xl ghost-border p-6 flex flex-col h-full">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-headline-md text-on-background">
           {isClassification ? "Confusion Matrix" : "Predicted vs Actual"}
-        </p>
+        </h3>
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-surface-container text-on-surface-variant rounded text-label-sm capitalize">
+          {problemType ?? "classification"}
+        </span>
       </div>
-
-      <div className="relative rounded-xl overflow-hidden bg-surface-elevated min-h-56 border border-surface-border">
+      <div className="flex-1 relative rounded-lg overflow-hidden bg-surface-container min-h-[200px]">
         {!loaded && <div className="absolute inset-0 shimmer" />}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={plotUrl(runId)}
           alt="Model result plot"
-          className={cn(
-            "w-full h-auto transition-opacity duration-500",
-            loaded ? "opacity-100" : "opacity-0"
-          )}
+          className={`w-full h-full object-contain transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
           onLoad={() => setLoaded(true)}
         />
       </div>
-
-      <div className="flex items-start gap-2 bg-brand-light/60 border border-brand-border/50 rounded-xl px-3 py-2.5">
-        <Info size={12} className="text-brand-primary mt-0.5 shrink-0" />
-        <p className="text-xs text-slate-600 leading-relaxed">
-          {isClassification
-            ? "Each cell shows how often the model predicted a given category. The diagonal from top-left to bottom-right represents correct predictions — the brighter those cells, the better. Off-diagonal cells are mistakes."
-            : "Each dot is one data point from the test set. The diagonal line is 'perfect prediction'. The closer the dots are to that line, the better the model. Dots far from the line are where the model struggled."}
-        </p>
-      </div>
+      <p className="text-label-sm text-on-surface-variant mt-3">
+        {isClassification
+          ? "Diagonal = correct predictions. Brighter diagonal → better model."
+          : "Dots close to the diagonal line = accurate predictions."}
+      </p>
     </div>
   );
 }
 
-/* ─── Main result page ──────────────────────────────────────────────────── */
+/* ─── Result page ── */
 
 export default function ResultPage() {
   const { runId } = useParams<{ runId: string }>();
@@ -312,7 +192,10 @@ export default function ResultPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-brand-primary" />
+        <div className="flex flex-col items-center gap-3">
+          <span className="material-symbols-outlined text-primary animate-spin" style={{ fontSize: "32px" }}>sync</span>
+          <p className="text-label-md text-on-surface-variant">Loading results…</p>
+        </div>
       </div>
     );
   }
@@ -320,10 +203,11 @@ export default function ResultPage() {
   if (!result || result.status === "failed") {
     return (
       <div className="flex-1 flex items-center justify-center flex-col gap-4">
-        <p className="text-red-500 text-sm">{result?.error ?? "No result found."}</p>
+        <span className="material-symbols-outlined text-error" style={{ fontSize: "48px" }}>error_outline</span>
+        <p className="text-body-md text-on-surface-variant">{result?.error ?? "No result found."}</p>
         <button
           onClick={() => router.push("/")}
-          className="text-sm text-brand-primary hover:underline cursor-pointer"
+          className="text-label-md text-primary border border-outline-variant px-4 py-2 rounded hover:bg-surface-purple-tint transition-colors"
         >
           ← Start over
         </button>
@@ -332,101 +216,165 @@ export default function ResultPage() {
   }
 
   const extra = result.extra ?? {};
-  const features = extra.top_features ?? [];
-  const models = extra.all_models ?? [];
-  const trainScore = extra.train_accuracy ?? extra.train_r2;
-  const overfitGap = extra.overfit_gap;
+  const features: FeatureImportance[] = extra.top_features ?? [];
+  const models: ModelScore[] = extra.all_models ?? [];
+  const trainScore: number | undefined = extra.train_accuracy ?? extra.train_r2;
+  const overfitGap: number | undefined = extra.overfit_gap;
   const modelName = result.model_name ?? "Best Model";
   const score = result.accuracy_score ?? 0;
   const metric = result.score_metric ?? "score";
+  const pct = Math.max(0, Math.min(100, score * 100));
+  const isRegression = metric === "r2";
 
   return (
-    <div className="flex-1 bg-surface px-6 py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-
-        {/* Header */}
+    <div className="flex-1 overflow-y-auto p-gutter">
+      <div className="max-w-[1280px] mx-auto w-full space-y-8">
+        {/* Page Header */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-start justify-between gap-4"
+          className="flex justify-between items-end gap-4"
         >
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-              Your model is ready
-            </p>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Winner:{" "}
-              <span className="text-brand-primary bg-brand-light px-2 py-0.5 rounded-lg border border-brand-border">
-                {modelName}
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400 mt-1.5 font-mono">
-              run {runId}
+            <h1 className="text-headline-xl text-on-background mb-2">Performance Analytics</h1>
+            <p className="text-body-lg text-on-surface-variant max-w-2xl">
+              Detailed evaluation metrics for{" "}
+              <span className="text-primary font-semibold">{modelName}</span>
               {result.target && (
-                <> · predicting <span className="text-brand-primary">{result.target}</span></>
+                <> · predicting <span className="text-primary">{result.target}</span></>
               )}
               {result.problem_type && (
                 <> · <span className="capitalize">{result.problem_type}</span></>
               )}
             </p>
+            {result.justification && (
+              <p className="text-label-sm text-on-surface-variant mt-2 max-w-2xl line-clamp-2">
+                <span className="font-semibold text-primary mr-1">Why this model:</span>
+                {result.justification}
+              </p>
+            )}
           </div>
-          <button
-            onClick={() => router.push("/")}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer shrink-0 card px-3 py-2"
-          >
-            <RotateCcw size={12} />
-            New dataset
-          </button>
+          <div className="flex gap-3 shrink-0">
+            <span className="bg-surface-green-tint text-success-green px-3 py-1 rounded-full text-label-sm flex items-center gap-1">
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>check_circle</span>
+              Status: Ready
+            </span>
+            <button
+              onClick={() => router.push("/")}
+              className="text-label-md text-on-surface-variant border border-outline-variant px-4 py-2 rounded hover:bg-surface-container transition-colors flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>refresh</span>
+              New dataset
+            </button>
+          </div>
         </motion.div>
 
-        {/* Justification banner */}
-        {result.justification && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="card px-5 py-4 border-l-4 border-brand-primary"
-          >
-            <p className="text-xs font-semibold text-brand-primary uppercase tracking-wider mb-2">
-              Why this model?
-            </p>
-            <p className="text-sm text-slate-700 leading-relaxed">{result.justification}</p>
-          </motion.div>
-        )}
-
-        {/* Charts 2×2 grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
+        {/* Key Metrics Bento */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-5"
+          transition={{ delay: 0.05 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          {/* Chart 1 */}
-          <ScoreChart
-            score={score}
-            metric={metric}
-            trainScore={trainScore}
-            overfitGap={overfitGap}
-            problemType={result.problem_type}
-          />
+          {/* Accuracy */}
+          <MetricCard
+            title={isRegression ? "R² Score" : "Overall Accuracy"}
+            value={pct.toFixed(1)}
+            unit="%"
+            accent="green"
+            icon="target"
+            trend={pct >= 85 ? "up" : pct >= 65 ? "flat" : "down"}
+            trendVal={pct >= 85 ? "Excellent" : pct >= 65 ? "Good" : "Low"}
+          >
+            <div className="mt-4 w-full bg-surface-variant h-2 rounded-full overflow-hidden">
+              <motion.div
+                className="bg-success-green h-full rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.9, ease: "easeOut" }}
+              />
+            </div>
+            {trainScore !== undefined && (
+              <div className="mt-2 flex justify-between text-label-sm text-on-surface-variant">
+                <span>Train: {(trainScore * 100).toFixed(1)}%</span>
+                {overfitGap !== undefined && overfitGap > 0.12 && (
+                  <span className="text-warning-orange flex items-center gap-1">
+                    <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>warning</span>
+                    Overfit gap: {(overfitGap * 100).toFixed(1)}%
+                  </span>
+                )}
+              </div>
+            )}
+          </MetricCard>
 
-          {/* Chart 2 */}
-          {features.length > 0 && (
-            <FeatureImportanceChart features={features} />
+          {/* Model score as F1 proxy */}
+          <MetricCard
+            title="CV Mean Score"
+            value={score.toFixed(3)}
+            accent="blue"
+            icon="balance"
+            trend="flat"
+            trendVal="0.0%"
+          >
+            <div className="mt-4 flex gap-1">
+              {[100, 80, 60, 40, 20].map((op, i) => (
+                <div
+                  key={i}
+                  className="h-2 flex-1 bg-info-blue rounded-full"
+                  style={{ opacity: op / 100 }}
+                />
+              ))}
+            </div>
+          </MetricCard>
+
+          {/* Model name card */}
+          <MetricCard
+            title="Winning Model"
+            value={modelName.length > 16 ? modelName.slice(0, 14) + "…" : modelName}
+            accent="purple"
+            icon="emoji_events"
+          >
+            <div className="mt-4 h-8 flex items-end gap-1">
+              {[40, 50, 45, 60, 75, 90, 95, 100].map((h, i) => (
+                <div
+                  key={i}
+                  className={`w-full rounded-t ${i >= 5 ? "bg-primary" : "bg-primary-fixed-dim"}`}
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
+          </MetricCard>
+        </motion.section>
+
+        {/* Analysis Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        >
+          {features.length > 0 ? (
+            <FeatureImportanceCard features={features} />
+          ) : (
+            <div className="bg-surface-container-lowest rounded-xl ghost-border p-6 flex flex-col items-center justify-center min-h-[280px]">
+              <span className="material-symbols-outlined text-outline opacity-40" style={{ fontSize: "48px" }}>bar_chart</span>
+              <p className="text-label-md text-on-surface-variant mt-3">Feature importance not available</p>
+            </div>
           )}
 
-          {/* Chart 3 */}
-          {models.length > 0 && (
-            <ModelComparisonChart
-              models={models}
-              winner={modelName}
-              metric={metric}
-            />
-          )}
+          <ResultPlotCard runId={runId} problemType={result.problem_type} />
+        </motion.section>
 
-          {/* Chart 4 */}
-          <ResultPlot runId={runId} problemType={result.problem_type} />
-        </motion.div>
+        {/* Model Comparison */}
+        {models.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+          >
+            <ModelComparisonCard models={models} winner={modelName} />
+          </motion.section>
+        )}
       </div>
     </div>
   );
