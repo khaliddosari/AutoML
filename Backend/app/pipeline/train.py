@@ -1,7 +1,9 @@
 import joblib
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 from sklearn.base import clone
+from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     accuracy_score,
@@ -12,7 +14,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -24,6 +26,8 @@ from app import storage
 from app.pipeline.models.classifiers import CLASSIFIERS
 from app.pipeline.models.regressors import REGRESSORS
 
+ONE_HOT_MAX_CARDINALITY = 10
+
 RANDOM_STATE = 42
 
 
@@ -34,17 +38,60 @@ def _inner_estimator(model):
     return model
 
 
-def _wrap_with_imputer(template):
-    """Prepend a median imputer so imputation re-fits per CV fold (no leakage).
+def _build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
+    """Build a ColumnTransformer that imputes and encodes per column type.
 
-    If `template` is already a Pipeline (LogReg/KNN have an inner scaler), the
-    imputer is inserted as the first step so we end up with a single flat
-    Pipeline rather than nested ones.
+    Numeric → median imputation. Low-cardinality categoricals → most-frequent
+    imputation + one-hot. High-cardinality categoricals → most-frequent
+    imputation + ordinal encoding. Unknown categories at inference time map
+    to -1 (ordinal) or all-zero (one-hot), so the deployed endpoint won't
+    crash on previously-unseen values.
     """
-    imputer_step = ("imputer", SimpleImputer(strategy="median"))
+    numeric_cols: list[str] = []
+    one_hot_cols: list[str] = []
+    ordinal_cols: list[str] = []
+
+    for c in X.columns:
+        if is_numeric_dtype(X[c]):
+            numeric_cols.append(c)
+        elif X[c].nunique(dropna=True) <= ONE_HOT_MAX_CARDINALITY:
+            one_hot_cols.append(c)
+        else:
+            ordinal_cols.append(c)
+
+    transformers: list = []
+    if numeric_cols:
+        transformers.append(("num", SimpleImputer(strategy="median"), numeric_cols))
+    if one_hot_cols:
+        transformers.append((
+            "cat_low",
+            Pipeline([
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False, drop="if_binary")),
+            ]),
+            one_hot_cols,
+        ))
+    if ordinal_cols:
+        transformers.append((
+            "cat_high",
+            Pipeline([
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                ("encoder", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
+            ]),
+            ordinal_cols,
+        ))
+
+    return ColumnTransformer(transformers, remainder="drop")
+
+
+def _wrap_with_preprocessor(X: pd.DataFrame, template):
+    """Prepend a ColumnTransformer so imputation+encoding re-fit per CV fold."""
+    preprocessor = _build_preprocessor(X)
     if isinstance(template, Pipeline):
-        return Pipeline([imputer_step] + list(template.steps))
-    return Pipeline([imputer_step, ("model", template)])
+        # Existing pipelines (LogReg/KNN) include an inner scaler+model; insert
+        # the preprocessor first and keep the rest as a flat pipeline.
+        return Pipeline([("preprocessor", preprocessor)] + list(template.steps))
+    return Pipeline([("preprocessor", preprocessor), ("model", template)])
 
 
 def save_model_bundle(
@@ -72,7 +119,13 @@ def save_model_bundle(
 
 
 def _feature_importances(model, columns: list[str]) -> list[dict]:
-    """Extract top-10 feature importances from tree or linear models."""
+    """Extract top-10 feature importances from tree or linear models.
+
+    Maps onto the *post-encoding* column names (one-hot expansion), pulled
+    from the fitted preprocessor when available — so each dummy column shows
+    up with its own importance instead of being silently aliased to the raw
+    column name.
+    """
     est = _inner_estimator(model)
     if hasattr(est, "feature_importances_"):
         imps = np.array(est.feature_importances_)
@@ -81,7 +134,17 @@ def _feature_importances(model, columns: list[str]) -> list[dict]:
         imps = np.abs(coef[0] if coef.ndim > 1 else coef)
     else:
         return []
-    pairs = sorted(zip(columns, imps.tolist()), key=lambda kv: kv[1], reverse=True)[:10]
+
+    expanded_cols: list[str] = list(columns)
+    if isinstance(model, Pipeline):
+        try:
+            expanded_cols = list(model[:-1].get_feature_names_out())
+        except Exception:
+            pass
+    if len(expanded_cols) != len(imps):
+        expanded_cols = [f"feature_{i}" for i in range(len(imps))]
+
+    pairs = sorted(zip(expanded_cols, imps.tolist()), key=lambda kv: kv[1], reverse=True)[:10]
     return [{"feature": f, "importance": round(float(i), 4)} for f, i in pairs]
 
 
@@ -118,7 +181,7 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         best_name, best_model, best_cv_mean = None, None, -1.0
 
         for name, template in CLASSIFIERS:
-            pipe = _wrap_with_imputer(clone(template))
+            pipe = _wrap_with_preprocessor(X_train, clone(template))
             cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
             fitted = clone(pipe)
             fitted.fit(X_train, y_train)
@@ -169,7 +232,7 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         best_name, best_model, best_cv_mean = None, None, float("-inf")
 
         for name, template in REGRESSORS:
-            pipe = _wrap_with_imputer(clone(template))
+            pipe = _wrap_with_preprocessor(X_train, clone(template))
             cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
             fitted = clone(pipe)
             fitted.fit(X_train, y_train)
@@ -339,7 +402,7 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
         min_class_count = int(np.bincount(y_train.astype(int)).min())
         n_splits = max(2, min(5, min_class_count))
 
-        model = _wrap_with_imputer(get_classifier(model_name, params))
+        model = _wrap_with_preprocessor(X_train, get_classifier(model_name, params))
         cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
         model.fit(X_train, y_train)
         test_acc = float(accuracy_score(y_test, model.predict(X_test)))
@@ -367,7 +430,7 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
 
         n_splits = max(2, min(5, len(X_train) // 10))
 
-        model = _wrap_with_imputer(get_regressor(model_name, params))
+        model = _wrap_with_preprocessor(X_train, get_regressor(model_name, params))
         cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
         model.fit(X_train, y_train)
         test_r2 = float(r2_score(y_test, model.predict(X_test)))
