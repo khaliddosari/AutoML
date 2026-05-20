@@ -36,8 +36,9 @@ class Predictor:
     def load(self):
         import joblib
         bundle = joblib.load("/model/model.joblib")
+        # `model` is a Pipeline(imputer -> ... -> estimator); imputation happens
+        # inside .predict() so we no longer need a separate imputer object.
         self.model = bundle["model"]
-        self.imputer = bundle["imputer"]
         self.feature_cols = bundle["feature_cols"]
         self.problem_type = bundle["problem_type"]
         self.model_name = bundle.get("model_name", "model")
@@ -71,8 +72,7 @@ class Predictor:
             }}
 
         try:
-            X = pd.DataFrame(self.imputer.transform(df), columns=self.feature_cols)
-            preds = self.model.predict(X)
+            preds = self.model.predict(df)
             preds_list = preds.tolist() if hasattr(preds, "tolist") else list(preds)
             result = {{"predictions": preds_list, "model": self.model_name}}
 
@@ -83,7 +83,7 @@ class Predictor:
                         for p in preds_list
                     ]
                 if hasattr(self.model, "predict_proba"):
-                    probs = self.model.predict_proba(X)
+                    probs = self.model.predict_proba(df)
                     result["probabilities"] = probs.tolist()
                     if self.class_labels:
                         result["class_labels"] = list(self.class_labels)

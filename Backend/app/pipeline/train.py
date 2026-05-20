@@ -28,25 +28,41 @@ RANDOM_STATE = 42
 
 
 def _inner_estimator(model):
-    """Return the final estimator whether the model is a Pipeline or a plain estimator."""
-    if isinstance(model, Pipeline):
-        return model.steps[-1][1]
+    """Walk past any Pipeline wrapping and return the underlying estimator."""
+    while isinstance(model, Pipeline):
+        model = model.steps[-1][1]
     return model
+
+
+def _wrap_with_imputer(template):
+    """Prepend a median imputer so imputation re-fits per CV fold (no leakage).
+
+    If `template` is already a Pipeline (LogReg/KNN have an inner scaler), the
+    imputer is inserted as the first step so we end up with a single flat
+    Pipeline rather than nested ones.
+    """
+    imputer_step = ("imputer", SimpleImputer(strategy="median"))
+    if isinstance(template, Pipeline):
+        return Pipeline([imputer_step] + list(template.steps))
+    return Pipeline([imputer_step, ("model", template)])
 
 
 def save_model_bundle(
     run_id: str,
     model,
-    imputer: SimpleImputer,
     feature_cols: list[str],
     problem_type: str,
     model_name: str,
     class_labels: list | None,
 ) -> None:
-    """Pickle the fitted model + preprocessing so it can be served from Modal."""
+    """Pickle the fitted Pipeline (imputer + model) so Modal can serve it.
+
+    The bundle stores a single sklearn Pipeline that handles imputation and
+    prediction in one step — Modal's serve.py just calls `model.predict(df)`
+    on raw input.
+    """
     bundle = {
         "model": model,
-        "imputer": imputer,
         "feature_cols": feature_cols,
         "problem_type": problem_type,
         "model_name": model_name,
@@ -88,9 +104,8 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
             X, y, test_size=0.2, random_state=RANDOM_STATE,
             stratify=y if len(np.unique(y)) > 1 else None,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
+        # NOTE: no upfront imputation — each candidate is a Pipeline that imputes
+        # internally, so CV folds and final fit/predict all impute on train rows only.
 
         # CV fold count bounded by smallest class size to avoid stratification errors.
         min_class_count = int(np.bincount(y_train.astype(int)).min())
@@ -103,10 +118,11 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         best_name, best_model, best_cv_mean = None, None, -1.0
 
         for name, template in CLASSIFIERS:
-            fitted = clone(template)
+            pipe = _wrap_with_imputer(clone(template))
+            cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
+            fitted = clone(pipe)
             fitted.fit(X_train, y_train)
             test_acc = float(accuracy_score(y_test, fitted.predict(X_test)))
-            cv = cross_val_score(clone(fitted), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
             all_scores.append({
                 "name": name,
                 "test_accuracy": round(test_acc, 4),
@@ -144,9 +160,7 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
+        # NOTE: no upfront imputation — see classification branch above.
 
         # Cap CV folds by training set size to avoid degenerate folds on tiny datasets.
         n_splits = max(2, min(5, len(X_train) // 10))
@@ -155,10 +169,11 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         best_name, best_model, best_cv_mean = None, None, float("-inf")
 
         for name, template in REGRESSORS:
-            fitted = clone(template)
+            pipe = _wrap_with_imputer(clone(template))
+            cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
+            fitted = clone(pipe)
             fitted.fit(X_train, y_train)
             test_r2 = float(r2_score(y_test, fitted.predict(X_test)))
-            cv = cross_val_score(clone(fitted), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
             all_scores.append({
                 "name": name,
                 "test_r2": round(test_r2, 4),
@@ -198,7 +213,6 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
     save_model_bundle(
         run_id,
         model=best_model,
-        imputer=imputer,
         feature_cols=feature_cols,
         problem_type=problem_type,
         model_name=best_name,
@@ -321,17 +335,14 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
             X, y, test_size=0.2, random_state=RANDOM_STATE,
             stratify=y if len(np.unique(y)) > 1 else None,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
 
         min_class_count = int(np.bincount(y_train.astype(int)).min())
         n_splits = max(2, min(5, min_class_count))
 
-        model = get_classifier(model_name, params)
+        model = _wrap_with_imputer(get_classifier(model_name, params))
+        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
         model.fit(X_train, y_train)
         test_acc = float(accuracy_score(y_test, model.predict(X_test)))
-        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
         cv_mean = float(cv.mean())
         cv_std = float(cv.std())
 
@@ -340,7 +351,6 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
             "cv_std": round(cv_std, 4),
             "test_score": round(test_acc, 4),
             "model": model,
-            "imputer": imputer,
             "feature_cols": feature_cols,
             "class_labels": class_labels,
             "y_test": y_test,
@@ -354,16 +364,13 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
 
         n_splits = max(2, min(5, len(X_train) // 10))
 
-        model = get_regressor(model_name, params)
+        model = _wrap_with_imputer(get_regressor(model_name, params))
+        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
         model.fit(X_train, y_train)
         test_r2 = float(r2_score(y_test, model.predict(X_test)))
-        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
         cv_mean = float(cv.mean())
         cv_std = float(cv.std())
 
@@ -372,7 +379,6 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
             "cv_std": round(cv_std, 4),
             "test_score": round(test_r2, 4),
             "model": model,
-            "imputer": imputer,
             "feature_cols": feature_cols,
             "class_labels": None,
             "y_test": y_test,

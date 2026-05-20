@@ -242,7 +242,6 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
             save_model_bundle(
                 run_id,
                 model=best_model,
-                imputer=current_best_model_data["imputer"],
                 feature_cols=feature_cols,
                 problem_type=problem_type,
                 model_name=champion_model,
