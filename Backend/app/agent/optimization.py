@@ -96,8 +96,22 @@ def clean_json_text(text: str) -> dict:
 
 def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_results: dict) -> dict:
     champion_model = baseline_results.get("model_name", "Best Model")
-    baseline_score = baseline_results.get("score", 0.0)
     metric = baseline_results.get("score_metric", "accuracy")
+    extra = baseline_results.get("extra", {})
+
+    # IMPORTANT: select by CV mean, not held-out test score. Reusing the same
+    # 20% test set across N trials and picking the highest-scoring config is
+    # textbook leakage — it biases the reported metric upward by selecting for
+    # quirks of that specific split. CV mean keeps the held-out set genuinely
+    # held out. We preserve the test score in extra["test_score"] as a sanity
+    # check the user can still see.
+    cv_key = "cv_accuracy_mean" if metric == "accuracy" else "cv_r2_mean"
+    test_score = baseline_results.get("score", 0.0)
+    baseline_score = extra.get(cv_key, test_score)
+    extra["test_score"] = test_score
+    baseline_results["extra"] = extra
+    baseline_results["score"] = baseline_score
+    baseline_results["accuracy_score"] = baseline_score
 
     # If the OPENROUTER key is not configured, fallback to standard results with a nice note
     if not settings.openrouter_api_key:
@@ -106,14 +120,15 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
 
     try:
         llm = _get_llm()
-        
-        # We start with empty parameters or standard baseline parameters
+
+        # Initial best = the baseline's CV mean. Trials must beat that on CV too.
         best_score = baseline_score
+        best_test_score = test_score
         best_params = {}
-        best_train_score = baseline_results.get("extra", {}).get("train_accuracy" if metric == "accuracy" else "train_r2", baseline_score)
-        
+        best_train_score = extra.get("train_accuracy" if metric == "accuracy" else "train_r2", baseline_score)
+
         history = [
-            {"trial": 0, "parameters": "Baseline Settings", "score": baseline_score, "result": "Champion baseline"}
+            {"trial": 0, "parameters": "Baseline Settings", "score": baseline_score, "result": "Champion baseline (CV mean)"}
         ]
         
         max_loops = 3
@@ -159,20 +174,29 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
                     model_name=champion_model,
                     params=suggested_params
                 )
-                
-                score = trial_res["test_score"]
+
+                # Compare on CV mean to keep the held-out test set unseen during
+                # selection. test_score is logged for transparency only.
+                score = trial_res["cv_mean"]
+                trial_test = trial_res["test_score"]
                 improvement = score - best_score
-                
+
                 if score > best_score:
                     best_score = score
+                    best_test_score = trial_test
                     best_params = suggested_params
                     best_train_score = trial_res["train_score"]
                     current_best_model_data = trial_res
-                    result_desc = f"New champion! Improved by +{improvement:.4f} (Reason: {reasoning})"
-                    history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
+                    result_desc = (
+                        f"New champion! CV +{improvement:.4f} "
+                        f"(CV={score:.4f}, holdout={trial_test:.4f}). Reason: {reasoning}"
+                    )
                 else:
-                    result_desc = f"No improvement (Score: {score:.4f}, Reason: {reasoning})"
-                    history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
+                    result_desc = (
+                        f"No improvement (CV={score:.4f}, holdout={trial_test:.4f}). "
+                        f"Reason: {reasoning}"
+                    )
+                history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
             except Exception as e:
                 log.error("Trial %d failed: %s", i, e)
                 history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": best_score, "result": f"Error during training: {str(e)}"})
@@ -224,6 +248,10 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
                 extra_metrics["mae"] = current_best_model_data["mae"]
             
             extra_metrics["overfit_gap"] = round(best_train_score - best_score, 4)
+            # test_score = held-out accuracy of the winning config (CV-selected).
+            # Kept as a sanity check: if it diverges sharply from cv_mean, the
+            # CV folds are misleading and the model isn't generalizing.
+            extra_metrics["test_score"] = best_test_score
             extra_metrics["tuning_trials"] = history
             
             # Generate new visualization with optimized model
