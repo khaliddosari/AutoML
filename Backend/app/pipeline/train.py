@@ -197,7 +197,8 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
                 best_template = template
 
         # Single final fit of the winner on the full training set.
-        best_model = clone(best_template)
+        # Must wrap with preprocessor again — best_template is the raw estimator.
+        best_model = _wrap_with_preprocessor(X_train, clone(best_template))
         best_model.fit(X_train, y_train)
 
         preds = best_model.predict(X_test)
@@ -252,7 +253,8 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
                 best_template = template
 
         # Single final fit of the winner on the full training set.
-        best_model = clone(best_template)
+        # Must wrap with preprocessor again — best_template is the raw estimator.
+        best_model = _wrap_with_preprocessor(X_train, clone(best_template))
         best_model.fit(X_train, y_train)
 
         preds = best_model.predict(X_test)
