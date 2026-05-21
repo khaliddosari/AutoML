@@ -1,6 +1,9 @@
+import joblib
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 from sklearn.base import clone
+from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     accuracy_score,
@@ -11,7 +14,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -23,18 +26,106 @@ from app import storage
 from app.pipeline.models.classifiers import CLASSIFIERS
 from app.pipeline.models.regressors import REGRESSORS
 
+ONE_HOT_MAX_CARDINALITY = 10
+
 RANDOM_STATE = 42
 
 
 def _inner_estimator(model):
-    """Return the final estimator whether the model is a Pipeline or a plain estimator."""
-    if isinstance(model, Pipeline):
-        return model.steps[-1][1]
+    """Walk past any Pipeline wrapping and return the underlying estimator."""
+    while isinstance(model, Pipeline):
+        model = model.steps[-1][1]
     return model
 
 
+def _build_preprocessor(X: pd.DataFrame) -> ColumnTransformer:
+    """Build a ColumnTransformer that imputes and encodes per column type.
+
+    Numeric → median imputation. Low-cardinality categoricals → most-frequent
+    imputation + one-hot. High-cardinality categoricals → most-frequent
+    imputation + ordinal encoding. Unknown categories at inference time map
+    to -1 (ordinal) or all-zero (one-hot), so the deployed endpoint won't
+    crash on previously-unseen values.
+    """
+    numeric_cols: list[str] = []
+    one_hot_cols: list[str] = []
+    ordinal_cols: list[str] = []
+
+    for c in X.columns:
+        if is_numeric_dtype(X[c]):
+            numeric_cols.append(c)
+        elif X[c].nunique(dropna=True) <= ONE_HOT_MAX_CARDINALITY:
+            one_hot_cols.append(c)
+        else:
+            ordinal_cols.append(c)
+
+    transformers: list = []
+    if numeric_cols:
+        transformers.append(("num", SimpleImputer(strategy="median"), numeric_cols))
+    if one_hot_cols:
+        transformers.append((
+            "cat_low",
+            Pipeline([
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False, drop="if_binary")),
+            ]),
+            one_hot_cols,
+        ))
+    if ordinal_cols:
+        transformers.append((
+            "cat_high",
+            Pipeline([
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                ("encoder", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
+            ]),
+            ordinal_cols,
+        ))
+
+    return ColumnTransformer(transformers, remainder="drop")
+
+
+def _wrap_with_preprocessor(X: pd.DataFrame, template):
+    """Prepend a ColumnTransformer so imputation+encoding re-fit per CV fold."""
+    preprocessor = _build_preprocessor(X)
+    if isinstance(template, Pipeline):
+        # Existing pipelines (LogReg/KNN) include an inner scaler+model; insert
+        # the preprocessor first and keep the rest as a flat pipeline.
+        return Pipeline([("preprocessor", preprocessor)] + list(template.steps))
+    return Pipeline([("preprocessor", preprocessor), ("model", template)])
+
+
+def save_model_bundle(
+    run_id: str,
+    model,
+    feature_cols: list[str],
+    problem_type: str,
+    model_name: str,
+    class_labels: list | None,
+) -> None:
+    """Pickle the fitted Pipeline (imputer + model) so Modal can serve it.
+
+    The bundle stores a single sklearn Pipeline that handles imputation and
+    prediction in one step — Modal's serve.py just calls `model.predict(df)`
+    on raw input.
+    """
+    bundle = {
+        "model": model,
+        "feature_cols": feature_cols,
+        "problem_type": problem_type,
+        "model_name": model_name,
+        "class_labels": class_labels,
+    }
+    joblib.dump(bundle, storage.run_dir(run_id) / "model.joblib")
+
+
 def _feature_importances(model, columns: list[str]) -> list[dict]:
-    """Extract top-10 feature importances from tree or linear models."""
+    """Extract top-10 feature importances from tree or linear models.
+
+    Maps onto the *post-encoding* column names (one-hot expansion), pulled
+    from the fitted preprocessor when available — so each dummy column shows
+    up with its own importance instead of being silently aliased to the raw
+    column name.
+    """
     est = _inner_estimator(model)
     if hasattr(est, "feature_importances_"):
         imps = np.array(est.feature_importances_)
@@ -43,7 +134,17 @@ def _feature_importances(model, columns: list[str]) -> list[dict]:
         imps = np.abs(coef[0] if coef.ndim > 1 else coef)
     else:
         return []
-    pairs = sorted(zip(columns, imps.tolist()), key=lambda kv: kv[1], reverse=True)[:10]
+
+    expanded_cols: list[str] = list(columns)
+    if isinstance(model, Pipeline):
+        try:
+            expanded_cols = list(model[:-1].get_feature_names_out())
+        except Exception:
+            pass
+    if len(expanded_cols) != len(imps):
+        expanded_cols = [f"feature_{i}" for i in range(len(imps))]
+
+    pairs = sorted(zip(expanded_cols, imps.tolist()), key=lambda kv: kv[1], reverse=True)[:10]
     return [{"feature": f, "importance": round(float(i), 4)} for f, i in pairs]
 
 
@@ -56,17 +157,18 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
     y = df[target]
     feature_cols = X.columns.tolist()
 
+    class_labels: list | None = None
     if problem_type == "classification":
         if not np.issubdtype(y.dtype, np.number):
-            y, _ = pd.factorize(y)
+            y, labels = pd.factorize(y)
+            class_labels = labels.tolist()
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
             stratify=y if len(np.unique(y)) > 1 else None,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
+        # NOTE: no upfront imputation — each candidate is a Pipeline that imputes
+        # internally, so CV folds and final fit/predict all impute on train rows only.
 
         # CV fold count bounded by smallest class size to avoid stratification errors.
         min_class_count = int(np.bincount(y_train.astype(int)).min())
@@ -79,7 +181,11 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         best_name, best_template, best_cv_mean = None, None, -1.0
 
         for name, template in CLASSIFIERS:
-            cv = cross_val_score(clone(template), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
+            pipe = _wrap_with_preprocessor(X_train, clone(template))
+            cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
+            fitted = clone(pipe)
+            fitted.fit(X_train, y_train)
+            test_acc = float(accuracy_score(y_test, fitted.predict(X_test)))
             all_scores.append({
                 "name": name,
                 "cv_mean": round(float(cv.mean()), 4),
@@ -120,9 +226,7 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
+        # NOTE: no upfront imputation — see classification branch above.
 
         # Cap CV folds by training set size to avoid degenerate folds on tiny datasets.
         n_splits = max(2, min(5, len(X_train) // 10))
@@ -132,7 +236,11 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         best_name, best_template, best_cv_mean = None, None, float("-inf")
 
         for name, template in REGRESSORS:
-            cv = cross_val_score(clone(template), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
+            pipe = _wrap_with_preprocessor(X_train, clone(template))
+            cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
+            fitted = clone(pipe)
+            fitted.fit(X_train, y_train)
+            test_r2 = float(r2_score(y_test, fitted.predict(X_test)))
             all_scores.append({
                 "name": name,
                 "cv_mean": round(float(cv.mean()), 4),
@@ -172,6 +280,14 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
 
     metrics["extra"]["top_features"] = _feature_importances(best_model, feature_cols)
     storage.write_json(run_id, "metrics.json", metrics)
+    save_model_bundle(
+        run_id,
+        model=best_model,
+        feature_cols=feature_cols,
+        problem_type=problem_type,
+        model_name=best_name,
+        class_labels=class_labels,
+    )
     return metrics
 
 
@@ -279,25 +395,24 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
     y = df[target]
     feature_cols = X.columns.tolist()
 
+    class_labels: list | None = None
     if problem_type == "classification":
         if not np.issubdtype(y.dtype, np.number):
-            y, _ = pd.factorize(y)
+            y, labels = pd.factorize(y)
+            class_labels = labels.tolist()
 
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
             stratify=y if len(np.unique(y)) > 1 else None,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
 
         min_class_count = int(np.bincount(y_train.astype(int)).min())
         n_splits = max(2, min(5, min_class_count))
 
-        model = get_classifier(model_name, params)
+        model = _wrap_with_preprocessor(X_train, get_classifier(model_name, params))
+        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
         model.fit(X_train, y_train)
         test_acc = float(accuracy_score(y_test, model.predict(X_test)))
-        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
         cv_mean = float(cv.mean())
         cv_std = float(cv.std())
 
@@ -307,6 +422,7 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
             "test_score": round(test_acc, 4),
             "model": model,
             "feature_cols": feature_cols,
+            "class_labels": class_labels,
             "y_test": y_test,
             "preds": model.predict(X_test),
             "train_score": float(accuracy_score(y_train, model.predict(X_train))),
@@ -318,16 +434,13 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=RANDOM_STATE,
         )
-        imputer = SimpleImputer(strategy="median")
-        X_train = pd.DataFrame(imputer.fit_transform(X_train), columns=feature_cols)
-        X_test = pd.DataFrame(imputer.transform(X_test), columns=feature_cols)
 
         n_splits = max(2, min(5, len(X_train) // 10))
 
-        model = get_regressor(model_name, params)
+        model = _wrap_with_preprocessor(X_train, get_regressor(model_name, params))
+        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
         model.fit(X_train, y_train)
         test_r2 = float(r2_score(y_test, model.predict(X_test)))
-        cv = cross_val_score(clone(model), X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
         cv_mean = float(cv.mean())
         cv_std = float(cv.std())
 
@@ -337,6 +450,7 @@ def train_champion_with_params(run_id: str, target: str, problem_type: str, mode
             "test_score": round(test_r2, 4),
             "model": model,
             "feature_cols": feature_cols,
+            "class_labels": None,
             "y_test": y_test,
             "preds": model.predict(X_test),
             "train_score": float(r2_score(y_train, model.predict(X_train))),
