@@ -1,3 +1,6 @@
+import io
+import logging
+
 import joblib
 import numpy as np
 import pandas as pd
@@ -25,6 +28,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from app import storage
 from app.pipeline.models.classifiers import CLASSIFIERS
 from app.pipeline.models.regressors import REGRESSORS
+
+log = logging.getLogger(__name__)
 
 ONE_HOT_MAX_CARDINALITY = 10
 
@@ -149,6 +154,38 @@ def _feature_importances(model, columns: list[str]) -> list[dict]:
 
 
 def train_model(run_id: str, target: str, problem_type: str) -> dict:
+    """Train all candidate models and save artifacts.
+
+    Tries to run on Modal (8 CPUs) first for speed. Falls back to local
+    execution automatically if Modal is unavailable or not configured.
+    """
+    # ── try Modal ─────────────────────────────────────────────────────────────
+    try:
+        import modal
+        run_training = modal.Function.from_name("modelforge-train", "run_training")
+        csv_bytes = storage.engineered_path(run_id).read_bytes()
+        log.info("Sending training job to Modal for run %s", run_id)
+        result = run_training.remote(csv_bytes, target, problem_type)
+
+        # Save all artifacts returned by Modal
+        metrics = result["metrics"]
+        y_test = np.array(result["y_test"])
+        y_pred = np.array(result["y_pred"])
+        np.save(storage.run_dir(run_id) / "y_test.npy", y_test)
+        np.save(storage.run_dir(run_id) / "y_pred.npy", y_pred)
+
+        bundle_buf = io.BytesIO(result["model_bytes"])
+        bundle = joblib.load(bundle_buf)
+        joblib.dump(bundle, storage.run_dir(run_id) / "model.joblib")
+
+        storage.write_json(run_id, "metrics.json", metrics)
+        log.info("Modal training succeeded for run %s — model: %s", run_id, metrics.get("model_name"))
+        return metrics
+
+    except Exception as exc:
+        log.warning("Modal training failed for run %s (%s) — falling back to local", run_id, exc)
+
+    # ── local fallback ────────────────────────────────────────────────────────
     df = pd.read_csv(storage.engineered_path(run_id))
     if target not in df.columns:
         raise ValueError(f"Target '{target}' missing from engineered dataset.")
