@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Brand } from "./brand";
 
 const NAV_ITEMS = [
   { key: "ingestion", icon: "upload_file", label: "Data Ingestion", pattern: /^\/$/ },
@@ -53,7 +54,7 @@ export function Sidebar() {
             </motion.div>
             
             <div className="flex flex-col justify-center">
-              <h1 className="text-lg font-bold text-primary tracking-wide leading-none">Model Forge</h1>
+              <h1 className="text-2xl text-primary leading-none"><Brand /></h1>
             </div>
           </div>
 
@@ -70,7 +71,7 @@ export function Sidebar() {
               {/* Shimmer overlay */}
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-shimmer" style={{ backgroundSize: "200% 100%" }} />
               
-              <span className="material-symbols-outlined z-10" style={{ fontSize: "18px", fontVariationSettings: "'FILL' 1" }}>add</span>
+              <span className="material-symbols-outlined z-10 text-white" style={{ fontSize: "18px", fontVariationSettings: "'FILL' 1" }}>add</span>
               
               <span className="z-10 text-sm font-semibold whitespace-nowrap text-white">
                 Create New Model

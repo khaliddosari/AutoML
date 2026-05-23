@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { getStatus } from "@/lib/api";
+import { getStatus, getDiagnostics } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -155,21 +155,31 @@ plt.savefig("storage/runs/{run_id}/plot.png")`,
 type StepStatus = "waiting" | "active" | "done" | "error";
 
 // Sidebar System Diagnostics
-function ServerDiagnosticsWidget() {
-  const [cpu, setCpu] = useState(48);
-  const [gpu, setGpu] = useState(65);
-  const [ram, setRam] = useState(4.8);
-  const [speed, setSpeed] = useState(1280);
+function ServerDiagnosticsWidget({ runId }: { runId: string }) {
+  const [cpu, setCpu] = useState(0);
+  const [gpu, setGpu] = useState(0);
+  const [ram, setRam] = useState(0);
+  const [ramTotal, setRamTotal] = useState(16);
+  const [speed, setSpeed] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCpu(Math.floor(45 + Math.random() * 25));
-      setGpu(Math.floor(60 + Math.random() * 28));
-      setRam(Number((4.7 + Math.random() * 0.4).toFixed(1)));
-      setSpeed(Math.floor(1210 + Math.random() * 180));
-    }, 1500);
+    const fetchDiagnostics = async () => {
+      try {
+        const data = await getDiagnostics(runId);
+        setCpu(data.cpu);
+        setGpu(data.gpu);
+        setRam(data.ram);
+        setRamTotal(data.ram_total);
+        setSpeed(data.speed);
+      } catch (err) {
+        console.error("Failed to fetch diagnostics:", err);
+      }
+    };
+
+    fetchDiagnostics();
+    const timer = setInterval(fetchDiagnostics, 2000);
     return () => clearInterval(timer);
-  }, []);
+  }, [runId]);
 
   return (
     <div className="bg-surface border border-outline-variant rounded-xl p-4 font-sans space-y-3 shadow-sm select-none">
@@ -198,7 +208,7 @@ function ServerDiagnosticsWidget() {
         </div>
         <div className="flex justify-between items-center text-[10px] font-semibold text-on-surface pt-1 border-t border-outline-variant/30">
           <span>RAM Used</span>
-          <span className="font-mono text-primary font-bold">{ram} GB / 16 GB</span>
+          <span className="font-mono text-primary font-bold">{ram} GB / {ramTotal} GB</span>
         </div>
         <div className="flex justify-between items-center text-[10px] font-semibold text-on-surface">
           <span>Training Speed</span>
@@ -513,14 +523,24 @@ export default function RunningPage() {
   const runStart = useRef<number>(Date.now());
 
   useEffect(() => {
+    if (isComplete || failed) return;
     const id = setInterval(
       () => setElapsed(Math.floor((Date.now() - runStart.current) / 1000)),
       1000
     );
     return () => clearInterval(id);
-  }, []);
+  }, [isComplete, failed]);
 
-  useEffect(() => { setExpandedCells(new Set([activeStep])); }, [activeStep]);
+  useEffect(() => {
+    setExpandedCells((prev) => {
+      const next = new Set(prev);
+      next.add(activeStep);
+      if (activeStep > 0) {
+        next.delete(activeStep - 1);
+      }
+      return next;
+    });
+  }, [activeStep]);
 
   const toggleCell = (index: number) => {
     setExpandedCells((prev) => {
@@ -573,21 +593,21 @@ export default function RunningPage() {
   const progressPct = Math.min(100, (activeStep / STEPS.length) * 100);
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-surface select-none">
+    <div className="flex-1 flex flex-row overflow-hidden bg-surface select-none relative">
 
-      {/* Left pipeline progress panel sidebar */}
+      {/* Left pipeline progress panel sidebar — completely detached, never scrolls with cells */}
       <motion.aside
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.35 }}
-        className="w-full lg:w-72 bg-surface-container-lowest border-b lg:border-b-0 lg:border-r border-outline-variant px-5 py-6 flex flex-col shrink-0 justify-between gap-6"
+        className="w-72 bg-surface-container-lowest border-r border-outline-variant px-5 py-6 flex flex-col shrink-0 justify-between gap-6 absolute left-0 top-0 bottom-0 h-full overflow-y-auto z-10"
       >
         <div className="flex flex-col gap-5">
           {/* Header Progress status */}
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="material-symbols-outlined text-primary" style={{ fontSize: "20px" }}>model_training</span>
-              <h2 className="text-xs font-bold text-primary uppercase tracking-widest">Pipeline Pipeline</h2>
+              <h2 className="text-xs font-bold text-primary uppercase tracking-widest">Pipeline</h2>
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-on-surface-variant font-sans">
@@ -604,6 +624,9 @@ export default function RunningPage() {
             </div>
           </div>
 
+          {/* Compute diagnostics metrics widget */}
+          <ServerDiagnosticsWidget runId={runId} />
+
           {/* Staggered steps progress list */}
           <div className="space-y-1 flex-1">
             {STEPS.map((step, i) => {
@@ -618,55 +641,22 @@ export default function RunningPage() {
           </div>
         </div>
 
-        {/* Compute diagnostics metrics widget */}
-        <div className="flex flex-col gap-4">
-          <ServerDiagnosticsWidget />
-
-          {/* Pipeline complete - Next button */}
-          {isComplete && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-surface-green-tint border border-success-green/30 rounded-xl px-4 py-4 space-y-3 text-left font-sans"
+        {failed && (
+          <div className="bg-error-container border border-error/20 rounded-xl px-4 py-3 space-y-1.5 text-left font-sans animate-scale">
+            <p className="text-xs font-bold text-error">Run execution failed</p>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed">{errMsg}</p>
+            <button
+              onClick={() => router.push("/")}
+              className="text-[11px] text-primary font-bold hover:underline"
             >
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-success-green" style={{ fontSize: "18px" }}>check_circle</span>
-                <p className="text-xs font-bold text-success-green">Pipeline Complete!</p>
-              </div>
-              <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                All 6 stages finished successfully. Your champion model is ready.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => router.push(`/${runId}/result`)}
-                className="w-full bg-primary text-white text-sm font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>insights</span>
-                View Results
-                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>arrow_forward</span>
-              </motion.button>
-            </motion.div>
-          )}
-
-          {failed && (
-            <div className="bg-error-container border border-error/20 rounded-xl px-4 py-3 space-y-1.5 text-left font-sans animate-scale">
-              <p className="text-xs font-bold text-error">Run execution failed</p>
-              <p className="text-[11px] text-on-surface-variant leading-relaxed">{errMsg}</p>
-              <button
-                onClick={() => router.push("/")}
-                className="text-[11px] text-primary font-bold hover:underline"
-              >
-                ← Start over ingestion
-              </button>
-            </div>
-          )}
-        </div>
+              ← Start over ingestion
+            </button>
+          </div>
+        )}
       </motion.aside>
 
-      {/* Main Notebook Console */}
-      <div className="flex-1 flex flex-col overflow-hidden p-4 lg:p-6">
+      {/* Main Notebook Console — scrolls independently from the pipeline panel */}
+      <div className="flex-1 flex flex-col overflow-hidden p-4 lg:p-6 ml-72">
         <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col gap-3 overflow-hidden">
           
           {/* Jupyter Notebook top toolbar bar */}

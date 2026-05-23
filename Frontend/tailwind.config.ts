@@ -81,6 +81,7 @@ const config: Config = {
       fontFamily: {
         sans: ['"IBM Plex Sans"', "sans-serif"],
         mono: ['"JetBrains Mono"', "Menlo", "monospace"],
+        arabic: ['"IBM Plex Sans Arabic"', '"IBM Plex Sans"', "sans-serif"],
       },
       fontSize: {
         "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],

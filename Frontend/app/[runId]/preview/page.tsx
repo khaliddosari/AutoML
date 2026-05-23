@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { startRun } from "@/lib/api";
+import { startRun, getPreview } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -43,11 +43,13 @@ export default function PreviewPage() {
   const pageSize = 10;
 
   useEffect(() => {
-    fetch(`/api/backend/runs/${runId}/preview`)
-      .then((r) => r.json())
+    getPreview(runId)
       .then((d) => {
         setData(d);
         if (d.columns?.length) setTarget(d.columns[d.columns.length - 1]);
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to load preview.");
       });
   }, [runId]);
 
@@ -353,14 +355,16 @@ export default function PreviewPage() {
                 onClick={handleStart}
                 disabled={!target || starting}
                 className={cn(
-                  "bg-primary-container text-white text-label-md px-6 py-3 rounded-lg shadow-sm font-bold hover:bg-primary transition-all flex items-center gap-2",
+                  "bg-primary-container !text-white text-label-md px-6 py-3 rounded-lg shadow-sm font-bold hover:bg-primary transition-all flex items-center gap-2",
                   (!target || starting) && "opacity-50 cursor-not-allowed"
                 )}
               >
-                <span className="material-symbols-outlined animate-pulse" style={{ fontSize: "18px" }}>
+                <span className="material-symbols-outlined !text-white animate-pulse" style={{ fontSize: "18px" }}>
                   {starting ? "sync" : "play_arrow"}
                 </span>
-                {starting ? "Starting..." : "Run AutoML Pipeline"}
+                <span className="!text-white">
+                  {starting ? "Starting..." : "Run AutoML Pipeline"}
+                </span>
               </button>
             </div>
           </div>

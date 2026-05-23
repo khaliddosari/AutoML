@@ -1,16 +1,16 @@
 # Product Requirements Document (PRD)
 ## LLM-Orchestrated AutoML Pipeline
 
-> **Working title:** _ModelForge_ — an LLM-driven AutoML tool that turns CSV uploads into ranked, justified ML models across two learning paradigms.
+> **Working title:** _ModelForge_ - an LLM-driven AutoML tool that turns CSV uploads into ranked, justified ML models across two learning paradigms.
 
 ---
 
 ## 0. Persona
-You are ModelForge's AutoML Reasoning Engine — a senior machine learning engineer with deep expertise in classical ML, model evaluation, and explainability. Your job is to reason over training results produced by the ModelForge pipeline and deliver clear, defensible model recommendations to users who may not have a formal ML background.
+You are ModelForge's AutoML Reasoning Engine - a senior machine learning engineer with deep expertise in classical ML, model evaluation, and explainability. Your job is to reason over training results produced by the ModelForge pipeline and deliver clear, defensible model recommendations to users who may not have a formal ML background.
 Your responsibilities:
 
 Analyze structured dataset profiles (schema, statistics, target distribution) and per-model evaluation metrics.
-Select the best-performing model in the given tier based on the metrics provided — not on prior reputation of the algorithm.
+Select the best-performing model in the given tier based on the metrics provided - not on prior reputation of the algorithm.
 Produce a concise justification (3–5 sentences) explaining why the chosen model won, what about the data made it win, and what its likely weaknesses are.
 Assign a normalized accuracy rating from 0–100 that reflects real-world reliability, not just the raw metric value.
 Recommend the most informative diagrams to support the justification.
@@ -26,9 +26,9 @@ Hard constraints:
 
 You only reason over the structured inputs provided in the prompt. You never assume facts about the dataset that aren't given.
 You never fabricate metric values. If a value is missing, flag it explicitly.
-You always return output in the JSON schema specified in the prompt — no prose outside the schema, no markdown code fences around the JSON.
+You always return output in the JSON schema specified in the prompt - no prose outside the schema, no markdown code fences around the JSON.
 You never recommend a model that wasn't in the candidate list for the tier.
-You never claim the winning model is "production-ready" — only that it is the best of the five candidates for this dataset.
+You never claim the winning model is "production-ready" - only that it is the best of the five candidates for this dataset.
 
 Tone: confident, technical, neutral. You are an evaluator, not a salesperson.
 
@@ -39,11 +39,11 @@ Tone: confident, technical, neutral. You are an evaluator, not a salesperson.
 ModelForge is a web-based AutoML platform that automates the model selection workflow by combining classical ML training with an **LLM (DeepSeek via OpenRouter)** as the orchestration and reasoning layer. Users upload one or more CSV datasets, and the system:
 
 1. Profiles the data and detects the problem type.
-2. Runs **2 model tiers** — Regression and Classification — with **5 candidate models per tier**.
+2. Runs **2 model tiers** - Regression and Classification - with **5 candidate models per tier**.
 3. Selects the **best model per tier** based on tier-specific metrics.
 4. Uses the LLM to generate an **accuracy rating, natural-language justification, and supporting diagrams** for each winner.
 
-The product targets users who need fast, defensible model selection without writing ML pipelines from scratch — students, analysts, junior data scientists, and product teams prototyping AI features.
+The product targets users who need fast, defensible model selection without writing ML pipelines from scratch - students, analysts, junior data scientists, and product teams prototyping AI features.
 
 ---
 
@@ -66,9 +66,9 @@ Existing AutoML tools (Auto-sklearn, H2O AutoML, Google Vertex AutoML) solve the
 - **AutoML demand is rising** as organizations adopt ML faster than they can hire ML engineers.
 - **LLMs can now reason about structured ML results** with high reliability when given metrics, dataset summaries, and visual context.
 - **Saudi market alignment**: Vision 2030's data-driven government initiatives (Elm, SITE, NCGR) create demand for explainable AI tooling that non-ML staff can operate.
-- **OpenRouter + DeepSeek specifically** is attractive because OpenRouter gives a single, swappable gateway across providers, and DeepSeek offers strong reasoning quality at a low per-token cost — keeping per-session LLM spend well under target.
+- **OpenRouter + DeepSeek specifically** is attractive because OpenRouter gives a single, swappable gateway across providers, and DeepSeek offers strong reasoning quality at a low per-token cost - keeping per-session LLM spend well under target.
 
-This product sits at the intersection of **AutoML, LLM orchestration, and MLOps** — three trends compounding into a single workflow.
+This product sits at the intersection of **AutoML, LLM orchestration, and MLOps** - three trends compounding into a single workflow.
 
 ---
 
@@ -104,7 +104,7 @@ This product sits at the intersection of **AutoML, LLM orchestration, and MLOps*
 
 ### 6.2 Two-Tier Model System
 
-#### Tier 1 — Regression (continuous targets)
+#### Tier 1 - Regression (continuous targets)
 | # | Model | Library |
 |---|-------|---------|
 | 1 | Linear Regression | scikit-learn |
@@ -115,7 +115,7 @@ This product sits at the intersection of **AutoML, LLM orchestration, and MLOps*
 
 **Metrics:** RMSE, MAE, R², MAPE.
 
-#### Tier 2 — Classification (categorical targets)
+#### Tier 2 - Classification (categorical targets)
 | # | Model | Library |
 |---|-------|---------|
 | 1 | Logistic Regression | scikit-learn |
@@ -130,9 +130,9 @@ This product sits at the intersection of **AutoML, LLM orchestration, and MLOps*
 - **Provider:** **OpenRouter** as a single gateway across model providers. Default model **`deepseek/deepseek-chat`** (swap to `deepseek/deepseek-r1` for heavier reasoning). Authenticated via `OPENROUTER_API_KEY`; accessed through `langchain-openai`'s `ChatOpenAI` pointed at `https://openrouter.ai/api/v1`.
 - **Orchestrator:** **LangChain** tool-calling agent. Each pipeline step (profile, detect, EDA, FE, train, visualize) is exposed as a `@tool`; the LLM decides invocation order within the prompt's constraints.
 - **Prompt templates** per tier with structured JSON output schema, validated by Pydantic.
-- **Input to the LLM:** dataset profile (column stats, target type, row count), per-model metrics, plot file references — never raw rows.
+- **Input to the LLM:** dataset profile (column stats, target type, row count), per-model metrics, plot file references - never raw rows.
 - **Output from the LLM:** chosen winner, accuracy rating (0–100), 3–5 sentence justification, suggested next steps. No prose outside the schema, no markdown fences.
-- **Token budgeting:** dataset never sent in full — only schema, summary statistics, and metric tables.
+- **Token budgeting:** dataset never sent in full - only schema, summary statistics, and metric tables.
 - **Attribution headers:** every OpenRouter call sets `HTTP-Referer` and `X-Title` so usage is traceable on the OpenRouter dashboard.
 - **PII filter** before any LLM call.
 
@@ -187,44 +187,44 @@ Auto-generated per tier:
 - **React 18 + TypeScript**
 - **Tailwind CSS**
 - **shadcn/ui**
-- **Recharts** / **Plotly.js** — interactive charts
-- **Framer Motion** — micro-interactions
+- **Recharts** / **Plotly.js** - interactive charts
+- **Framer Motion** - micro-interactions
 
 ### Backend (Application Layer)
-- **Next.js (App Router) + TypeScript** — API routes, server actions, session/auth, request orchestration
+- **Next.js (App Router) + TypeScript** - API routes, server actions, session/auth, request orchestration
 - **No database.** Run metadata, job state, and results are persisted as JSON artifacts in object storage alongside the datasets and diagrams they describe. Each run is keyed by a deterministic run ID (seed + dataset hash).
-- **BullMQ + Redis** — async job queue dispatched from Next.js API routes (Redis used for ephemeral queue state only, not as a source of truth).
-- **Object storage** (S3-compatible — AWS S3 or Cloudflare R2) — datasets, generated diagrams, run manifests, metric JSON, PDF exports.
+- **BullMQ + Redis** - async job queue dispatched from Next.js API routes (Redis used for ephemeral queue state only, not as a source of truth).
+- **Object storage** (S3-compatible - AWS S3 or Cloudflare R2) - datasets, generated diagrams, run manifests, metric JSON, PDF exports.
 - Hosts the React frontend (same Next.js app serves UI + API)
 
 ### ML Worker (Python Service)
 - **Python 3.11+**
-- **FastAPI** — internal REST endpoints called by the Next.js backend
-- **Celery + Redis** _or_ a BullMQ consumer bridge — executes training jobs queued by Next.js
-- **scikit-learn** — regression + classification
-- **XGBoost**, **LightGBM** — boosted trees
-- **Pandas**, **NumPy** — data handling
-- **Matplotlib**, **Seaborn**, **Plotly** — diagram generation
-- **langchain-openai** (pointed at OpenRouter) — LLM client for DeepSeek
+- **FastAPI** - internal REST endpoints called by the Next.js backend
+- **Celery + Redis** _or_ a BullMQ consumer bridge - executes training jobs queued by Next.js
+- **scikit-learn** - regression + classification
+- **XGBoost**, **LightGBM** - boosted trees
+- **Pandas**, **NumPy** - data handling
+- **Matplotlib**, **Seaborn**, **Plotly** - diagram generation
+- **langchain-openai** (pointed at OpenRouter) - LLM client for DeepSeek
 - Communicates with Next.js over an internal HTTP boundary; writes results back to object storage
 
 ### Infrastructure
-- **Docker** + **Docker Compose** — local dev (Next.js, Python worker, Redis, MinIO for object-storage emulation)
-- **AWS** (ECS / Fargate) or **GCP** (Cloud Run) — deployment, one service per container
-- **Cloudflare** — CDN + edge
+- **Docker** + **Docker Compose** - local dev (Next.js, Python worker, Redis, MinIO for object-storage emulation)
+- **AWS** (ECS / Fargate) or **GCP** (Cloud Run) - deployment, one service per container
+- **Cloudflare** - CDN + edge
 
 ### LLM Layer
-- **OpenRouter** as the LLM gateway — single API key, swappable model IDs.
+- **OpenRouter** as the LLM gateway - single API key, swappable model IDs.
 - Default model: **DeepSeek via OpenRouter** (`deepseek/deepseek-chat` for fast tiers, `deepseek/deepseek-r1` available for heavier reasoning).
 - Accessed through `langchain-openai`'s `ChatOpenAI` with `base_url=https://openrouter.ai/api/v1`.
-- **Pydantic** — structured output validation
+- **Pydantic** - structured output validation
 - Prompt versioning under `prompts/v1/`, `prompts/v2/`, etc.
 
 ### MLOps
-- **MLflow** — experiment tracking per run
-- **DVC** — dataset versioning
-- **GitHub Actions** — CI/CD
-- **Sentry** — error tracking
+- **MLflow** - experiment tracking per run
+- **DVC** - dataset versioning
+- **GitHub Actions** - CI/CD
+- **Sentry** - error tracking
 
 ---
 
@@ -247,11 +247,11 @@ Auto-generated per tier:
 
 ## 10. Out of Scope (v1)
 
-- Deep learning models (CNN, RNN, Transformer) — defer to v2.
-- Time-series-specific tier (ARIMA, Prophet, LSTM) — defer to v2.
-- Reinforcement learning — not a fit for static CSV input.
-- Clustering / unsupervised tier — defer to v2.
-- Text / image / audio data — tabular only in v1.
+- Deep learning models (CNN, RNN, Transformer) - defer to v2.
+- Time-series-specific tier (ARIMA, Prophet, LSTM) - defer to v2.
+- Reinforcement learning - not a fit for static CSV input.
+- Clustering / unsupervised tier - defer to v2.
+- Text / image / audio data - tabular only in v1.
 - Custom model upload by users.
 - Multi-user real-time collaboration on a dataset.
 - Fine-tuning any LLM.
@@ -260,15 +260,15 @@ Auto-generated per tier:
 
 ## 11. Open Questions & Design Considerations
 
-1. **Tier auto-selection vs. user choice** — should the system always run both tiers, or detect the appropriate one from the target column? _Recommendation:_ auto-detect with manual override.
+1. **Tier auto-selection vs. user choice** - should the system always run both tiers, or detect the appropriate one from the target column? _Recommendation:_ auto-detect with manual override.
 
-2. **LLM cost management** — at what dataset size do we summarize more aggressively before prompting?
+2. **LLM cost management** - at what dataset size do we summarize more aggressively before prompting?
 
-3. **Reproducibility vs speed** — fixed seeds make results comparable but slower (no parallel hyperparameter search).
+3. **Reproducibility vs speed** - fixed seeds make results comparable but slower (no parallel hyperparameter search).
 
-4. **Confidence calibration** — the 0–100 accuracy rating should not just be the raw metric. Define a normalization function per tier (e.g., R² for regression, balanced accuracy for classification).
+4. **Confidence calibration** - the 0–100 accuracy rating should not just be the raw metric. Define a normalization function per tier (e.g., R² for regression, balanced accuracy for classification).
 
-5. **Imbalanced classification handling** — should the classification tier auto-apply SMOTE / class weights, or surface this as a user choice?
+5. **Imbalanced classification handling** - should the classification tier auto-apply SMOTE / class weights, or surface this as a user choice?
 
 ---
 
@@ -279,7 +279,7 @@ Before the full 5-models-per-tier v1, the team is building a single end-to-end s
 - Uses **LangChain (Python)** inside the FastAPI ML worker as the orchestrator. Next.js is **not** part of this slice.
 - Exposes upload → preview → start-run → status → result endpoints.
 - Runs one agent that drives a fixed tool sequence: `profile_dataset` → `detect_problem_type` → `run_eda` → `feature_engineer` → `train_model` → `generate_visualization`.
-- Ships **one model per problem type** (RandomForest) — not the full 5 candidates. Metric: R² for regression, accuracy for classification.
+- Ships **one model per problem type** (RandomForest) - not the full 5 candidates. Metric: R² for regression, accuracy for classification.
 - Produces a single accuracy score + one plot (predicted-vs-actual or confusion matrix) + a 3–5 sentence LLM-written justification.
 - Persists artifacts to local filesystem (`./storage/runs/<run_id>/`) behind the storage interface that will later swap to S3/R2.
 
@@ -315,4 +315,4 @@ Scope this slice **must not** expand into without a PRD update: multi-model tier
 
 ---
 
-_Document version: 0.7 — §6.3 rewritten to explicitly document OpenRouter + DeepSeek + LangChain orchestrator; loosened backend dependency pins to resolvable ranges._
+_Document version: 0.7 - §6.3 rewritten to explicitly document OpenRouter + DeepSeek + LangChain orchestrator; loosened backend dependency pins to resolvable ranges._

@@ -9,7 +9,7 @@ from importlib.metadata import version
 
 SERVE_TEMPLATE = '''"""Modal serving app for ModelForge run {run_id}.
 
-Auto-generated. Do not edit by hand — rerun the Deploy button to regenerate.
+Auto-generated. Do not edit by hand - rerun the Deploy button to regenerate.
 """
 import modal
 

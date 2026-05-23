@@ -1,4 +1,4 @@
-const BASE = "/api/backend";
+const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export interface UploadResponse {
   run_id: string;
@@ -159,3 +159,32 @@ export async function predict(
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export interface PreviewData {
+  run_id: string;
+  columns: string[];
+  n_columns: number;
+  preview: Record<string, unknown>[];
+}
+
+export async function getPreview(runId: string): Promise<PreviewData> {
+  const res = await fetch(`${BASE}/runs/${runId}/preview`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export interface Diagnostics {
+  cpu: number;
+  gpu: number;
+  ram: number;
+  ram_total: number;
+  speed: number;
+}
+
+export async function getDiagnostics(runId: string): Promise<Diagnostics> {
+  const res = await fetch(`${BASE}/runs/${runId}/diagnostics`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+

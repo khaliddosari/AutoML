@@ -23,7 +23,7 @@ def _get_llm():
     )
 
 
-OPTIMIZER_PROMPT = """You are ModelForge's AutoML Hyperparameter Fine-Tuning Agent.
+OPTIMIZER_PROMPT = """You are نَمذِج's AutoML Hyperparameter Fine-Tuning Agent.
 Your goal is to optimize hyperparameters for the champion model '{champion_model}' to maximize prediction '{metric}'.
 The task is {problem_type}.
 
@@ -58,9 +58,9 @@ ALLOWED_PARAMS = {
     "KNN": "- n_neighbors: integer between 2 and 20\n- weights: string, either 'uniform' or 'distance'"
 }
 
-JUSTIFICATION_PROMPT = """You are ModelForge's AutoML Champion Architect.
+JUSTIFICATION_PROMPT = """You are نَمذِج's AutoML Champion Architect.
 You have just run an agentic fine-tuning optimization loop that searched for the best model configuration.
-Please write a comprehensive, extremely premium and engaging 4-6 sentence "Explainable AI Justification" for the results.
+Please write an extremely brief, premium and punchy 1-2 sentence "Explainable AI Justification" for the results. Keep it as brief and high-impact as possible.
 
 Champion Model: {champion_model}
 Problem Type: {problem_type}
@@ -74,12 +74,11 @@ Tuning Process History details:
 {history}
 
 In the justification, explain:
-1. What the baseline model was and why it won the initial leaderboard competition.
-2. The agentic fine-tuning loop: what hyperparameters the agent scanned/tested, what it learned from the trials (e.g. how it raised accuracy or handled overfitting), and how the final optimized score compared to the starting baseline.
-3. A plain-english explanation of what this final score means for decision makers, including one realistic real-world caveat or weakness (e.g., potential outliers, specific target range limitations).
+1. Why this champion model won and the benefit of the optimal hyperparameters selected by the نَمذِج reasoning engine.
+2. A very brief, plain-english explanation of the performance improvement, including one key real-world caveat (e.g., sensitive to rare outliers).
 
-Write in a neutral, confident, and professional tone suitable for a data analyst or business leader.
-Do not use markdown fences or mention 'agent', 'LangChain' directly—focus on 'ModelForge reasoning engine' or 'agentic optimization'.
+Write in a neutral, confident, and extremely concise professional tone suitable for a data analyst or business leader. Keep it strictly to 1-2 sentences maximum.
+Do not use markdown fences or mention 'agent', 'LangChain' directly-focus on 'نَمذِج reasoning engine' or 'agentic optimization'.
 """
 
 
@@ -101,7 +100,7 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
 
     # IMPORTANT: select by CV mean, not held-out test score. Reusing the same
     # 20% test set across N trials and picking the highest-scoring config is
-    # textbook leakage — it biases the reported metric upward by selecting for
+    # textbook leakage - it biases the reported metric upward by selecting for
     # quirks of that specific split. CV mean keeps the held-out set genuinely
     # held out. We preserve the test score in extra["test_score"] as a sanity
     # check the user can still see.
@@ -131,7 +130,7 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
             {"trial": 0, "parameters": "Baseline Settings", "score": baseline_score, "result": "Champion baseline (CV mean)"}
         ]
         
-        max_loops = 2
+        max_loops = 3
         current_best_model_data = None
         
         allowed_params_text = ALLOWED_PARAMS.get(champion_model, "- No adjustable parameters available.")
@@ -221,6 +220,14 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
         justification_res = llm.invoke(justification_prompt)
         justification = justification_res.content.strip()
         
+        # Persist the tuning trial log regardless of whether a better model was
+        # found — the UI shows it as a before/after card, and "we tried these and
+        # none beat the baseline" is a real result worth surfacing.
+        if len(history) > 1:
+            extra_persist = baseline_results.get("extra", {})
+            extra_persist["tuning_trials"] = history
+            baseline_results["extra"] = extra_persist
+
         # If we successfully optimized and found a better model, update the metrics and assets!
         if current_best_model_data:
             import numpy as np

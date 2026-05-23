@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { uploadCSV } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Brand } from "@/components/brand";
 
 const VERIFY_STEPS = [
   "Reading CSV byte stream into client buffer...",
@@ -129,7 +130,7 @@ export default function UploadPage() {
             </motion.div>
             <h3 className="text-headline-lg text-primary font-bold mb-2">Drop your CSV here</h3>
             <p className="text-body-lg text-on-surface-variant font-medium">
-              ModelForge will automatically parse features and check schema health.
+              <Brand /> will automatically parse features and check schema health.
             </p>
           </motion.div>
         )}
@@ -142,15 +143,10 @@ export default function UploadPage() {
           <div>
             <h2 className="text-headline-lg text-on-surface mb-2 font-bold">Data Ingestion</h2>
             <p className="text-body-lg text-on-surface-variant">
-              Upload a dataset and ModelForge will automatically configure and run the full training pipeline.
+              Upload a dataset and <Brand /> will automatically configure and run the full training pipeline.
             </p>
           </div>
-          <div className="flex gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 bg-surface-container-high px-4.5 py-1.5 rounded-full text-label-sm font-semibold text-on-surface-variant border border-outline-variant">
-              <span className="material-symbols-outlined text-outline" style={{ fontSize: "16px" }}>storage</span>
-              Storage Quota: 45% used
-            </span>
-          </div>
+
         </div>
 
         {/* Upload card */}
@@ -163,10 +159,7 @@ export default function UploadPage() {
                 <span className="material-symbols-outlined text-primary">upload_file</span>
                 Upload Dataset
               </h3>
-              <button className="text-primary hover:bg-surface-purple-tint/50 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
-                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>link</span>
-                <span className="text-xs font-semibold">Import via URL</span>
-              </button>
+
             </div>
 
             {/* Dropzone */}
@@ -276,17 +269,19 @@ export default function UploadPage() {
                         onClick={handleUpload}
                         disabled={uploading}
                         className={cn(
-                          "bg-primary-container hover:bg-primary text-white text-label-md px-6 py-2.5 rounded-lg shadow-sm font-bold transition-all flex items-center gap-2",
+                          "bg-primary-container hover:bg-primary !text-white text-label-md px-6 py-2.5 rounded-lg shadow-sm font-bold transition-all flex items-center gap-2",
                           uploading && "opacity-60 cursor-not-allowed"
                         )}
                       >
                         <span
-                          className={cn("material-symbols-outlined", uploading && "animate-spin")}
+                          className={cn("material-symbols-outlined !text-white", uploading && "animate-spin")}
                           style={{ fontSize: "18px" }}
                         >
                           {uploading ? "sync" : "play_arrow"}
                         </span>
-                        {uploading ? "Uploading..." : "Start Ingestion"}
+                        <span className="!text-white">
+                          {uploading ? "Uploading..." : "Start Ingestion"}
+                        </span>
                       </motion.button>
                     </div>
                   </div>

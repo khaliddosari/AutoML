@@ -10,7 +10,7 @@ cd "c:\Users\khali\Downloads\AutoML\Backend"
 uvicorn app.main:app --reload --port 8000
 
 Frontend:
-cd "c:\Users\khali\Downloads\AutoML\Frontend"
+cd "C:\Users\Khalid\Downloads\Coding Projects\AutoML\Frontend"
 npm run dev
 
 ---
@@ -19,16 +19,16 @@ npm run dev
 
 End-to-end pipeline for a single CSV → single best model:
 
-1. **Upload** — user POSTs a CSV; backend stores it and returns column list + preview.
-2. **Target select** — user picks the target column.
-3. **Agent run** — LangChain agent (DeepSeek via OpenRouter) drives a fixed tool sequence:
-   1. `profile_dataset` — schema, dtypes, missing, uniques.
-   2. `detect_problem_type` — inspects target → `regression` or `classification`.
-   3. `run_eda` — numeric summary, target distribution, correlations.
-   4. `feature_engineer` — drop high-missing & id-like cols, impute, encode categoricals.
-   5. `train_model` — RandomForest (regressor or classifier) with 5-fold CV + 80/20 holdout.
-   6. `generate_visualization` — predicted-vs-actual (regression) or confusion matrix (classification).
-4. **Output** — accuracy score (R² for regression, accuracy for classification), one plot, and a 3–5 sentence justification.
+1. **Upload** - user POSTs a CSV; backend stores it and returns column list + preview.
+2. **Target select** - user picks the target column.
+3. **Agent run** - LangChain agent (DeepSeek via OpenRouter) drives a fixed tool sequence:
+   1. `profile_dataset` - schema, dtypes, missing, uniques.
+   2. `detect_problem_type` - inspects target → `regression` or `classification`.
+   3. `run_eda` - numeric summary, target distribution, correlations.
+   4. `feature_engineer` - drop high-missing & id-like cols, impute, encode categoricals.
+   5. `train_model` - RandomForest (regressor or classifier) with 5-fold CV + 80/20 holdout.
+   6. `generate_visualization` - predicted-vs-actual (regression) or confusion matrix (classification).
+4. **Output** - accuracy score (R² for regression, accuracy for classification), one plot, and a 3–5 sentence justification.
 
 This is the **M1–M2 vertical slice** from PRD §12, not the final v1. The full PRD still calls for 5 models per tier and richer Gemini reasoning.
 
@@ -98,17 +98,17 @@ backend/
 
 Every run produces these files under `storage/runs/<run_id>/`:
 
-- `dataset.csv` — original upload
-- `engineered.csv` — after feature engineering
+- `dataset.csv` - original upload
+- `engineered.csv` - after feature engineering
 - `profile.json`, `detection.json`, `eda.json`, `feature_engineering.json`, `metrics.json`, `visualization.json`
-- `plot.png` — the result graph
-- `status.json` — current lifecycle state
-- `result.json` — final agent output (score + justification + plot path)
-- `y_test.npy`, `y_pred.npy` — held-out predictions for the plot
+- `plot.png` - the result graph
+- `status.json` - current lifecycle state
+- `result.json` - final agent output (score + justification + plot path)
+- `y_test.npy`, `y_pred.npy` - held-out predictions for the plot
 
 ## Notes & known gaps
 
 - **No object storage yet.** Storage is local filesystem. The interface in `storage.py` is the seam to swap in S3/R2 later.
-- **No PII filter yet** (PRD §6.3 / §7). Add before sending anything from the dataset itself to the LLM — currently only metric numbers and schema flow to OpenRouter.
+- **No PII filter yet** (PRD §6.3 / §7). Add before sending anything from the dataset itself to the LLM - currently only metric numbers and schema flow to OpenRouter.
 - **Single model per type.** PRD calls for 5 candidates per tier; this slice ships RandomForest as the default to keep the loop end-to-end runnable.
 - **In-process background tasks**, not Celery/BullMQ. Swap later when concurrency matters.

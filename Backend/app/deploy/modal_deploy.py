@@ -56,7 +56,7 @@ def deploy_run(run_id: str) -> dict:
     run_dir = storage.run_dir(run_id)
     model_path = run_dir / "model.joblib"
     if not model_path.exists():
-        err = "model.joblib missing — has the training run succeeded?"
+        err = "model.joblib missing - has the training run succeeded?"
         _write_deployment(run_id, status="failed", error=err, finished_at=_now())
         return {"status": "failed", "error": err}
 
@@ -162,11 +162,27 @@ def _parse_urls(text: str) -> tuple[str | None, str | None, list[str]]:
 
     Modal builds endpoint hostnames as `{ws}--{app}-{class}-{method}.modal.run`,
     so the *method* name appears as the final segment before `.modal.run`. We
-    match on that suffix — matching anywhere in the URL would conflate
+    match on that suffix - matching anywhere in the URL would conflate
     `predictor-predict` with `predictor-schema`.
+
+    Modal's CLI uses `rich` box-drawing to render the result tree and wraps
+    long URLs across multiple lines. Mid-tree children use a `│   ` (vertical
+    bar + 3 spaces) continuation prefix; the last child (`└──`) uses 4 spaces
+    instead. Both wrap URLs like:
+
+        │   https://workspace--app-predictor-schema.modal.ru
+        │   n
+            https://workspace--app-predictor-predict.modal.r
+            un
+
+    We strip both continuation styles before regex-scanning so the URLs
+    survive as single tokens.
     """
     clean = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
-    raw = re.findall(r"https://[A-Za-z0-9\-\.]+\.modal\.run[/\w\-]*", clean)
+    # Join any tree-style continuation: newline followed by 4 chars that are
+    # either the vertical-bar box character or spaces.
+    unwrapped = re.sub(r"\n[│ ]{4}", "", clean)
+    raw = re.findall(r"https://[A-Za-z0-9\-\.]+\.modal\.run[/\w\-]*", unwrapped)
     seen: set[str] = set()
     urls = [u for u in raw if not (u in seen or seen.add(u))]
 

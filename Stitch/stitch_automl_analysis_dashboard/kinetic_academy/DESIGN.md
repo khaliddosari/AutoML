@@ -118,13 +118,13 @@ spacing:
 
 The design system is engineered for a tech-forward educational environment that balances professional rigor with energetic momentum. It is designed to feel ambitious, modern, and highly structured, mirroring the precision of coding and digital craftsmanship. 
 
-The aesthetic blends **Modern Corporate** reliability with **High-Contrast Bold** accents. It utilizes a predominantly light, airy canvas to ensure that the vibrant secondary palette is used with surgical precision—highlighting achievements, paths, and calls to action. The visual language is punctuated by geometric discipline, using grid-based patterns and clean lines to evoke a sense of digital architecture.
+The aesthetic blends **Modern Corporate** reliability with **High-Contrast Bold** accents. It utilizes a predominantly light, airy canvas to ensure that the vibrant secondary palette is used with surgical precision-highlighting achievements, paths, and calls to action. The visual language is punctuated by geometric discipline, using grid-based patterns and clean lines to evoke a sense of digital architecture.
 
 ## Colors
 
 This design system utilizes a high-energy "Vibrant Tech" palette. The primary Purple serves as the anchor, used for headers, primary actions, and brand identification. 
 
-The secondary palette (Yellow, Green, Blue, Pink, Orange) is functional rather than purely decorative. These colors should be used as "Signals"—Yellow for featured paths, Green for completion/success, and Blue for interactive depth. Surfaces primarily use white (#FFFFFF) and a cool neutral (#F5F5F7) to maintain clarity, while very soft tints of the primary and functional colors (e.g., `#E7DDFF`) are used to create distinct content zones without overwhelming the user.
+The secondary palette (Yellow, Green, Blue, Pink, Orange) is functional rather than purely decorative. These colors should be used as "Signals"-Yellow for featured paths, Green for completion/success, and Blue for interactive depth. Surfaces primarily use white (#FFFFFF) and a cool neutral (#F5F5F7) to maintain clarity, while very soft tints of the primary and functional colors (e.g., `#E7DDFF`) are used to create distinct content zones without overwhelming the user.
 
 ## Typography
 
@@ -142,7 +142,7 @@ The spacing rhythm is based on an 8px baseline. Section-to-section transitions r
 
 Visual hierarchy is achieved through **Tonal Layers** and **Low-Contrast Outlines**. 
 
-Instead of traditional heavy shadows, the system uses subtle "ghost borders" (1px solid borders using a 10% opacity version of the primary color) to define containers. Depth is signaled by shifting surface colors—from pure White to the Neutral Grey (#F5F5F7). 
+Instead of traditional heavy shadows, the system uses subtle "ghost borders" (1px solid borders using a 10% opacity version of the primary color) to define containers. Depth is signaled by shifting surface colors-from pure White to the Neutral Grey (#F5F5F7). 
 
 In specific "featured" instances, a very soft, diffused ambient shadow with a hint of the primary purple tint is used to lift primary cards off the page, making them feel interactive and "hoverable."
 

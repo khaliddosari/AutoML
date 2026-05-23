@@ -14,7 +14,7 @@ def feature_engineer(run_id: str, target: str) -> dict:
     Structural decisions live here (drop high-missing columns, drop id-like
     columns, drop rows with a missing target). Encoding is intentionally
     deferred to the training pipeline so each CV fold fits its own encoders
-    on its own train portion — that closes the encoder-leakage source and
+    on its own train portion - that closes the encoder-leakage source and
     lets the deployed Modal endpoint accept raw inputs (the Pipeline encodes
     them internally before predicting).
     """
@@ -46,7 +46,7 @@ def feature_engineer(run_id: str, target: str) -> dict:
             dropped.append(f"{c} (id-like)")
 
     # 4. Record the encoding plan. The actual encoders are fit by the training
-    # pipeline, not here — see app/pipeline/train.py:_build_preprocessor.
+    # pipeline, not here - see app/pipeline/train.py:_build_preprocessor.
     for c in df.columns:
         if c == target or is_numeric_dtype(df[c]):
             continue
