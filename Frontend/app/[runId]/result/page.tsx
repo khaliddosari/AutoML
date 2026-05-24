@@ -1,107 +1,115 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getResult,
   getStatus,
   plotUrl,
+  getDeployment,
   type RunResult,
   type FeatureImportance,
   type ModelScore,
   type TuningTrial,
+  type Deployment,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { formatArabicBrand } from "@/components/brand";
 
 /* ─── Metric card ── */
-function MetricCard({
-  title,
-  value,
-  unit,
-  accent,
-  icon,
-  trend,
-  trendVal,
-  children,
+/* ─── Combined Accuracy + Feature Importance card ── */
+function AccuracyAndFeaturesCard({
+  features,
+  accuracyPct,
+  accuracyLabel,
+  accuracyUnit,
+  trendLabel,
+  trendKind,
+  trainScore,
+  overfitGap,
 }: {
-  title: string;
-  value: string;
-  unit?: string;
-  accent: "green" | "blue" | "purple";
-  icon: string;
-  trend?: "up" | "down" | "flat";
-  trendVal?: string;
-  children?: React.ReactNode;
+  features: FeatureImportance[];
+  accuracyPct: number;
+  accuracyLabel: string;
+  accuracyUnit: string;
+  trendLabel: string;
+  trendKind: "up" | "flat" | "down";
+  trainScore?: number;
+  overfitGap?: number;
 }) {
-  const accentMap = {
-    green: { bar: "bg-success-green", iconBg: "bg-surface-green-tint", iconColor: "text-success-green", trendColor: "text-success-green" },
-    blue: { bar: "bg-info-blue", iconBg: "bg-surface-container", iconColor: "text-info-blue", trendColor: "text-info-blue" },
-    purple: { bar: "bg-primary", iconBg: "bg-surface-purple-tint", iconColor: "text-primary", trendColor: "text-primary" },
-  };
-  const a = accentMap[accent];
-
-  return (
-    <div className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant card-shadow relative overflow-hidden text-left">
-      <div className={`absolute top-0 left-0 w-full h-1 ${a.bar}`} />
-      <div className="flex justify-between items-start mb-4">
-        <div className={cn("p-2 rounded-lg shrink-0", a.iconBg, a.iconColor)}>
-          <span className="material-symbols-outlined block" style={{ fontSize: "20px" }}>{icon}</span>
-        </div>
-        {trend && trendVal && (
-          <span className={`flex items-center text-xs font-bold gap-1 shrink-0 ${trend === "down" ? "text-error" : trend === "up" ? a.trendColor : "text-on-surface-variant"}`}>
-            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-              {trend === "up" ? "trending_up" : trend === "down" ? "trending_down" : "horizontal_rule"}
-            </span>
-            {trendVal}
-          </span>
-        )}
-      </div>
-      <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">{title}</h3>
-      <div className="text-3xl font-black text-on-background font-mono leading-none">
-        {value}
-        {unit && <span className="text-sm font-bold text-on-surface-variant ml-1 font-sans">{unit}</span>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/* ─── Feature importance (SHAP) ── */
-function FeatureImportanceCard({ features }: { features: FeatureImportance[] }) {
   const top = features.slice(0, 5);
   const max = Math.max(...top.map((f) => f.importance));
-  const COLORS = ["bg-primary", "bg-info-blue", "bg-warning-orange", "bg-secondary-fixed-dim", "bg-outline"];
-  
-  // Feature hover details state
-  const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
+  const COLORS = [
+    "bg-primary",
+    "bg-primary-container",
+    "bg-surface-tint",
+    "bg-primary-fixed-dim",
+    "bg-surface-purple-tint",
+  ];
 
-  const getFeatureExplanation = (name: string): string => {
-    return `SHAP analysis indicates '${name}' has a direct correlation with prediction deviations. A higher value shifts the probability output by ${(Math.random() * 8 + 2).toFixed(1)}%.`;
-  };
+  const trendColor =
+    trendKind === "down" ? "text-error" : trendKind === "up" ? "text-success-green" : "text-on-surface-variant";
+  const trendIcon = trendKind === "up" ? "trending_up" : trendKind === "down" ? "trending_down" : "horizontal_rule";
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col h-full card-shadow relative text-left">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-headline-md font-bold text-on-background">Feature Importance (SHAP)</h3>
+    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
+      <div className="absolute top-0 left-0 w-full h-1 bg-success-green" />
+
+      {/* Accuracy header */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="p-2 rounded-lg shrink-0 bg-surface-green-tint text-success-green">
+          <span className="material-symbols-outlined block" style={{ fontSize: "20px" }}>target</span>
+        </div>
+        <span className={cn("flex items-center text-sm font-bold gap-1 shrink-0", trendColor)}>
+          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>{trendIcon}</span>
+          {trendLabel}
+        </span>
+      </div>
+      <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-1">{accuracyLabel}</h3>
+      <div className="text-4xl font-black text-success-green font-mono leading-none">
+        {accuracyPct.toFixed(2)}
+        <span className="text-base font-bold text-success-green/70 ml-1 font-sans">{accuracyUnit}</span>
+      </div>
+      <div className="mt-4 w-full bg-surface-variant h-2 rounded-full overflow-hidden">
+        <motion.div
+          className="bg-success-green h-full rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${accuracyPct}%` }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+        />
+      </div>
+      {trainScore !== undefined && (
+        <div className="mt-3 flex justify-between text-xs font-bold text-on-surface-variant uppercase tracking-wider font-mono">
+          <span>Train score: {(trainScore * 100).toFixed(1)}%</span>
+          {overfitGap !== undefined && overfitGap > 0.12 && (
+            <span className="text-warning-orange flex items-center gap-1.5 font-sans font-bold">
+              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>warning</span>
+              Overfit warning: {(overfitGap * 100).toFixed(0)}% Gap
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Divider */}
+      <div className="my-6 border-t border-outline-variant" />
+
+      {/* Feature importance section */}
+      <div className="flex justify-between items-center mb-5">
+        <h3 className="text-headline-md font-bold text-on-background">Feature Importance</h3>
         <span className="material-symbols-outlined text-outline" style={{ fontSize: "20px" }}>analytics</span>
       </div>
-      
-      <div className="flex-1 space-y-4 relative">
+
+      <div className="flex-1 flex flex-col gap-4 relative">
         {top.map((f, i) => {
           const pct = max > 0 ? (f.importance / max) * 100 : 0;
           return (
-            <div
-              key={f.feature}
-              onMouseEnter={() => setHoveredFeature(f.feature)}
-              onMouseLeave={() => setHoveredFeature(null)}
-              className="relative cursor-help"
-            >
-              <div className="flex justify-between text-xs font-bold mb-1">
+            <div key={f.feature} className="relative flex-1 flex flex-col justify-center min-h-0">
+              <div className="flex justify-between text-sm font-bold mb-2">
                 <span className="text-on-background truncate mr-2">{f.feature}</span>
                 <span className="text-on-surface-variant font-mono">{f.importance.toFixed(4)}</span>
               </div>
-              <div className="w-full bg-surface-variant h-3 rounded-full overflow-hidden">
+              <div className="w-full bg-surface-variant h-4 rounded-full overflow-hidden">
                 <motion.div
                   className={cn(COLORS[i], "h-full rounded-full")}
                   initial={{ width: 0 }}
@@ -109,20 +117,6 @@ function FeatureImportanceCard({ features }: { features: FeatureImportance[] }) 
                   transition={{ duration: 0.65, delay: i * 0.06, ease: "easeOut" }}
                 />
               </div>
-
-              {/* SHAP explanation popover */}
-              <AnimatePresence>
-                {hoveredFeature === f.feature && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute top-10 left-0 right-0 bg-inverse-surface text-inverse-on-surface text-xs font-medium rounded-xl p-4 z-30 shadow-lg leading-relaxed border border-outline/10"
-                  >
-                    {getFeatureExplanation(f.feature)}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           );
         })}
@@ -140,7 +134,8 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
 
   return (
     <>
-      <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col h-full card-shadow relative text-left">
+      <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
+        <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-headline-md font-bold text-on-background">
             {isClassification ? "Confusion Matrix" : "Predicted vs Actual"}
@@ -156,10 +151,10 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
 
         <div
           onClick={() => setLightboxOpen(true)}
-          className="flex-1 relative rounded-lg overflow-hidden bg-surface-container min-h-[220px] cursor-pointer group"
+          className="flex-1 relative rounded-lg overflow-hidden bg-surface-container-lowest min-h-[220px] cursor-pointer group"
         >
           {!loaded && <div className="absolute inset-0 shimmer" />}
-          
+
           {/* Glassmorphic hover overlay */}
           <div className="absolute inset-0 bg-surface/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 z-10">
             <span className="material-symbols-outlined text-primary bg-surface-container-lowest p-3 rounded-full shadow-md" style={{ fontSize: "28px" }}>zoom_in</span>
@@ -168,6 +163,7 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
           <img
             src={url}
             alt="Model result plot"
+            crossOrigin="anonymous"
             className={cn(
               "w-full h-full object-contain transition-all duration-500 group-hover:scale-103",
               loaded ? "opacity-100" : "opacity-0"
@@ -175,11 +171,16 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
             onLoad={() => setLoaded(true)}
           />
         </div>
-        <p className="text-[10px] font-medium text-on-surface-variant mt-3 uppercase tracking-wider font-mono">
-          {isClassification
-            ? "Diagonal = correct predictions. Bright purple index indicates accurate validation."
-            : "Closer plot clusters along correlation slope indicate tighter residual coefficients."}
-        </p>
+        <div className="text-xs font-medium text-on-surface-variant mt-3 uppercase tracking-wider font-mono space-y-1">
+          {isClassification ? (
+            <>
+              <p>Diagonal = correct predictions.</p>
+              <p>Bright purple index indicates accurate validation.</p>
+            </>
+          ) : (
+            <p>Closer plot clusters along correlation slope indicate tighter residual coefficients.</p>
+          )}
+        </div>
       </div>
 
       {/* Lightbox Modal */}
@@ -211,7 +212,7 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
               </h3>
               
               <div className="bg-surface rounded-xl p-2 border border-outline-variant flex items-center justify-center max-h-[500px]">
-                <img src={url} alt="Large plot" className="max-h-[460px] object-contain rounded-lg" />
+                <img src={url} alt="Large plot" crossOrigin="anonymous" className="max-h-[460px] object-contain rounded-lg" />
               </div>
             </motion.div>
           </motion.div>
@@ -245,8 +246,8 @@ function TuningResultsCard({
       {/* Header */}
       <div className="p-5 border-b border-outline-variant flex flex-wrap justify-between items-center gap-3 bg-surface-bright">
         <div>
-          <h3 className="text-headline-md font-bold text-on-background">Hyperparameter Tuning</h3>
-          <p className="text-xs text-on-surface-variant mt-0.5 font-mono">
+          <h3 className="text-[28px] leading-tight font-bold tracking-tight text-on-background">Hyperparameter Tuning</h3>
+          <p className="text-xs text-on-surface-variant mt-1.5 font-mono">
             Agentic optimization loop · {tuningTrials.length} trial{tuningTrials.length !== 1 ? "s" : ""} on <strong className="text-primary">{modelName}</strong>
           </p>
         </div>
@@ -286,12 +287,9 @@ function TuningResultsCard({
           <span className="text-[10px] font-black uppercase tracking-widest font-mono mb-1 text-success-green">
             ✦ After Tuning
           </span>
-          <span className={cn(
-            "text-4xl font-black font-mono",
-            improved ? "text-success-green" : "text-on-background"
-          )}>
+          <span className="text-4xl font-black font-mono text-success-green">
             {(optimized * 100).toFixed(2)}
-            <span className="text-base font-bold text-on-surface-variant ml-1">%</span>
+            <span className="text-base font-bold text-success-green/70 ml-1">%</span>
           </span>
           <span className="text-[11px] text-on-surface-variant font-mono mt-0.5">
             Optimized {metric.toUpperCase()} · best params
@@ -314,13 +312,13 @@ function TuningResultsCard({
 
       {/* Trial history table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse font-sans">
+        <table className="w-full text-left border-collapse font-sans text-sm">
           <thead>
-            <tr className="bg-surface-container-low border-b border-outline-variant text-on-surface-variant">
-              <th className="p-4 text-[10px] font-black uppercase tracking-wider w-16">Trial</th>
-              <th className="p-4 text-[10px] font-black uppercase tracking-wider">Parameters Tested</th>
-              <th className="p-4 text-[10px] font-black uppercase tracking-wider text-right w-28">Score</th>
-              <th className="p-4 text-[10px] font-black uppercase tracking-wider">Outcome</th>
+            <tr className="bg-surface-container-low text-label-md text-on-surface-variant font-bold border-b border-outline-variant">
+              <th className="p-5 text-xs uppercase tracking-wider w-20 whitespace-nowrap">Trial</th>
+              <th className="p-5 text-xs uppercase tracking-wider whitespace-nowrap">Parameters Tested</th>
+              <th className="p-5 text-xs uppercase tracking-wider text-right w-28 whitespace-nowrap">Score</th>
+              <th className="p-5 text-xs uppercase tracking-wider whitespace-nowrap">Outcome</th>
             </tr>
           </thead>
           <tbody>
@@ -328,15 +326,17 @@ function TuningResultsCard({
               const isBaseline = t.trial === 0;
               const isBest = !isBaseline && Math.abs(t.score - optimized) < 0.00005 && improved;
 
-              let paramsLabel = t.parameters;
+              // Parse the trial parameters into a list of {key, value} chips so
+              // the user can see exactly which hyperparameters the optimizer
+              // changed for this trial. Falls back to raw string on parse error.
+              let paramEntries: Array<[string, string]> = [];
+              let paramFallback = "";
               if (!isBaseline) {
                 try {
                   const obj = JSON.parse(t.parameters) as Record<string, unknown>;
-                  paramsLabel = Object.entries(obj)
-                    .map(([k, v]) => `${k}=${v}`)
-                    .join("  ·  ");
+                  paramEntries = Object.entries(obj).map(([k, v]) => [k, String(v)]);
                 } catch {
-                  paramsLabel = t.parameters;
+                  paramFallback = t.parameters;
                 }
               }
 
@@ -347,30 +347,51 @@ function TuningResultsCard({
                     "border-b border-outline-variant/40 last:border-0 transition-colors",
                     isBaseline && "bg-surface-container-low/40",
                     isBest && "bg-surface-green-tint/20",
-                    !isBaseline && !isBest && "hover:bg-surface-container-low/40"
+                    !isBaseline && !isBest && "hover:bg-surface-container-low/60"
                   )}
                 >
                   {/* Trial # */}
-                  <td className="p-4">
+                  <td className="p-5 align-middle">
                     {isBaseline ? (
-                      <span className="inline-block text-[9px] font-black uppercase tracking-widest text-outline bg-surface-container px-2 py-0.5 rounded-full border border-outline-variant font-mono">
+                      <span className="inline-block text-[11px] font-black uppercase tracking-widest text-outline bg-surface-container px-3 py-1 rounded-full border border-outline-variant font-mono">
                         Base
                       </span>
                     ) : isBest ? (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-success-green bg-surface-green-tint px-2 py-0.5 rounded-full border border-success-green/20 font-mono">
-                        <span className="material-symbols-outlined" style={{ fontSize: "10px" }}>star</span>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-success-green bg-surface-green-tint px-3 py-1 rounded-full border border-success-green/20 font-mono">
+                        <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>star</span>
                         #{t.trial}
                       </span>
                     ) : (
-                      <span className="font-mono font-bold text-xs text-on-surface-variant">#{t.trial}</span>
+                      <span className="font-mono font-bold text-on-surface-variant">#{t.trial}</span>
                     )}
                   </td>
-                  {/* Params */}
-                  <td className="p-4 font-mono text-[11px] text-on-surface-variant max-w-xs">
-                    <span className="truncate block" title={paramsLabel}>{paramsLabel}</span>
+                  {/* Params — render each changed hyperparameter as a chip */}
+                  <td className="p-5 align-middle">
+                    {isBaseline ? (
+                      <span className="font-mono text-on-surface-variant italic">
+                        Model defaults
+                      </span>
+                    ) : paramEntries.length > 0 ? (
+                      <div className="flex flex-nowrap gap-1.5 whitespace-nowrap">
+                        {paramEntries.map(([k, v]) => (
+                          <span
+                            key={k}
+                            className="inline-flex items-baseline gap-1 px-2.5 py-1 rounded-md bg-surface-purple-tint border border-primary-fixed-dim font-mono text-xs whitespace-nowrap"
+                          >
+                            <span className="font-bold text-primary">{k}</span>
+                            <span className="text-outline">=</span>
+                            <span className="font-semibold text-on-background">{v}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="font-mono text-on-surface-variant break-all">
+                        {paramFallback}
+                      </span>
+                    )}
                   </td>
                   {/* Score */}
-                  <td className="p-4 text-right font-mono font-bold text-sm">
+                  <td className="p-5 text-right font-mono font-bold align-middle">
                     <span className={cn(
                       isBest ? "text-success-green" :
                       isBaseline ? "text-on-surface-variant" : "text-on-surface"
@@ -378,21 +399,37 @@ function TuningResultsCard({
                       {(t.score * 100).toFixed(2)}%
                     </span>
                   </td>
-                  {/* Outcome */}
-                  <td className="p-4 text-xs max-w-xs">
-                    <span className={cn(
-                      "font-medium leading-relaxed",
-                      isBaseline && "text-primary font-semibold",
-                      t.result.toLowerCase().includes("new champion") && "text-success-green font-bold",
-                      t.result.toLowerCase().includes("error") && "text-error",
-                      !isBaseline && !t.result.toLowerCase().includes("new champion") && !t.result.toLowerCase().includes("error") && "text-on-surface-variant"
-                    )}>
-                      {isBaseline
-                        ? "Baseline: champion from initial leaderboard sweep"
-                        : t.result.length > 80
-                        ? t.result.slice(0, 77) + "…"
-                        : t.result}
-                    </span>
+                  {/* Outcome — keep the verdict+scores in full, trim the LLM reason
+                     so rows stay compact. Full text is shown on hover. */}
+                  <td className="p-5 align-middle">
+                    {(() => {
+                      const display = (() => {
+                        if (isBaseline) return "Baseline: champion from initial leaderboard sweep";
+                        const reasonIdx = t.result.indexOf("Reason:");
+                        if (reasonIdx === -1) {
+                          // No reason segment — cap whole string at 110 chars.
+                          return t.result.length > 110 ? t.result.slice(0, 107) + "…" : t.result;
+                        }
+                        const verdict = t.result.slice(0, reasonIdx).trim();
+                        const reason = t.result.slice(reasonIdx + "Reason:".length).trim();
+                        const shortReason = reason.length > 90 ? reason.slice(0, 87) + "…" : reason;
+                        return `${verdict} Reason: ${shortReason}`;
+                      })();
+                      return (
+                        <span
+                          title={t.result}
+                          className={cn(
+                            "font-medium leading-relaxed whitespace-normal break-words block",
+                            isBaseline && "text-primary font-semibold",
+                            t.result.toLowerCase().includes("new champion") && "text-success-green font-bold",
+                            t.result.toLowerCase().includes("error") && "text-error",
+                            !isBaseline && !t.result.toLowerCase().includes("new champion") && !t.result.toLowerCase().includes("error") && "text-on-surface-variant"
+                          )}
+                        >
+                          {formatArabicBrand(display)}
+                        </span>
+                      );
+                    })()}
                   </td>
                 </tr>
               );
@@ -410,9 +447,241 @@ export default function ResultPage() {
   const router = useRouter();
   const [result, setResult] = useState<RunResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deployment, setDeployment] = useState<Deployment | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
-  // Advanced UI Toggles
-  const [justificationExpanded, setJustificationExpanded] = useState(false);
+  const copyShareLink = async () => {
+    const base = typeof window !== "undefined" ? window.location.origin : "";
+    const link = `${base}/share/${runId}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1800);
+    } catch {
+      /* clipboard blocked - ignore */
+    }
+  };
+
+  // PNG export
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
+  // Captures the report region into a fully-styled PNG dataURL. Shared by both
+  // the PNG and PDF export handlers so they always render identically.
+  const captureSnapshot = async (): Promise<{
+    dataUrl: string;
+    width: number;
+    height: number;
+  } | null> => {
+    if (!exportRef.current) return null;
+
+    const fetchAsDataUrl = async (url: string): Promise<string | null> => {
+      try {
+        const res = await fetch(url, { mode: "cors" });
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        return await new Promise<string>((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onloadend = () => resolve(fr.result as string);
+          fr.onerror = reject;
+          fr.readAsDataURL(blob);
+        });
+      } catch {
+        return null;
+      }
+    };
+
+    // Fetches the Google Fonts CSS and inlines every woff2 URL inside it as a
+    // base64 data URI, so the resulting stylesheet is fully self-contained and
+    // works inside the SVG <foreignObject> that html-to-image rasterizes.
+    const fetchFontEmbedCSS = async (cssUrl: string): Promise<string> => {
+      try {
+        const res = await fetch(cssUrl, { mode: "cors" });
+        if (!res.ok) return "";
+        let css = await res.text();
+        const urlRefs = Array.from(
+          new Set(
+            Array.from(css.matchAll(/url\((https?:\/\/[^)]+)\)/g)).map((m) => m[1])
+          )
+        );
+        const replacements = await Promise.all(
+          urlRefs.map(async (u) => ({ u, data: await fetchAsDataUrl(u) }))
+        );
+        for (const { u, data } of replacements) {
+          if (data) css = css.split(u).join(data);
+        }
+        return css;
+      } catch {
+        return "";
+      }
+    };
+
+    const node = exportRef.current;
+    const CAPTURE_WIDTH = 1280;
+
+    // Build a sandbox container OUTSIDE the page's flex layout so we can render
+    // a 1280px-wide copy of the report regardless of the user's viewport width.
+    const sandbox = document.createElement("div");
+    sandbox.style.position = "fixed";
+    sandbox.style.left = "-100000px";
+    sandbox.style.top = "0";
+    sandbox.style.width = `${CAPTURE_WIDTH}px`;
+    sandbox.style.zIndex = "-1";
+    sandbox.style.pointerEvents = "none";
+    sandbox.style.background = "#ffffff";
+
+    const clone = node.cloneNode(true) as HTMLElement;
+    clone.style.width = `${CAPTURE_WIDTH}px`;
+    clone.style.maxWidth = `${CAPTURE_WIDTH}px`;
+    clone.style.flex = "none";
+    // A little bottom padding so the last row of the leaderboard isn't flush
+    // against the canvas edge.
+    clone.style.paddingBottom = "32px";
+    clone
+      .querySelectorAll("[data-export-ignore]")
+      .forEach((el) => el.remove());
+
+    // Strip scroll bars from the snapshot. The leaderboard and trial tables use
+    // `overflow-x-auto`; at 1280px-wide their content fits, but some browsers
+    // still reserve a scroll-bar gutter that appears as a grey strip in the
+    // capture. Forcing `overflow: visible` on the clone subtree removes those
+    // gutters while also hiding any vertical scrollbar artifacts.
+    const styleReset = document.createElement("style");
+    styleReset.textContent = `
+      .__export-clone, .__export-clone * {
+        overflow: visible !important;
+        scrollbar-width: none !important;
+      }
+      .__export-clone ::-webkit-scrollbar,
+      .__export-clone::-webkit-scrollbar { display: none !important; }
+    `;
+    clone.classList.add("__export-clone");
+    sandbox.appendChild(styleReset);
+    sandbox.appendChild(clone);
+    document.body.appendChild(sandbox);
+
+    try {
+      // Let the cloned subtree paint and any inline-styled animations settle.
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      // Wait for every <img> in the clone to be ready (the backend plot is CORS).
+      const imgs = Array.from(clone.querySelectorAll("img"));
+      await Promise.all(
+        imgs.map((img) =>
+          img.complete && img.naturalWidth > 0
+            ? Promise.resolve()
+            : new Promise<void>((resolve) => {
+                img.addEventListener("load", () => resolve(), { once: true });
+                img.addEventListener("error", () => resolve(), { once: true });
+              })
+        )
+      );
+
+      // Inline @font-face rules with base64 woff2 so Material Symbols ligatures
+      // render as glyphs in the snapshot instead of as literal text.
+      const FONT_URLS = [
+        "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
+        "https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0",
+      ];
+      const fontEmbedCSS = (
+        await Promise.all(FONT_URLS.map(fetchFontEmbedCSS))
+      ).join("\n");
+
+      // Wait one more frame after font load to make sure final layout is stable,
+      // then take the maximum of every height measurement we can get to defend
+      // against scrollHeight under-reporting when the clone is in a fixed sandbox.
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      const rect = clone.getBoundingClientRect();
+      const height = Math.ceil(
+        Math.max(clone.scrollHeight, clone.offsetHeight, rect.height)
+      );
+
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(clone, {
+        backgroundColor: "#ffffff",
+        pixelRatio: 2,
+        cacheBust: true,
+        width: CAPTURE_WIDTH,
+        height,
+        fontEmbedCSS,
+      });
+
+      return { dataUrl, width: CAPTURE_WIDTH, height };
+    } finally {
+      document.body.removeChild(sandbox);
+    }
+  };
+
+  const handleExportPng = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const snap = await captureSnapshot();
+      if (!snap) return;
+      const link = document.createElement("a");
+      link.href = snap.dataUrl;
+      link.download = `modelforge-${runId}-report.png`;
+      link.click();
+    } catch (e) {
+      console.error("PNG export failed", e);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const snap = await captureSnapshot();
+      if (!snap) return;
+
+      // Convert the PNG dataURL to a JPEG at 92% quality. PNG is lossless and
+      // would balloon the PDF past 40MB for a tall report; JPEG at 0.92 is
+      // visually indistinguishable and an order of magnitude smaller.
+      const jpegDataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("2d context unavailable"));
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/jpeg", 0.92));
+        };
+        img.onerror = () => reject(new Error("snapshot failed to decode"));
+        img.src = snap.dataUrl;
+      });
+
+      const { jsPDF } = await import("jspdf");
+      // Build the PDF in points (1px = 0.75pt at 96dpi). Using 'pt' with an
+      // explicit pixel→point conversion gives jsPDF a single accurate page
+      // size that exactly matches the snapshot — no auto-pagination, no
+      // letterboxing, just one tall page.
+      const PX_TO_PT = 0.75;
+      const widthPt = snap.width * PX_TO_PT;
+      const heightPt = snap.height * PX_TO_PT;
+      const pdf = new jsPDF({
+        orientation: widthPt > heightPt ? "landscape" : "portrait",
+        unit: "pt",
+        format: [widthPt, heightPt],
+        compress: true,
+      });
+      pdf.addImage(jpegDataUrl, "JPEG", 0, 0, widthPt, heightPt);
+      pdf.save(`modelforge-${runId}-report.pdf`);
+    } catch (e) {
+      console.error("PDF export failed", e);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  useEffect(() => {
+    getDeployment(runId).then(setDeployment).catch(() => {});
+  }, [runId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -488,14 +757,16 @@ export default function ResultPage() {
   const pct = Math.max(0, Math.min(100, score * 100));
   const isRegression = metric === "r2";
 
+  const deployed = deployment?.status === "succeeded" && !!deployment.predict_url;
+
   // Sort model scores for standard comparison
   const sortedModels = [...models].sort((a, b) => b.cv_mean - a.cv_mean);
 
   return (
     <div className="flex-1 overflow-y-auto p-gutter relative select-none">
 
-      <div className="max-w-[1280px] mx-auto w-full space-y-8">
-        
+      <div ref={exportRef} className="max-w-[1280px] mx-auto w-full space-y-8">
+
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -510,16 +781,84 @@ export default function ResultPage() {
           </div>
           
           <div className="flex items-center gap-3 shrink-0 ml-auto md:ml-0">
-            <span className="bg-surface-green-tint text-success-green border border-success-green/10 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5">
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>check_circle</span>
-              Pipeline Ready
-            </span>
+            {deployed ? (
+              <span className="bg-surface-green-tint text-success-green border border-success-green/10 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>bolt</span>
+                Endpoint Live
+              </span>
+            ) : (
+              <span className="bg-surface-container text-on-surface-variant border border-outline-variant px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5">
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>cloud_off</span>
+                Not Deployed
+              </span>
+            )}
+            {deployed && (
+              <button
+                onClick={copyShareLink}
+                className={cn(
+                  "text-xs font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border",
+                  shareCopied
+                    ? "bg-surface-green-tint text-success-green border border-success-green/30"
+                    : "text-on-surface-variant border-outline-variant hover:bg-surface-container"
+                )}
+                title="Copy a public link non-technical viewers can open"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                  {shareCopied ? "check" : "share"}
+                </span>
+                {shareCopied ? "Link copied!" : "Copy share link"}
+              </button>
+            )}
+            <button
+              onClick={() => router.push(`/${runId}/inference`)}
+              className="text-xs font-bold bg-primary text-on-primary border border-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>rocket_launch</span>
+              Go to test page
+            </button>
+
+            <div className="border-l border-outline-variant h-6 mx-1" />
+
             <button
               onClick={() => router.push("/")}
               className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>refresh</span>
               New Run
+            </button>
+            <button
+              onClick={handleExportPng}
+              disabled={exporting}
+              data-export-ignore
+              className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <span
+                className={cn(
+                  "material-symbols-outlined",
+                  exporting && "animate-spin"
+                )}
+                style={{ fontSize: "16px" }}
+              >
+                {exporting ? "sync" : "image"}
+              </span>
+              {exporting ? "Exporting..." : "Export PNG"}
+            </button>
+            <button
+              onClick={handleExportPdf}
+              disabled={exporting}
+              data-export-ignore
+              className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <span
+                className={cn(
+                  "material-symbols-outlined",
+                  exporting && "animate-spin"
+                )}
+                style={{ fontSize: "16px" }}
+              >
+                {exporting ? "sync" : "picture_as_pdf"}
+              </span>
+              {exporting ? "Exporting..." : "Export PDF"}
             </button>
           </div>
         </motion.div>
@@ -528,54 +867,34 @@ export default function ResultPage() {
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-surface-purple-tint/35 via-surface-bright to-surface-green-tint/15 border-2 border-primary/30 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 card-shadow relative overflow-hidden text-left"
+          className="bg-gradient-to-r from-surface-purple-tint/35 via-surface-bright to-surface-green-tint/15 border-2 border-primary/30 p-6 rounded-2xl flex flex-col md:flex-row md:items-stretch justify-between gap-6 card-shadow relative overflow-hidden text-left"
         >
           {/* Certificate golden glow decoration */}
           <div className="absolute -left-10 -top-10 w-44 h-44 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="flex items-center gap-4 flex-1 min-w-0 relative z-10">
+
+          <div className="flex items-start gap-4 flex-1 min-w-0 relative z-10">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-container to-primary text-white flex items-center justify-center shrink-0 shadow-md">
               <span className="material-symbols-outlined text-[32px] fill">workspace_premium</span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-primary bg-surface-purple-tint px-2 py-0.5 rounded-full font-mono">Champion Winner</span>
               <h2 className="text-2xl font-black text-on-surface truncate mt-1">{modelName}</h2>
-              
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-xs font-bold text-primary">Explainable AI Justification</span>
-                <button
-                  onClick={() => setJustificationExpanded(!justificationExpanded)}
-                  className="text-outline hover:text-primary transition-colors flex items-center"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                    {justificationExpanded ? "expand_less" : "expand_more"}
-                  </span>
-                </button>
-              </div>
 
-              {/* Justification toggle expanded */}
-              <AnimatePresence>
-                {justificationExpanded && result.justification && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="text-xs text-on-surface-variant leading-relaxed mt-2 p-3 bg-white border border-outline-variant rounded-lg font-medium"
-                  >
-                    {result.justification}
-                  </motion.p>
-                )}
-              </AnimatePresence>
+              {/* Justification — always visible, plain text on card background */}
+              {result.justification && (
+                <p className="text-sm text-on-surface-variant leading-relaxed mt-3 font-medium">
+                  {formatArabicBrand(result.justification)}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="flex gap-6 shrink-0 relative z-10">
-            <div className="flex flex-col text-right">
+          <div className="flex flex-col justify-center shrink-0 relative z-10 md:text-right gap-8">
+            <div className="flex flex-col">
               <span className="text-[10px] font-bold text-outline uppercase tracking-wider">Fold score variance</span>
               <span className="text-xl font-black text-primary font-mono mt-0.5">± 0.012</span>
             </div>
-            <div className="border-l border-outline-variant h-10" />
-            <div className="flex flex-col text-right">
+            <div className="flex flex-col">
               <span className="text-[10px] font-bold text-outline uppercase tracking-wider">Inference latency</span>
               <span className="text-xl font-black text-success-green font-mono mt-0.5">0.03 ms</span>
             </div>
@@ -599,70 +918,20 @@ export default function ResultPage() {
               Push the winning model to Modal as an API and run live predictions from the Inference page.
             </p>
           </div>
-          <span className="material-symbols-outlined text-primary shrink-0 group-hover:translate-x-1 transition-transform" style={{ fontSize: "24px" }}>arrow_forward</span>
+          <span
+            className="shrink-0 bg-primary text-on-primary px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 group-hover:bg-primary-container transition-colors"
+          >
+            Try Now
+            <span
+              className="material-symbols-outlined group-hover:translate-x-0.5 transition-transform"
+              style={{ fontSize: "18px" }}
+            >
+              arrow_forward
+            </span>
+          </span>
         </motion.button>
 
-        {/* Key Metrics Bento Grid */}
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
-          {/* Accuracy */}
-          <MetricCard
-            title={isRegression ? "R² Regression Score" : "Cross-Validation Accuracy"}
-            value={pct.toFixed(2)}
-            unit="%"
-            accent="green"
-            icon="target"
-            trend={pct >= 85 ? "up" : pct >= 65 ? "flat" : "down"}
-            trendVal={pct >= 85 ? "Excellent Match" : "Moderate Accuracy"}
-          >
-            <div className="mt-4 w-full bg-surface-variant h-2 rounded-full overflow-hidden">
-              <motion.div
-                className="bg-success-green h-full rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.9, ease: "easeOut" }}
-              />
-            </div>
-            {trainScore !== undefined && (
-              <div className="mt-3.5 flex justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-wider font-mono">
-                <span>Train score: {(trainScore * 100).toFixed(1)}%</span>
-                {overfitGap !== undefined && overfitGap > 0.12 && (
-                  <span className="text-warning-orange flex items-center gap-1.5 font-sans font-bold">
-                    <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>warning</span>
-                    Overfit warning: {(overfitGap * 100).toFixed(0)}% Gap
-                  </span>
-                )}
-              </div>
-            )}
-          </MetricCard>
-
-          {/* Winning Model type */}
-          <MetricCard
-            title="Pipeline Estimator"
-            value={modelName.length > 16 ? modelName.slice(0, 14) + "…" : modelName}
-            accent="purple"
-            icon="emoji_events"
-          >
-            <div className="mt-4 h-8 flex items-end gap-1 select-none">
-              {[40, 50, 45, 60, 75, 90, 95, 100].map((h, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "w-full rounded-t transition-colors",
-                    i >= 5 ? "bg-primary" : "bg-primary-fixed-dim"
-                  )}
-                  style={{ height: `${h}%` }}
-                />
-              ))}
-            </div>
-          </MetricCard>
-        </motion.section>
-
-        {/* Feature Importance & Plot Graphics */}
+        {/* Accuracy + Feature Importance (left) and Plot Graphics (right) */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -670,11 +939,20 @@ export default function ResultPage() {
           className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         >
           {features.length > 0 ? (
-            <FeatureImportanceCard features={features} />
+            <AccuracyAndFeaturesCard
+              features={features}
+              accuracyPct={pct}
+              accuracyLabel={isRegression ? "R² Regression Score" : "Cross-Validation Accuracy"}
+              accuracyUnit="%"
+              trendLabel={pct >= 85 ? "Excellent Match" : "Moderate Accuracy"}
+              trendKind={pct >= 85 ? "up" : pct >= 65 ? "flat" : "down"}
+              trainScore={trainScore}
+              overfitGap={overfitGap}
+            />
           ) : (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col items-center justify-center min-h-[280px]">
               <span className="material-symbols-outlined text-outline opacity-40 animate-pulse" style={{ fontSize: "48px" }}>bar_chart</span>
-              <p className="text-xs font-bold text-on-surface-variant font-mono mt-3">SHAP diagnostics not available for model type</p>
+              <p className="text-sm font-bold text-on-surface-variant font-mono mt-3">Feature diagnostics not available for model type</p>
             </div>
           )}
 

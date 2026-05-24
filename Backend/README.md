@@ -5,7 +5,7 @@ LangChain-orchestrated AutoML backend. See [../Docs/PRD.md](../Docs/PRD.md) for 
 ---
 ### For me
 Backend:
-cd "c:\Users\khali\Downloads\AutoML\Backend"
+cd "c:\Users\Khalid\Downloads\Coding Projects\AutoML\Backend"
 .venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload --port 8000
 
@@ -105,6 +105,61 @@ Every run produces these files under `storage/runs/<run_id>/`:
 - `status.json` - current lifecycle state
 - `result.json` - final agent output (score + justification + plot path)
 - `y_test.npy`, `y_pred.npy` - held-out predictions for the plot
+
+## Deploying inference to Modal (shared app)
+
+The "Deploy" button on the result page uploads each trained model to a single
+shared Modal app (`modelforge-inference`), instead of creating a brand new app
+per run. This keeps Modal's free tier viable when many people use the project:
+
+- One image build (cached after first deploy), not one per upload.
+- One deployment slot used forever, not one per upload.
+- Models live in a `modelforge-models` Modal Volume — uploading a new one is
+  just a file copy, no `modal deploy` per run.
+
+### One-time setup (do this once per workspace)
+
+1. `pip install modal` and `modal token new` if you haven't already.
+2. Add two lines to `Backend/.env`:
+
+   ```
+   MODAL_WORKSPACE=your-modal-username
+   ```
+
+   Find it by running `modal app list` — it's the workspace name shown at the
+   top, or the prefix of any existing app URL (`{workspace}--…modal.run`).
+
+3. Deploy the shared inference app **once**:
+
+   ```bash
+   modal deploy app/deploy/inference_app.py
+   ```
+
+   Modal builds the image (sklearn + pandas + fastapi pinned to the versions
+   in `IMAGE_PIN`) and registers the `modelforge-inference` app. Subsequent
+   user "Deploy" clicks just upload model files into the shared volume — no
+   image build, no new app.
+
+### When to re-deploy `inference_app.py`
+
+Only when:
+- You bump a pinned library version in `IMAGE_PIN` (must match the training
+  environment so unpickled models load cleanly).
+- You change the `Predictor` class (new endpoint, new preprocessing, etc.).
+
+Per-user model updates don't need a re-deploy.
+
+### URL shape
+
+After deploy, prediction and schema endpoints look like:
+
+```
+https://{MODAL_WORKSPACE}--modelforge-inference-predictor-predict.modal.run/?run_id=<id>
+https://{MODAL_WORKSPACE}--modelforge-inference-predictor-schema.modal.run/?run_id=<id>
+```
+
+The FastAPI backend proxies `/runs/<id>/predict` to these, so the frontend
+never has to know the URL or worry about CORS.
 
 ## Notes & known gaps
 

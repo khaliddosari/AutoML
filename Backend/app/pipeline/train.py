@@ -160,30 +160,46 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
     execution automatically if Modal is unavailable or not configured.
     """
     # ── try Modal ─────────────────────────────────────────────────────────────
+    use_modal = False
     try:
-        import modal
-        run_training = modal.Function.from_name("modelforge-train", "run_training")
-        csv_bytes = storage.engineered_path(run_id).read_bytes()
-        log.info("Sending training job to Modal for run %s", run_id)
-        result = run_training.remote(csv_bytes, target, problem_type)
+        csv_path = storage.engineered_path(run_id)
+        if csv_path.exists():
+            file_size_bytes = csv_path.stat().st_size
+            if file_size_bytes >= 5 * 1024 * 1024:
+                use_modal = True
+            else:
+                log.info(
+                    "Dataset is small (%.2f KB < 5 MB). Training locally for optimal performance.",
+                    file_size_bytes / 1024
+                )
+    except Exception as e:
+        log.warning("Error checking dataset size: %s. Defaulting to local training.", e)
 
-        # Save all artifacts returned by Modal
-        metrics = result["metrics"]
-        y_test = np.array(result["y_test"])
-        y_pred = np.array(result["y_pred"])
-        np.save(storage.run_dir(run_id) / "y_test.npy", y_test)
-        np.save(storage.run_dir(run_id) / "y_pred.npy", y_pred)
+    if use_modal:
+        try:
+            import modal
+            run_training = modal.Function.from_name("modelforge-train", "run_training")
+            csv_bytes = storage.engineered_path(run_id).read_bytes()
+            log.info("Sending training job to Modal for run %s", run_id)
+            result = run_training.remote(csv_bytes, target, problem_type)
 
-        bundle_buf = io.BytesIO(result["model_bytes"])
-        bundle = joblib.load(bundle_buf)
-        joblib.dump(bundle, storage.run_dir(run_id) / "model.joblib")
+            # Save all artifacts returned by Modal
+            metrics = result["metrics"]
+            y_test = np.array(result["y_test"])
+            y_pred = np.array(result["y_pred"])
+            np.save(storage.run_dir(run_id) / "y_test.npy", y_test)
+            np.save(storage.run_dir(run_id) / "y_pred.npy", y_pred)
 
-        storage.write_json(run_id, "metrics.json", metrics)
-        log.info("Modal training succeeded for run %s — model: %s", run_id, metrics.get("model_name"))
-        return metrics
+            bundle_buf = io.BytesIO(result["model_bytes"])
+            bundle = joblib.load(bundle_buf)
+            joblib.dump(bundle, storage.run_dir(run_id) / "model.joblib")
 
-    except Exception as exc:
-        log.warning("Modal training failed for run %s (%s) — falling back to local", run_id, exc)
+            storage.write_json(run_id, "metrics.json", metrics)
+            log.info("Modal training succeeded for run %s — model: %s", run_id, metrics.get("model_name"))
+            return metrics
+
+        except Exception as exc:
+            log.warning("Modal training failed for run %s (%s) — falling back to local", run_id, exc)
 
     # ── local fallback ────────────────────────────────────────────────────────
     df = pd.read_csv(storage.engineered_path(run_id))
@@ -211,18 +227,19 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         min_class_count = int(np.bincount(y_train.astype(int)).min())
         n_splits = max(2, min(5, min_class_count))
 
-        # Sweep: rank all candidates by 5-fold CV only (no wasted initial fit).
+        # Sweep: rank all candidates by 5-fold CV only.
         # Each template is cloned so module-level definitions are never mutated
         # and concurrent runs don't corrupt each other.
+        # PERF: previously each iteration also did a full fitted.fit + predict to
+        # compute a per-candidate test_acc that was then thrown away (never
+        # appended to all_scores). Dropping that wasted training pass roughly
+        # halves the per-candidate cost.
         all_scores: list[dict] = []
         best_name, best_template, best_cv_mean = None, None, -1.0
 
         for name, template in CLASSIFIERS:
             pipe = _wrap_with_preprocessor(X_train, clone(template))
             cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="accuracy", n_jobs=-1)
-            fitted = clone(pipe)
-            fitted.fit(X_train, y_train)
-            test_acc = float(accuracy_score(y_test, fitted.predict(X_test)))
             all_scores.append({
                 "name": name,
                 "cv_mean": round(float(cv.mean()), 4),
@@ -269,16 +286,15 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         # Cap CV folds by training set size to avoid degenerate folds on tiny datasets.
         n_splits = max(2, min(5, len(X_train) // 10))
 
-        # Sweep: rank all candidates by 5-fold CV only (no wasted initial fit).
+        # Sweep: rank all candidates by 5-fold CV only.
+        # PERF: dropped a wasted per-candidate fitted.fit + test_r2 that was
+        # never used downstream (same fix as the classification branch above).
         all_scores: list[dict] = []
         best_name, best_template, best_cv_mean = None, None, float("-inf")
 
         for name, template in REGRESSORS:
             pipe = _wrap_with_preprocessor(X_train, clone(template))
             cv = cross_val_score(pipe, X_train, y_train, cv=n_splits, scoring="r2", n_jobs=-1)
-            fitted = clone(pipe)
-            fitted.fit(X_train, y_train)
-            test_r2 = float(r2_score(y_test, fitted.predict(X_test)))
             all_scores.append({
                 "name": name,
                 "cv_mean": round(float(cv.mean()), 4),

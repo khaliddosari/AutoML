@@ -229,21 +229,14 @@ export default function InferencePage() {
                 Not Deployed
               </span>
             )}
-            <button
-              onClick={() => router.push(`/${runId}/result`)}
-              className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>insights</span>
-              Analytics
-            </button>
             {deployed && (
               <button
                 onClick={copyShareLink}
                 className={cn(
-                  "text-xs font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer",
+                  "text-xs font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border",
                   shareCopied
-                    ? "bg-surface-green-tint text-success-green border border-success-green/30"
-                    : "bg-primary text-on-primary border border-primary hover:opacity-90"
+                    ? "bg-surface-green-tint text-success-green border-success-green/30"
+                    : "text-on-surface-variant border-outline-variant hover:bg-surface-container"
                 )}
                 title="Copy a public link non-technical viewers can open"
               >
@@ -253,6 +246,13 @@ export default function InferencePage() {
                 {shareCopied ? "Link copied!" : "Copy share link"}
               </button>
             )}
+            <button
+              onClick={() => router.push(`/${runId}/result`)}
+              className="text-xs font-bold bg-primary text-on-primary border border-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>insights</span>
+              Analytics
+            </button>
           </div>
         </motion.div>
 

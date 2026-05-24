@@ -12,6 +12,16 @@ class Settings(BaseSettings):
     storage_dir: Path = Path("./storage")
     log_level: str = "INFO"
 
+    # Modal workspace username (visible in `modal app list` output). Used to
+    # construct shared-inference endpoint URLs without shelling out. Set via
+    # MODAL_WORKSPACE in .env. If unset, deploys fail with a clear error.
+    modal_workspace: str = ""
+    # Name of the deployed shared inference app — must match the `modal.App`
+    # name in app/deploy/inference_app.py.
+    modal_inference_app: str = "modelforge-inference"
+    # Modal Volume that holds per-run model bundles. Created on first upload.
+    modal_models_volume: str = "modelforge-models"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

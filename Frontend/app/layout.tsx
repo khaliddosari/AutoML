@@ -10,10 +10,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link
           href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
+          crossOrigin="anonymous"
         />
         <link
           href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
           rel="stylesheet"
+          crossOrigin="anonymous"
         />
       </head>
       <body className="bg-surface text-on-surface antialiased">

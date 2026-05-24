@@ -53,9 +53,9 @@ export function Sidebar() {
               <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>settings_input_component</span>
             </motion.div>
             
-            <div className="flex flex-col justify-center">
-              <h1 className="text-2xl text-primary leading-none"><Brand /></h1>
-            </div>
+            <h1 className="text-2xl text-primary flex items-center h-9">
+              <Brand />
+            </h1>
           </div>
 
           {/* Create Button */}

@@ -128,7 +128,7 @@ def deploy(run_id: str, background: BackgroundTasks) -> dict:
     storage.write_json(
         run_id,
         "deployment.json",
-        {"status": "deploying", "app_name": f"modelforge-{run_id}"},
+        {"status": "deploying", "app_name": settings.modal_inference_app},
     )
     background.add_task(deploy_run, run_id)
     return {"run_id": run_id, "status": "deploying"}

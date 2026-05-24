@@ -92,22 +92,53 @@ def _build_executor() -> AgentExecutor:
 def run_agent(run_id: str, target: str) -> dict:
     storage.write_status(run_id, "running", target=target)
     try:
-        executor = _build_executor()
-        result = executor.invoke({"run_id": run_id, "target": target})
-        parsed = _extract_json(result.get("output", ""))
-
-        metrics = storage.read_json(run_id, "metrics.json") or {}
+        log.info("Starting direct Python orchestration pipeline for run %s", run_id)
         
+        # Step 1: profile_dataset(run_id)
+        from app.pipeline import profile
+        log.info("Direct pipeline: profiling dataset...")
+        profile.profile_dataset(run_id)
+
+        # Step 2: detect_problem_type(run_id, target) -> reads problem_type
+        from app.pipeline import detect
+        log.info("Direct pipeline: detecting problem type...")
+        detection = detect.detect_problem_type(run_id, target)
+        problem_type = detection.get("problem_type", "classification")
+
+        # Step 3: run_eda(run_id, target)
+        from app.pipeline import eda
+        log.info("Direct pipeline: running EDA...")
+        eda.run_eda(run_id, target)
+
+        # Step 4: feature_engineer(run_id, target)
+        from app.pipeline import feature_engineering
+        log.info("Direct pipeline: engineering features...")
+        feature_engineering.feature_engineer(run_id, target)
+
+        # Step 5: train_model(run_id, target, problem_type) -> reads score and score_metric
+        from app.pipeline import train
+        log.info("Direct pipeline: training model candidates...")
+        metrics = train.train_model(run_id, target, problem_type)
+        accuracy_score = metrics.get("score", 0.0)
+        score_metric = metrics.get("score_metric", "accuracy")
+
+        # Step 6: generate_visualization(run_id, target, problem_type)
+        from app.pipeline import visualize
+        log.info("Direct pipeline: generating plots...")
+        viz_info = visualize.generate_visualization(run_id, target, problem_type)
+        plot_path = viz_info.get("plot_path", "")
+
         # Trigger dynamic hyperparameter scanning and agentic justification loop!
         from app.agent.optimization import run_fine_tuning_loop
+        log.info("Direct pipeline: running optimization fine-tuning loop...")
         optimized = run_fine_tuning_loop(
             run_id=run_id,
             target=target,
-            problem_type=parsed.get("problem_type"),
+            problem_type=problem_type,
             baseline_results={
                 "model_name": metrics.get("model_name"),
-                "score": parsed.get("accuracy_score"),
-                "score_metric": parsed.get("score_metric"),
+                "score": accuracy_score,
+                "score_metric": score_metric,
                 "extra": metrics.get("extra", {}),
             }
         )
@@ -116,16 +147,17 @@ def run_agent(run_id: str, target: str) -> dict:
             "run_id": run_id,
             "status": "succeeded",
             "target": target,
-            "problem_type": parsed.get("problem_type"),
+            "problem_type": problem_type,
             "accuracy_score": optimized.get("score"),
-            "score_metric": parsed.get("score_metric"),
-            "plot_path": parsed.get("plot_path"),
-            "justification": optimized.get("justification"),
+            "score_metric": score_metric,
+            "plot_path": plot_path,
+            "justification": (optimized.get("justification") or "").replace("—", "-").replace("–", "-"),
             "model_name": optimized.get("model_name"),
             "extra": optimized.get("extra", {}),
         }
         storage.write_json(run_id, "result.json", final)
         storage.write_status(run_id, "succeeded")
+        log.info("Direct pipeline orchestration completed successfully for run %s!", run_id)
         return final
     except Exception as e:
         log.exception("Agent run failed for %s", run_id)
