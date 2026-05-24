@@ -17,6 +17,8 @@ services:
     #   mountPath: /storage
     #   sizeGB: 1
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
       - key: OPENROUTER_API_KEY
         sync: false # Securely prompted during Render setup
       - key: OPENROUTER_BASE_URL
