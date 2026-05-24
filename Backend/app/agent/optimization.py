@@ -30,9 +30,26 @@ def remove_em_dashes(text: str) -> str:
     return text.replace("—", "-").replace("–", "-")
 
 
-OPTIMIZER_PROMPT = """You are نَمذِج's AutoML Hyperparameter Fine-Tuning Agent.
-Your goal is to optimize hyperparameters for the champion model '{champion_model}' to maximize prediction '{metric}'.
-The task is {problem_type}.
+OPTIMIZER_SYSTEM_PROMPT = """You are نَمذِج's AutoML Hyperparameter Fine-Tuning Agent.
+Your goal is to optimize hyperparameters for a champion model to maximize the prediction metric.
+
+Suggest the parameters in standard JSON. Provide EXACTLY a JSON block. No markdown code fences, no extra text.
+Return ONLY this JSON shape:
+{
+  "parameters": {
+     "<param_name>": <value>,
+     ...
+  },
+  "reasoning": "<A very short 3-5 word phrase explaining the change, e.g., 'Lowering learning rate to prevent overfitting' or 'Increasing depth to capture patterns'>",
+  "stop_tuning": <true or false. Set to true if you believe no further improvements can be found or you have reached a plateau>
+}
+
+CRITICAL constraint: Never use an em dash (—) or en dash (–) in your reasoning or any output under any circumstances.
+"""
+
+OPTIMIZER_USER_PROMPT = """Champion Model: {champion_model}
+Task Problem Type: {problem_type}
+Metric to Maximize: {metric}
 
 Current best score achieved so far: {best_score}
 Hyperparameters that achieved this best score: {best_params}
@@ -43,19 +60,6 @@ History of attempted runs:
 Based on the run history, suggest a NEW set of hyperparameters to try.
 Here are the valid hyperparameters you can suggest for the model '{champion_model}':
 {allowed_params}
-
-Suggest the parameters in standard JSON. Provide EXACTLY a JSON block. No markdown code fences, no extra text.
-Return ONLY this JSON shape:
-{{
-  "parameters": {{
-     "<param_name>": <value>,
-     ...
-  }},
-  "reasoning": "<A very short 3-5 word phrase explaining the change, e.g., 'Lowering learning rate to prevent overfitting' or 'Increasing depth to capture patterns'>",
-  "stop_tuning": <true or false. Set to true if you believe no further improvements can be found or you have reached a plateau>
-}}
-
-CRITICAL constraint: Never use an em dash (—) or en dash (–) in your reasoning or any output under any circumstances.
 """
 
 ALLOWED_PARAMS = {
@@ -67,20 +71,9 @@ ALLOWED_PARAMS = {
     "KNN": "- n_neighbors: integer between 2 and 20\n- weights: string, either 'uniform' or 'distance'"
 }
 
-JUSTIFICATION_PROMPT = """You are نَمذِج's AutoML Champion Architect.
+JUSTIFICATION_SYSTEM_PROMPT = """You are نَمذِج's AutoML Champion Architect.
 You have just run an agentic fine-tuning optimization loop that searched for the best model configuration.
 Please write an extremely brief, premium and punchy 1-2 sentence "Explainable AI Justification" for the results. Keep it as brief and high-impact as possible.
-
-Champion Model: {champion_model}
-Problem Type: {problem_type}
-Target Column: {target}
-Metric: {metric}
-Starting Baseline Score: {baseline_score}
-Best Optimized Score Reached: {best_score}
-Optimal Hyperparameters Selected: {best_params}
-
-Tuning Process History details:
-{history}
 
 In the justification, explain:
 1. Why this champion model won and the benefit of the optimal hyperparameters selected by the نَمذِج reasoning engine.
@@ -90,6 +83,18 @@ Write in a neutral, confident, and extremely concise professional tone suitable 
 Do not use markdown fences or mention 'agent', 'LangChain' directly-focus on 'نَمذِج reasoning engine' or 'agentic optimization'.
 
 CRITICAL RULE: Do NOT use an em dash (—) or en dash (–) anywhere in the output. If you need to separate clauses, use commas, semicolons, or regular hyphens.
+"""
+
+JUSTIFICATION_USER_PROMPT = """Champion Model: {champion_model}
+Problem Type: {problem_type}
+Target Column: {target}
+Metric: {metric}
+Starting Baseline Score: {baseline_score}
+Best Optimized Score Reached: {best_score}
+Optimal Hyperparameters Selected: {best_params}
+
+Tuning Process History details:
+{history}
 """
 
 
@@ -201,17 +206,20 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
         )
         try:
             llm = _get_llm()
-            justification_prompt = JUSTIFICATION_PROMPT.format(
-                champion_model=champion_model,
-                problem_type=problem_type,
-                target=target,
-                metric=metric,
-                baseline_score=baseline_score,
-                best_score=baseline_score,
-                best_params="Baseline parameters",
-                history="- Trial 0: Baseline Settings => Score: {:.4f} (Excellent baseline match, no tuning required)".format(baseline_score)
-            )
-            justification_res = llm.invoke(justification_prompt)
+            messages = [
+                ("system", JUSTIFICATION_SYSTEM_PROMPT),
+                ("human", JUSTIFICATION_USER_PROMPT.format(
+                    champion_model=champion_model,
+                    problem_type=problem_type,
+                    target=target,
+                    metric=metric,
+                    baseline_score=baseline_score,
+                    best_score=baseline_score,
+                    best_params="Baseline parameters",
+                    history="- Trial 0: Baseline Settings => Score: {:.4f} (Excellent baseline match, no tuning required)".format(baseline_score)
+                ))
+            ]
+            justification_res = llm.invoke(messages)
             baseline_results["justification"] = remove_em_dashes(justification_res.content.strip())
         except Exception as e:
             baseline_results["justification"] = (
@@ -306,17 +314,20 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
                     for h in history
                 ])
                 
-                prompt_text = OPTIMIZER_PROMPT.format(
-                    champion_model=champion_model,
-                    metric=metric,
-                    problem_type=problem_type,
-                    best_score=best_score,
-                    best_params=json.dumps(best_params),
-                    history=history_text,
-                    allowed_params=allowed_params_text
-                )
+                messages = [
+                    ("system", OPTIMIZER_SYSTEM_PROMPT),
+                    ("human", OPTIMIZER_USER_PROMPT.format(
+                        champion_model=champion_model,
+                        metric=metric,
+                        problem_type=problem_type,
+                        best_score=best_score,
+                        best_params=json.dumps(best_params),
+                        history=history_text,
+                        allowed_params=allowed_params_text
+                    ))
+                ]
                 
-                response = llm.invoke(prompt_text)
+                response = llm.invoke(messages)
                 parsed = clean_json_text(response.content)
                 
                 suggested_params = parsed.get("parameters", {})
@@ -375,18 +386,21 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
             for h in history
         ])
         
-        justification_prompt = JUSTIFICATION_PROMPT.format(
-            champion_model=champion_model,
-            problem_type=problem_type,
-            target=target,
-            metric=metric,
-            baseline_score=baseline_score,
-            best_score=best_score,
-            best_params=json.dumps(best_params) if best_params else "Baseline parameters",
-            history=history_summary
-        )
+        messages = [
+            ("system", JUSTIFICATION_SYSTEM_PROMPT),
+            ("human", JUSTIFICATION_USER_PROMPT.format(
+                champion_model=champion_model,
+                problem_type=problem_type,
+                target=target,
+                metric=metric,
+                baseline_score=baseline_score,
+                best_score=best_score,
+                best_params=json.dumps(best_params) if best_params else "Baseline parameters",
+                history=history_summary
+            ))
+        ]
         
-        justification_res = llm.invoke(justification_prompt)
+        justification_res = llm.invoke(messages)
         justification = remove_em_dashes(justification_res.content.strip())
         
         # Persist the tuning trial log regardless of whether a better model was
