@@ -63,7 +63,4 @@ services:
           name: modelforge-backend
           property: host
       - key: NEXT_PUBLIC_BACKEND_URL
-        fromService:
-          type: web
-          name: modelforge-backend
-          property: host
+        value: /api/backend
