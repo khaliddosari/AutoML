@@ -4,7 +4,7 @@ services:
   # 1. FastAPI Backend Service
   # -------------------------------------------------------------
   - type: web
-    name: modelforge-backend
+    name: namtheg
     env: python
     plan: free
     rootDir: Backend
