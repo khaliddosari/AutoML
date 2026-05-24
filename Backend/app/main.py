@@ -72,13 +72,23 @@ async def upload_csv(file: UploadFile = File(...)) -> dict:
         if dest.exists():
             dest.unlink()
         raise HTTPException(400, f"Could not parse CSV: {e}")
-    storage.write_status(run_id, "uploaded", filename=file.filename)
-    return {
-        "run_id": run_id,
-        "filename": file.filename,
-        "columns": df.columns.tolist(),
-        "preview": df.to_dict(orient="records"),
-    }
+    try:
+        storage.write_status(run_id, "uploaded", filename=file.filename)
+        # Roundtrip through pandas' JSON writer to safely handle NaN, Inf,
+        # Timestamps and numpy scalar types that the default encoder rejects.
+        columns = [str(c) for c in df.columns.tolist()]
+        preview = _json.loads(df.to_json(orient="records", date_format="iso"))
+        return {
+            "run_id": run_id,
+            "filename": file.filename,
+            "columns": columns,
+            "preview": preview,
+        }
+    except Exception as e:
+        log.exception("Upload post-processing failed for run %s", run_id)
+        if dest.exists():
+            dest.unlink()
+        raise HTTPException(500, f"Upload post-processing failed: {e}")
 
 
 @app.get("/runs/{run_id}/preview")
@@ -88,12 +98,14 @@ def preview(run_id: str) -> dict:
     df = pd.read_csv(storage.dataset_path(run_id), nrows=20)
     status_data = storage.read_status(run_id) or {}
     filename = status_data.get("filename", "dataset.csv")
+    columns = [str(c) for c in df.columns.tolist()]
+    preview_rows = _json.loads(df.to_json(orient="records", date_format="iso"))
     return {
         "run_id": run_id,
         "filename": filename,
         "n_columns": int(df.shape[1]),
-        "columns": df.columns.tolist(),
-        "preview": df.to_dict(orient="records"),
+        "columns": columns,
+        "preview": preview_rows,
     }
 
 
