@@ -6,6 +6,7 @@ services:
   - type: web
     name: modelforge-backend
     env: python
+    plan: free
     rootDir: Backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -48,6 +49,7 @@ services:
   - type: web
     name: modelforge-frontend
     env: node
+    plan: free
     rootDir: Frontend
     buildCommand: npm run build
     startCommand: npm run start
