@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import { TryModelCard } from "@/components/try-model-card";
 import { Brand } from "@/components/brand";
+import { SiteFooter } from "@/components/site-footer";
 
 export default function PublicSharePage() {
   const { runId } = useParams<{ runId: string }>();
@@ -38,12 +39,12 @@ export default function PublicSharePage() {
       {/* Top bar */}
       <header className="w-full px-6 md:px-10 py-5 flex items-center justify-between border-b border-outline-variant/40">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-on-primary" style={{ fontSize: "20px" }}>graph_3</span>
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-on-primary" style={{ fontSize: "28px" }}>graph_3</span>
           </div>
           <div className="leading-tight">
             <p className="text-xl text-on-background group-hover:text-primary transition-colors"><Brand /></p>
-            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Live AI Model</p>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">Live AI Model</p>
           </div>
         </Link>
         <Link
@@ -102,19 +103,7 @@ export default function PublicSharePage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-outline-variant/40 px-6 md:px-10 py-6 flex flex-col items-center justify-center gap-2 text-center">
-        <p className="text-sm text-on-surface-variant">
-          Built with{" "}
-          <Link href="/" className="text-primary hover:underline">
-            <Brand />
-          </Link>
-          {" "}· self-serve AutoML in under a minute.
-        </p>
-        <p className="text-[11px] font-mono text-outline">
-          Model ID: {runId.slice(0, 12)}
-        </p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

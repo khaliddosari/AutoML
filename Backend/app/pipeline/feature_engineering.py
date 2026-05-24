@@ -37,9 +37,14 @@ def feature_engineer(run_id: str, target: str) -> dict:
     df = df.dropna(subset=[target]).reset_index(drop=True)
     n = len(df)
 
-    # 3. Drop ID-like columns (>=95% unique values, any dtype).
+    # 3. Drop ID-like columns (>=95% unique values).
+    # Numeric dtypes are intentionally exempt: continuous floats on small
+    # datasets naturally hit ~100% uniqueness and would otherwise be wiped
+    # out as if they were identifiers.
     for c in list(df.columns):
         if c == target:
+            continue
+        if is_numeric_dtype(df[c]):
             continue
         if df[c].nunique(dropna=True) >= 0.95 * n:
             df = df.drop(columns=[c])

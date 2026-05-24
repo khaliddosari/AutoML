@@ -197,12 +197,21 @@ export function TryModelCard({
             </div>
           )}
 
-          <div className="mt-5 flex items-center gap-3 flex-wrap">
+          <div className="mt-5 flex flex-col gap-4">
+            {mode === "form" && (
+              <button
+                onClick={resetToSample}
+                className="self-center text-sm font-bold text-primary hover:bg-surface-purple-tint/40 px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>restart_alt</span>
+                Reset to sample
+              </button>
+            )}
             <button
               onClick={runPredict}
               disabled={busy}
               className={cn(
-                "px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 transition-all cursor-pointer",
+                "w-full px-5 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer",
                 busy ? "bg-surface-container text-on-surface-variant cursor-not-allowed" : "bg-primary text-on-primary hover:opacity-90",
               )}
             >
@@ -218,16 +227,6 @@ export function TryModelCard({
                 </>
               )}
             </button>
-
-            {mode === "form" && (
-              <button
-                onClick={resetToSample}
-                className="text-xs font-bold text-primary hover:bg-surface-purple-tint/40 px-3 py-2 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>restart_alt</span>
-                Reset to sample
-              </button>
-            )}
           </div>
 
           {error && (
@@ -239,7 +238,7 @@ export function TryModelCard({
 
           {result && !result.error && (
             <div className="mt-5 bg-surface-container rounded-lg border border-outline-variant p-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-mono mb-3">Prediction Result</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant font-mono mb-3 text-center">Prediction Result</h4>
               {isClassification ? (
                 <div className="space-y-3">
                   {(result.predicted_labels ?? result.predictions ?? []).map((label, i) => {
@@ -279,13 +278,10 @@ export function TryModelCard({
                   })}
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 text-center">
                   {(result.predictions ?? []).map((p, i) => (
-                    <div key={i} className="flex items-baseline gap-3">
-                      <span className="text-xs font-bold text-on-surface-variant font-mono">Predicted value:</span>
-                      <span className="text-2xl font-black text-primary font-mono">
-                        {typeof p === "number" ? p.toFixed(4) : String(p)}
-                      </span>
+                    <div key={i} className="text-3xl font-black text-primary font-mono">
+                      {typeof p === "number" ? p.toFixed(4) : String(p)}
                     </div>
                   ))}
                 </div>

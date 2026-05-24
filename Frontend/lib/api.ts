@@ -162,6 +162,7 @@ export async function predict(
 
 export interface PreviewData {
   run_id: string;
+  filename?: string;
   columns: string[];
   n_columns: number;
   preview: Record<string, unknown>[];

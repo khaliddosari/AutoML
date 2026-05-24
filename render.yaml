@@ -1,0 +1,65 @@
+# Render Deployment Blueprint for ModelForge (AutoML)
+services:
+  # -------------------------------------------------------------
+  # 1. FastAPI Backend Service
+  # -------------------------------------------------------------
+  - type: web
+    name: modelforge-backend
+    env: python
+    rootDir: Backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # By default, Render Free Tier has ephemeral storage. 
+    # If using a paid tier ($7/mo Starter), you can uncomment the disk section below:
+    # disk:
+    #   name: modelforge-storage
+    #   mountPath: /storage
+    #   sizeGB: 1
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false # Securely prompted during Render setup
+      - key: OPENROUTER_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: OPENROUTER_MODEL
+        value: deepseek/deepseek-v4-flash
+      - key: OPENROUTER_REFERER
+        value: https://modelforge.onrender.com
+      - key: OPENROUTER_APP_TITLE
+        value: ModelForge
+      - key: STORAGE_DIR
+        value: ./storage
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MODAL_WORKSPACE
+        sync: false # Securely prompted (e.g., your-username)
+      - key: MODAL_INFERENCE_APP
+        value: modelforge-inference
+      - key: MODAL_MODELS_VOLUME
+        value: modelforge-models
+      # Token authentication details for Modal deployments inside Render:
+      - key: MODAL_TOKEN_ID
+        sync: false
+      - key: MODAL_TOKEN_SECRET
+        sync: false
+
+  # -------------------------------------------------------------
+  # 2. Next.js Frontend Service
+  # -------------------------------------------------------------
+  - type: web
+    name: modelforge-frontend
+    env: node
+    rootDir: Frontend
+    buildCommand: npm run build
+    startCommand: npm run start
+    envVars:
+      # Automatically fetch the deployed backend URL and inject it:
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: modelforge-backend
+          property: host
+      - key: NEXT_PUBLIC_BACKEND_URL
+        fromService:
+          type: web
+          name: modelforge-backend
+          property: host

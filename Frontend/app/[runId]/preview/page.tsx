@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface PreviewData {
   run_id: string;
+  filename?: string;
   columns: string[];
   n_columns: number;
   preview: Record<string, unknown>[];
@@ -152,10 +153,10 @@ export default function PreviewPage() {
         {/* Page Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-headline-lg font-bold text-on-background mb-2">
-              Dataset: {runId?.slice(0, 16)}
+            <h1 className="text-headline-lg-mobile md:text-headline-lg font-bold text-on-background mb-2">
+              Dataset: {data.filename ?? runId?.slice(0, 16)}
             </h1>
-            <p className="text-body-lg text-on-surface-variant">
+            <p className="text-base md:text-body-lg text-on-surface-variant">
               Full feature breakdown, data quality metrics, and schema targets for training.
             </p>
           </div>
@@ -195,14 +196,14 @@ export default function PreviewPage() {
               <span className="material-symbols-outlined text-primary bg-surface-purple-tint p-2 rounded-lg" style={{ fontSize: "24px" }}>target</span>
             </div>
 
-            <div className="relative z-10 flex justify-between items-end mt-4">
-              <div>
-                <h2 className="text-2xl font-black text-primary font-mono truncate max-w-sm" title={target || "Awaiting target selection..."}>
+            <div className="relative z-10 flex justify-between items-end gap-3 mt-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl font-black text-primary font-mono break-words" title={target || "Awaiting target selection..."}>
                   {target || "Select target..."}
                 </h2>
                 <p className="text-xs text-on-surface-variant mt-1.5">Selected column model will learn to predict.</p>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <span className="text-3xl font-black text-on-background font-mono leading-none">{data.preview.length.toLocaleString()}</span>
                 <span className="text-[10px] font-bold text-outline uppercase tracking-wider block mt-1">Preview Rows</span>
               </div>
@@ -329,16 +330,16 @@ export default function PreviewPage() {
         {/* Target Column Selection + Run */}
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 card-shadow mb-8">
           <div className="flex items-center justify-between gap-6 flex-wrap">
-            <div className="flex items-center gap-4 flex-wrap flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-4 flex-1 min-w-0 w-full">
+              <div className="flex items-center gap-2 text-center sm:text-left">
                 <span className="material-symbols-outlined text-primary">target</span>
                 <h3 className="text-headline-md font-bold text-on-surface">Target Variable Selection</h3>
               </div>
-              <div className="relative min-w-[240px]">
+              <div className="relative min-w-[240px] mx-auto sm:mx-0">
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg py-2.5 px-3 appearance-none text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer font-semibold"
+                  className="w-full bg-surface border border-outline-variant rounded-lg py-2.5 px-3 appearance-none text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer font-semibold text-center sm:text-left"
                 >
                   {data.columns.map((col) => (
                     <option key={col} value={col}>{col}</option>
@@ -346,10 +347,10 @@ export default function PreviewPage() {
                 </select>
                 <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: "20px" }}>expand_more</span>
               </div>
-              <p className="text-xs text-on-surface-variant">The models will attempt to map patterns to classify or regress this output.</p>
+              <p className="text-xs text-on-surface-variant text-center sm:text-left">The models will attempt to map patterns to classify or regress this output.</p>
             </div>
             
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-3 w-full justify-center md:w-auto md:ml-auto">
               {error && <p className="text-xs text-error font-medium">{error}</p>}
               <button
                 onClick={handleStart}
@@ -375,13 +376,13 @@ export default function PreviewPage() {
           
           {/* Table Toolbar controls */}
           <div className="p-5 border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-bright">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 items-start sm:items-center">
               <h3 className="text-headline-md font-bold text-on-background">
                 {viewMode === "data" ? "Dataset Raw Preview" : "Features Profiling Statistics"}
               </h3>
               
               {/* Raw vs Stats Toggle */}
-              <div className="flex border border-outline-variant rounded-lg p-0.5 bg-surface-container-low shrink-0 select-none">
+              <div className="flex border border-outline-variant rounded-lg p-0.5 bg-surface-container-low shrink-0 select-none w-fit">
                 <button
                   onClick={() => setViewMode("data")}
                   className={cn(

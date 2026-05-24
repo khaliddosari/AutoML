@@ -112,7 +112,6 @@ def get_grid_candidates(model_name: str) -> list[dict]:
             {"n_estimators": 150, "min_samples_split": 5, "max_depth": 12},
             {"n_estimators": 200, "min_samples_split": 5, "max_depth": None},
             {"n_estimators": 250, "min_samples_split": 10, "max_depth": 8},
-            {"n_estimators": 100, "min_samples_split": 10, "max_depth": None},
         ]
     elif model_name == "ExtraTrees":
         return [
@@ -121,28 +120,20 @@ def get_grid_candidates(model_name: str) -> list[dict]:
             {"n_estimators": 150, "max_depth": 12},
             {"n_estimators": 200, "max_depth": None},
             {"n_estimators": 250, "max_depth": 8},
-            {"n_estimators": 100, "max_depth": None},
         ]
     elif model_name == "GradientBoosting":
         return [
             {"n_estimators": 50, "learning_rate": 0.05, "max_depth": 3},
-            {"n_estimators": 100, "learning_rate": 0.05, "max_depth": 4},
-            {"n_estimators": 100, "learning_rate": 0.08, "max_depth": 3},
             {"n_estimators": 100, "learning_rate": 0.08, "max_depth": 4},
-            {"n_estimators": 150, "learning_rate": 0.1, "max_depth": 3},
-            {"n_estimators": 150, "learning_rate": 0.1, "max_depth": 4},
             {"n_estimators": 150, "learning_rate": 0.1, "max_depth": 5},
             {"n_estimators": 200, "learning_rate": 0.12, "max_depth": 4},
-            {"n_estimators": 200, "learning_rate": 0.15, "max_depth": 5},
             {"n_estimators": 100, "learning_rate": 0.03, "max_depth": 3},
         ]
     elif model_name == "LogisticRegression":
         return [
             {"C": 0.01},
             {"C": 0.1},
-            {"C": 0.5},
             {"C": 1.0},
-            {"C": 5.0},
             {"C": 10.0},
             {"C": 50.0},
         ]
@@ -150,21 +141,16 @@ def get_grid_candidates(model_name: str) -> list[dict]:
         return [
             {"alpha": 0.01},
             {"alpha": 0.1},
-            {"alpha": 0.5},
             {"alpha": 1.0},
-            {"alpha": 5.0},
             {"alpha": 10.0},
             {"alpha": 50.0},
         ]
     elif model_name == "KNN":
         return [
-            {"n_neighbors": 3, "weights": "uniform"},
             {"n_neighbors": 3, "weights": "distance"},
             {"n_neighbors": 5, "weights": "uniform"},
             {"n_neighbors": 5, "weights": "distance"},
-            {"n_neighbors": 7, "weights": "uniform"},
             {"n_neighbors": 7, "weights": "distance"},
-            {"n_neighbors": 10, "weights": "uniform"},
             {"n_neighbors": 15, "weights": "distance"},
         ]
     return []

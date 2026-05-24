@@ -128,8 +128,8 @@ export default function UploadPage() {
             >
               <span className="material-symbols-outlined" style={{ fontSize: "40px" }}>cloud_upload</span>
             </motion.div>
-            <h3 className="text-headline-lg text-primary font-bold mb-2">Drop your CSV here</h3>
-            <p className="text-body-lg text-on-surface-variant font-medium">
+            <h3 className="text-headline-lg-mobile md:text-headline-lg text-primary font-bold mb-2">Drop your CSV here</h3>
+            <p className="text-base md:text-body-lg text-on-surface-variant font-medium">
               <Brand /> will automatically parse features and check schema health.
             </p>
           </motion.div>
@@ -141,8 +141,8 @@ export default function UploadPage() {
         {/* Page header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h2 className="text-headline-lg text-on-surface mb-2 font-bold">Data Ingestion</h2>
-            <p className="text-body-lg text-on-surface-variant">
+            <h2 className="text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2 font-bold">Data Ingestion</h2>
+            <p className="text-base md:text-body-lg text-on-surface-variant">
               Upload a dataset and <Brand /> will automatically configure and run the full training pipeline.
             </p>
           </div>
@@ -151,11 +151,11 @@ export default function UploadPage() {
 
         {/* Upload card */}
         <div className="max-w-4xl mx-auto w-full">
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 card-shadow">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 md:p-6 card-shadow">
 
             {/* Card header */}
             <div className="flex justify-between items-center mb-5">
-              <h3 className="text-headline-md font-bold text-on-surface flex items-center gap-2">
+              <h3 className="text-xl md:text-headline-md font-bold text-on-surface flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">upload_file</span>
                 Upload Dataset
               </h3>
@@ -165,7 +165,7 @@ export default function UploadPage() {
             {/* Dropzone */}
             <div
               className={cn(
-                "border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer group transition-all duration-300 select-none min-h-[260px] relative overflow-hidden",
+                "border-2 border-dashed rounded-xl p-4 sm:p-6 md:p-10 flex flex-col items-center justify-center cursor-pointer group transition-all duration-300 select-none min-h-[200px] md:min-h-[260px] relative overflow-hidden",
                 dragging
                   ? "border-primary bg-surface-purple-tint/40 shadow-sm"
                   : "border-outline-variant bg-surface hover:border-primary/50 hover:bg-surface-container-low"
@@ -204,7 +204,7 @@ export default function UploadPage() {
                   <div className="w-14 h-14 rounded-xl bg-surface-green-tint flex items-center justify-center text-success-green mb-4 shadow-sm animate-scale">
                     <span className="material-symbols-outlined text-[28px]">description</span>
                   </div>
-                  <h4 className="text-headline-md text-on-surface font-bold truncate max-w-sm mb-1">{file.name}</h4>
+                  <h4 className="text-base sm:text-lg md:text-headline-md text-on-surface font-bold truncate max-w-xs md:max-w-sm mb-1">{file.name}</h4>
                   <p className="text-xs text-on-surface-variant font-mono mb-4">
                     {(file.size / (1024 * 1024)).toFixed(2)} MB · CSV Schema Verified
                   </p>
@@ -218,12 +218,12 @@ export default function UploadPage() {
                 </>
               ) : (
                 <>
-                  <h4 className="text-headline-md text-on-surface font-semibold mb-2">Drag &amp; Drop files here</h4>
-                  <p className="text-body-md text-on-surface-variant mb-6 text-center max-w-md">
+                  <h4 className="text-base sm:text-lg md:text-headline-md text-on-surface font-semibold mb-2 text-center">Drag &amp; Drop files here</h4>
+                  <p className="text-[11px] sm:text-xs md:text-body-md text-on-surface-variant mb-5 text-center max-w-xs md:max-w-md px-2 leading-relaxed">
                     Supported format: <strong className="font-semibold text-primary font-mono">.CSV</strong> (up to 500 MB). Files are parsed and verified on upload.
                   </p>
                   <button
-                    className="bg-surface-container-high text-on-surface text-label-md px-5 py-2.5 rounded-lg border border-outline-variant group-hover:border-primary group-hover:text-primary transition-all font-semibold"
+                    className="bg-surface-container-high text-on-surface text-[12px] sm:text-label-md px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg border border-outline-variant group-hover:border-primary group-hover:text-primary transition-all font-semibold"
                     onClick={(e) => { e.stopPropagation(); document.getElementById("csv-input-main")?.click(); }}
                   >
                     Browse Files
@@ -261,7 +261,7 @@ export default function UploadPage() {
                     </div>
 
                     {/* Error + CTA */}
-                    <div className="flex items-center gap-3 ml-auto shrink-0">
+                    <div className="flex items-center gap-3 w-full justify-center md:w-auto md:ml-auto shrink-0">
                       {error && <p className="text-xs text-error font-medium">{error}</p>}
                       <motion.button
                         whileHover={{ scale: 1.02 }}
@@ -290,6 +290,18 @@ export default function UploadPage() {
             </AnimatePresence>
 
           </div>
+        </div>
+
+        {/* Download testing dataset button */}
+        <div className="mt-6 flex justify-center">
+          <a
+            href="/insurance.csv"
+            download="insurance.csv"
+            className="text-xs font-bold text-primary hover:text-primary-container bg-surface-purple-tint/35 hover:bg-surface-purple-tint border border-primary/25 hover:border-primary/40 px-5 py-2.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>download</span>
+            Download a free dataset
+          </a>
         </div>
       </div>
     </div>

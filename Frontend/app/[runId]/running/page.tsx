@@ -393,17 +393,17 @@ function PipelineCell({
         </span>
 
         {/* Expanders and Code toggle actions */}
-        <div className="ml-auto flex items-center gap-3 shrink-0">
+        <div className="ml-auto flex flex-col-reverse sm:flex-row items-center gap-1 sm:gap-3 shrink-0">
           {status !== "waiting" && (
             <button
               onClick={() => setCodeOpen(!codeOpen)}
               className={cn(
-                "text-[10px] font-mono border px-2 py-0.5 rounded transition-all flex items-center gap-1 hover:border-primary hover:text-primary",
+                "text-[10px] font-mono border px-1.5 py-0.5 sm:px-2 rounded transition-all flex items-center gap-1 hover:border-primary hover:text-primary",
                 codeOpen ? "bg-surface-purple-tint border-primary/30 text-primary font-semibold" : "border-outline-variant text-outline"
               )}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "11px" }}>code</span>
-              {codeOpen ? "Hide Code" : "Show Code"}
+              <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>code</span>
+              <span className="hidden sm:inline">{codeOpen ? "Hide Code" : "Show Code"}</span>
             </button>
           )}
 
@@ -600,7 +600,7 @@ export default function RunningPage() {
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.35 }}
-        className="w-72 bg-surface-container-lowest border-r border-outline-variant px-5 py-6 flex flex-col shrink-0 justify-between gap-6 absolute left-0 top-0 bottom-0 h-full overflow-y-auto z-10"
+        className="w-72 bg-surface-container-lowest border-r border-outline-variant px-5 py-6 hidden md:flex flex-col shrink-0 justify-between gap-6 absolute left-0 top-0 bottom-0 h-full overflow-y-auto z-10"
       >
         <div className="flex flex-col gap-5">
           {/* Header Progress status */}
@@ -656,7 +656,7 @@ export default function RunningPage() {
       </motion.aside>
 
       {/* Main Notebook Console — scrolls independently from the pipeline panel */}
-      <div className="flex-1 flex flex-col overflow-hidden p-4 lg:p-6 ml-72">
+      <div className="flex-1 flex flex-col overflow-hidden p-4 lg:p-6 ml-0 md:ml-72">
         <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col gap-3 overflow-hidden">
           
           {/* Jupyter Notebook top toolbar bar */}
@@ -667,12 +667,12 @@ export default function RunningPage() {
               <div className="w-2.5 h-2.5 rounded-full bg-success-green/70" />
             </div>
             
-            <span className="text-xs font-bold text-on-surface-variant font-mono truncate flex-1 text-left ml-2">
+            <span className="text-xs font-bold text-on-surface-variant font-mono truncate flex-1 text-left ml-2 hidden sm:block">
               automl_forge_{runId?.slice(0, 8)}.ipynb
             </span>
 
             {/* Log filter toggles */}
-            <div className="flex border border-outline-variant rounded-lg p-0.5 bg-surface-container-low shrink-0 text-[10px] font-bold">
+            <div className="hidden sm:flex border border-outline-variant rounded-lg p-0.5 bg-surface-container-low shrink-0 text-[10px] font-bold">
               <button
                 onClick={() => setLogFilter("all")}
                 className={cn(
@@ -702,7 +702,7 @@ export default function RunningPage() {
               </button>
             </div>
 
-            <div className="border-l border-outline-variant h-5 mx-2 shrink-0" />
+            <div className="hidden sm:block border-l border-outline-variant h-5 mx-2 shrink-0" />
 
             {!failed && !allDone && (
               <span className="flex items-center gap-1.5 text-xs text-primary font-bold shrink-0">

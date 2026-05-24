@@ -7,12 +7,10 @@ import {
   getResult,
   getStatus,
   plotUrl,
-  getDeployment,
   type RunResult,
   type FeatureImportance,
   type ModelScore,
   type TuningTrial,
-  type Deployment,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatArabicBrand } from "@/components/brand";
@@ -53,7 +51,7 @@ function AccuracyAndFeaturesCard({
   const trendIcon = trendKind === "up" ? "trending_up" : trendKind === "down" ? "trending_down" : "horizontal_rule";
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
+    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sm:p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
       <div className="absolute top-0 left-0 w-full h-1 bg-success-green" />
 
       {/* Accuracy header */}
@@ -67,7 +65,7 @@ function AccuracyAndFeaturesCard({
         </span>
       </div>
       <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-1">{accuracyLabel}</h3>
-      <div className="text-4xl font-black text-success-green font-mono leading-none">
+      <div className="text-3xl sm:text-4xl font-black text-success-green font-mono leading-none">
         {accuracyPct.toFixed(2)}
         <span className="text-base font-bold text-success-green/70 ml-1 font-sans">{accuracyUnit}</span>
       </div>
@@ -96,7 +94,7 @@ function AccuracyAndFeaturesCard({
 
       {/* Feature importance section */}
       <div className="flex justify-between items-center mb-5">
-        <h3 className="text-headline-md font-bold text-on-background">Feature Importance</h3>
+        <h3 className="text-lg sm:text-headline-md font-bold text-on-background">Feature Importance</h3>
         <span className="material-symbols-outlined text-outline" style={{ fontSize: "20px" }}>analytics</span>
       </div>
 
@@ -109,7 +107,7 @@ function AccuracyAndFeaturesCard({
                 <span className="text-on-background truncate mr-2">{f.feature}</span>
                 <span className="text-on-surface-variant font-mono">{f.importance.toFixed(4)}</span>
               </div>
-              <div className="w-full bg-surface-variant h-4 rounded-full overflow-hidden">
+              <div className="w-full bg-surface-variant h-3 sm:h-4 rounded-full overflow-hidden">
                 <motion.div
                   className={cn(COLORS[i], "h-full rounded-full")}
                   initial={{ width: 0 }}
@@ -134,7 +132,7 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
 
   return (
     <>
-      <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
+      <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sm:p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
         <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-headline-md font-bold text-on-background">
@@ -244,9 +242,9 @@ function TuningResultsCard({
   return (
     <div className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden card-shadow text-left">
       {/* Header */}
-      <div className="p-5 border-b border-outline-variant flex flex-wrap justify-between items-center gap-3 bg-surface-bright">
+      <div className="p-4 sm:p-5 border-b border-outline-variant flex flex-wrap justify-between items-center gap-3 bg-surface-bright">
         <div>
-          <h3 className="text-[28px] leading-tight font-bold tracking-tight text-on-background">Hyperparameter Tuning</h3>
+          <h3 className="text-xl sm:text-[28px] leading-tight font-bold tracking-tight text-on-background">Hyperparameter Tuning</h3>
           <p className="text-xs text-on-surface-variant mt-1.5 font-mono">
             Agentic optimization loop · {tuningTrials.length} trial{tuningTrials.length !== 1 ? "s" : ""} on <strong className="text-primary">{modelName}</strong>
           </p>
@@ -265,13 +263,13 @@ function TuningResultsCard({
       </div>
 
       {/* Before vs After panels */}
-      <div className="grid grid-cols-2 divide-x divide-outline-variant border-b border-outline-variant">
+      <div className="grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-y sm:divide-y-0 divide-outline-variant border-b border-outline-variant">
         {/* Before */}
-        <div className="p-6 flex flex-col gap-1">
+        <div className="p-4 sm:p-6 flex flex-col gap-1">
           <span className="text-[10px] font-black uppercase tracking-widest text-outline font-mono mb-1">
             ◎ Before Tuning
           </span>
-          <span className="text-4xl font-black font-mono text-on-surface-variant">
+          <span className="text-3xl sm:text-4xl font-black font-mono text-on-surface-variant">
             {(baseline * 100).toFixed(2)}
             <span className="text-base font-bold text-outline ml-1">%</span>
           </span>
@@ -283,11 +281,11 @@ function TuningResultsCard({
           </div>
         </div>
         {/* After */}
-        <div className="p-6 flex flex-col gap-1 relative">
+        <div className="p-4 sm:p-6 flex flex-col gap-1 relative">
           <span className="text-[10px] font-black uppercase tracking-widest font-mono mb-1 text-success-green">
             ✦ After Tuning
           </span>
-          <span className="text-4xl font-black font-mono text-success-green">
+          <span className="text-3xl sm:text-4xl font-black font-mono text-success-green">
             {(optimized * 100).toFixed(2)}
             <span className="text-base font-bold text-success-green/70 ml-1">%</span>
           </span>
@@ -312,13 +310,13 @@ function TuningResultsCard({
 
       {/* Trial history table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse font-sans text-sm">
+        <table className="w-full text-left border-collapse font-sans text-xs sm:text-sm">
           <thead>
             <tr className="bg-surface-container-low text-label-md text-on-surface-variant font-bold border-b border-outline-variant">
-              <th className="p-5 text-xs uppercase tracking-wider w-20 whitespace-nowrap">Trial</th>
-              <th className="p-5 text-xs uppercase tracking-wider whitespace-nowrap">Parameters Tested</th>
-              <th className="p-5 text-xs uppercase tracking-wider text-right w-28 whitespace-nowrap">Score</th>
-              <th className="p-5 text-xs uppercase tracking-wider whitespace-nowrap">Outcome</th>
+              <th className="p-3 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider w-16 sm:w-20 whitespace-nowrap">Trial</th>
+              <th className="p-3 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Parameters Tested</th>
+              <th className="p-3 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right w-20 sm:w-28 whitespace-nowrap">Score</th>
+              <th className="p-3 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider whitespace-nowrap">Outcome</th>
             </tr>
           </thead>
           <tbody>
@@ -351,7 +349,7 @@ function TuningResultsCard({
                   )}
                 >
                   {/* Trial # */}
-                  <td className="p-5 align-middle">
+                  <td className="p-3 sm:p-5 align-middle">
                     {isBaseline ? (
                       <span className="inline-block text-[11px] font-black uppercase tracking-widest text-outline bg-surface-container px-3 py-1 rounded-full border border-outline-variant font-mono">
                         Base
@@ -366,7 +364,7 @@ function TuningResultsCard({
                     )}
                   </td>
                   {/* Params — render each changed hyperparameter as a chip */}
-                  <td className="p-5 align-middle">
+                  <td className="p-3 sm:p-5 align-middle hidden sm:table-cell">
                     {isBaseline ? (
                       <span className="font-mono text-on-surface-variant italic">
                         Model defaults
@@ -391,7 +389,7 @@ function TuningResultsCard({
                     )}
                   </td>
                   {/* Score */}
-                  <td className="p-5 text-right font-mono font-bold align-middle">
+                  <td className="p-3 sm:p-5 text-right font-mono font-bold align-middle">
                     <span className={cn(
                       isBest ? "text-success-green" :
                       isBaseline ? "text-on-surface-variant" : "text-on-surface"
@@ -401,7 +399,7 @@ function TuningResultsCard({
                   </td>
                   {/* Outcome — keep the verdict+scores in full, trim the LLM reason
                      so rows stay compact. Full text is shown on hover. */}
-                  <td className="p-5 align-middle">
+                  <td className="p-3 sm:p-5 align-middle">
                     {(() => {
                       const display = (() => {
                         if (isBaseline) return "Baseline: champion from initial leaderboard sweep";
@@ -447,20 +445,7 @@ export default function ResultPage() {
   const router = useRouter();
   const [result, setResult] = useState<RunResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deployment, setDeployment] = useState<Deployment | null>(null);
-  const [shareCopied, setShareCopied] = useState(false);
 
-  const copyShareLink = async () => {
-    const base = typeof window !== "undefined" ? window.location.origin : "";
-    const link = `${base}/share/${runId}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 1800);
-    } catch {
-      /* clipboard blocked - ignore */
-    }
-  };
 
   // PNG export
   const exportRef = useRef<HTMLDivElement>(null);
@@ -557,6 +542,71 @@ export default function ResultPage() {
     `;
     clone.classList.add("__export-clone");
     sandbox.appendChild(styleReset);
+
+    // Force the desktop layout regardless of the user's actual viewport. The
+    // clone is rendered at 1280px, but Tailwind's `sm:`/`md:`/`lg:`/`xl:`
+    // variants are media-query-gated on viewport width — on a phone they never
+    // activate, so the snapshot keeps the cramped mobile layout. We harvest
+    // every `min-width` media rule from the loaded stylesheets, re-emit each
+    // inner rule with its selectors scoped to `.__export-clone`, and inject
+    // the result so those desktop rules win the cascade only inside the clone.
+    const desktopCSS = (() => {
+      const out: string[] = [];
+      const scopeSelector = (selector: string): string => {
+        const t = selector.trim();
+        if (!t) return "";
+        // Don't try to scope root-level selectors — they wouldn't apply inside
+        // the clone anyway and produce invalid CSS when prefixed.
+        if (/^(html|body|:root)\b/.test(t)) return "";
+        return `.__export-clone ${t}, .__export-clone${t}`;
+      };
+      const emitStyleRule = (rule: CSSStyleRule) => {
+        const sel = rule.selectorText
+          .split(",")
+          .map(scopeSelector)
+          .filter(Boolean)
+          .join(", ");
+        if (sel && rule.style.cssText) {
+          out.push(`${sel} { ${rule.style.cssText} }`);
+        }
+      };
+      const visit = (rules: CSSRuleList) => {
+        for (const rule of Array.from(rules)) {
+          if (rule instanceof CSSMediaRule) {
+            const mt = rule.media.mediaText;
+            const minMatch = mt.match(/min-width:\s*(\d+(?:\.\d+)?)px/);
+            const hasMax = /max-width/.test(mt);
+            if (
+              minMatch &&
+              !hasMax &&
+              parseFloat(minMatch[1]) <= CAPTURE_WIDTH
+            ) {
+              for (const inner of Array.from(rule.cssRules)) {
+                if (inner instanceof CSSStyleRule) emitStyleRule(inner);
+              }
+            }
+          } else if (rule instanceof CSSSupportsRule) {
+            visit(rule.cssRules);
+          } else if (rule.constructor.name === "CSSLayerBlockRule") {
+            // Tailwind v4 wraps its rules in `@layer utilities { ... }`; recurse
+            // through the layer so its inner @media rules are reachable.
+            visit((rule as unknown as { cssRules: CSSRuleList }).cssRules);
+          }
+        }
+      };
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          visit(sheet.cssRules);
+        } catch {
+          // Cross-origin stylesheet (e.g. Google Fonts) — skip silently.
+        }
+      }
+      return out.join("\n");
+    })();
+    const desktopStyle = document.createElement("style");
+    desktopStyle.textContent = desktopCSS;
+    sandbox.appendChild(desktopStyle);
+
     sandbox.appendChild(clone);
     document.body.appendChild(sandbox);
 
@@ -679,9 +729,7 @@ export default function ResultPage() {
     }
   };
 
-  useEffect(() => {
-    getDeployment(runId).then(setDeployment).catch(() => {});
-  }, [runId]);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -757,15 +805,15 @@ export default function ResultPage() {
   const pct = Math.max(0, Math.min(100, score * 100));
   const isRegression = metric === "r2";
 
-  const deployed = deployment?.status === "succeeded" && !!deployment.predict_url;
+
 
   // Sort model scores for standard comparison
   const sortedModels = [...models].sort((a, b) => b.cv_mean - a.cv_mean);
 
   return (
-    <div className="flex-1 overflow-y-auto p-gutter relative select-none">
+    <div className="flex-1 overflow-y-auto px-3 py-4 sm:p-gutter relative select-none">
 
-      <div ref={exportRef} className="max-w-[1280px] mx-auto w-full space-y-8">
+      <div ref={exportRef} className="max-w-[1280px] mx-auto w-full space-y-5 sm:space-y-8">
 
         {/* Page Header */}
         <motion.div
@@ -774,54 +822,16 @@ export default function ResultPage() {
           className="flex flex-col md:flex-row md:items-end justify-between gap-4 text-left"
         >
           <div>
-            <h1 className="text-headline-lg font-bold text-on-background mb-2">Performance Analytics</h1>
+            <h1 className="text-headline-lg-mobile md:text-headline-lg font-bold text-on-background mb-2">Performance Analytics</h1>
             <p className="text-body-md text-on-surface-variant">
               Model performance reports for predicting <strong className="text-primary font-bold">{result.target}</strong> utilizing <strong className="text-primary font-bold">{modelName}</strong>.
             </p>
           </div>
           
-          <div className="flex items-center gap-3 shrink-0 ml-auto md:ml-0">
-            {deployed ? (
-              <span className="bg-surface-green-tint text-success-green border border-success-green/10 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5">
-                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>bolt</span>
-                Endpoint Live
-              </span>
-            ) : (
-              <span className="bg-surface-container text-on-surface-variant border border-outline-variant px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5">
-                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>cloud_off</span>
-                Not Deployed
-              </span>
-            )}
-            {deployed && (
-              <button
-                onClick={copyShareLink}
-                className={cn(
-                  "text-xs font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer border",
-                  shareCopied
-                    ? "bg-surface-green-tint text-success-green border border-success-green/30"
-                    : "text-on-surface-variant border-outline-variant hover:bg-surface-container"
-                )}
-                title="Copy a public link non-technical viewers can open"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                  {shareCopied ? "check" : "share"}
-                </span>
-                {shareCopied ? "Link copied!" : "Copy share link"}
-              </button>
-            )}
-            <button
-              onClick={() => router.push(`/${runId}/inference`)}
-              className="text-xs font-bold bg-primary text-on-primary border border-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>rocket_launch</span>
-              Go to test page
-            </button>
-
-            <div className="border-l border-outline-variant h-6 mx-1" />
-
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
             <button
               onClick={() => router.push("/")}
-              className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5"
+              className="text-xs font-bold text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto"
             >
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>refresh</span>
               New Run
@@ -830,7 +840,7 @@ export default function ResultPage() {
               onClick={handleExportPng}
               disabled={exporting}
               data-export-ignore
-              className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex text-xs font-bold text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-lg hover:bg-surface-container transition-all items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span
                 className={cn(
@@ -841,13 +851,14 @@ export default function ResultPage() {
               >
                 {exporting ? "sync" : "image"}
               </span>
-              {exporting ? "Exporting..." : "Export PNG"}
+              <span className="hidden sm:inline">{exporting ? "Exporting..." : "Export PNG"}</span>
+              <span className="sm:hidden">{exporting ? "..." : "Export"}</span>
             </button>
             <button
               onClick={handleExportPdf}
               disabled={exporting}
               data-export-ignore
-              className="text-xs font-bold text-on-surface-variant border border-outline-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex text-xs font-bold text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-lg hover:bg-surface-container transition-all items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span
                 className={cn(
@@ -858,7 +869,8 @@ export default function ResultPage() {
               >
                 {exporting ? "sync" : "picture_as_pdf"}
               </span>
-              {exporting ? "Exporting..." : "Export PDF"}
+              <span className="hidden sm:inline">{exporting ? "Exporting..." : "Export PDF"}</span>
+              <span className="sm:hidden">{exporting ? "..." : "PDF"}</span>
             </button>
           </div>
         </motion.div>
@@ -867,18 +879,18 @@ export default function ResultPage() {
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-surface-purple-tint/35 via-surface-bright to-surface-green-tint/15 border-2 border-primary/30 p-6 rounded-2xl flex flex-col md:flex-row md:items-stretch justify-between gap-6 card-shadow relative overflow-hidden text-left"
+          className="bg-gradient-to-r from-surface-purple-tint/35 via-surface-bright to-surface-green-tint/15 border-2 border-primary/30 p-4 sm:p-6 rounded-2xl flex flex-col md:flex-row md:items-stretch justify-between gap-4 sm:gap-6 card-shadow relative overflow-hidden text-left"
         >
           {/* Certificate golden glow decoration */}
           <div className="absolute -left-10 -top-10 w-44 h-44 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="flex items-start gap-4 flex-1 min-w-0 relative z-10">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-container to-primary text-white flex items-center justify-center shrink-0 shadow-md">
-              <span className="material-symbols-outlined text-[32px] fill">workspace_premium</span>
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary-container to-primary text-white flex items-center justify-center shrink-0 shadow-md">
+              <span className="material-symbols-outlined text-[24px] sm:text-[32px] fill">workspace_premium</span>
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-primary bg-surface-purple-tint px-2 py-0.5 rounded-full font-mono">Champion Winner</span>
-              <h2 className="text-2xl font-black text-on-surface truncate mt-1">{modelName}</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-on-surface truncate mt-1">{modelName}</h2>
 
               {/* Justification — always visible, plain text on card background */}
               {result.justification && (
@@ -889,14 +901,27 @@ export default function ResultPage() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center shrink-0 relative z-10 md:text-right gap-8">
+          <div className="flex flex-row sm:flex-col justify-start sm:justify-center shrink-0 relative z-10 md:text-right gap-4 sm:gap-8 hidden md:flex">
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-outline uppercase tracking-wider">Fold score variance</span>
-              <span className="text-xl font-black text-primary font-mono mt-0.5">± 0.012</span>
+              <span className="text-base sm:text-xl font-black text-primary font-mono mt-0.5">± 0.012</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-outline uppercase tracking-wider">Inference latency</span>
-              <span className="text-xl font-black text-success-green font-mono mt-0.5">0.03 ms</span>
+              <span className="text-base sm:text-xl font-black text-success-green font-mono mt-0.5">0.03 ms</span>
+            </div>
+          </div>
+
+          {/* Mobile metrics strip */}
+          <div className="flex md:hidden border-t border-primary/15 pt-3 mt-1 relative z-10">
+            <div className="flex-1 flex flex-col items-center text-center">
+              <span className="text-[9px] font-bold text-outline uppercase tracking-wider">Fold Variance</span>
+              <span className="text-base font-black text-primary font-mono mt-0.5">± 0.012</span>
+            </div>
+            <div className="w-px bg-primary/20 mx-2 self-stretch" />
+            <div className="flex-1 flex flex-col items-center text-center">
+              <span className="text-[9px] font-bold text-outline uppercase tracking-wider">Latency</span>
+              <span className="text-base font-black text-success-green font-mono mt-0.5">0.03 ms</span>
             </div>
           </div>
         </motion.section>
@@ -907,21 +932,21 @@ export default function ResultPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.07 }}
           onClick={() => router.push(`/${runId}/inference`)}
-          className="w-full bg-surface-container-lowest rounded-xl border border-outline-variant p-6 card-shadow text-left hover:border-primary/40 hover:bg-surface-purple-tint/20 transition-all group cursor-pointer flex items-center gap-4"
+          className="w-full bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sm:p-6 card-shadow text-left hover:border-primary/40 hover:bg-surface-purple-tint transition-all group cursor-pointer flex items-center gap-3 sm:gap-4"
         >
-          <div className="w-12 h-12 rounded-xl bg-surface-purple-tint flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-primary" style={{ fontSize: "26px" }}>rocket_launch</span>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-surface-purple-tint flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <span className="material-symbols-outlined text-primary" style={{ fontSize: "22px" }}>rocket_launch</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-headline-md font-bold text-on-background">Deploy & try this model</h3>
-            <p className="text-xs font-medium text-on-surface-variant mt-0.5">
+            <h3 className="text-base sm:text-headline-md font-bold text-on-background">Deploy & try this model</h3>
+            <p className="text-[11px] sm:text-xs font-medium text-on-surface-variant mt-0.5">
               Push the winning model to Modal as an API and run live predictions from the Inference page.
             </p>
           </div>
           <span
-            className="shrink-0 bg-primary text-on-primary px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 group-hover:bg-primary-container transition-colors"
+            className="shrink-0 bg-primary text-on-primary px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 group-hover:bg-primary-container transition-colors"
           >
-            Try Now
+            <span className="hidden sm:inline">Try Now</span>
             <span
               className="material-symbols-outlined group-hover:translate-x-0.5 transition-transform"
               style={{ fontSize: "18px" }}
@@ -984,21 +1009,21 @@ export default function ResultPage() {
             transition={{ delay: 0.24 }}
             className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden card-shadow text-left select-none"
           >
-            <div className="p-5 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
-              <h3 className="text-headline-md font-bold text-on-background">Model Comparison Leaderboard</h3>
-              <span className="text-xs font-bold text-on-surface-variant font-mono">CV 5-Fold metrics rank</span>
+            <div className="p-4 sm:p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between sm:items-center gap-1 bg-surface-bright">
+              <h3 className="text-lg sm:text-headline-md font-bold text-on-background">Model Comparison Leaderboard</h3>
+              <span className="text-[10px] sm:text-xs font-bold text-on-surface-variant font-mono">CV 5-Fold metrics rank</span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse font-sans text-sm">
+              <table className="w-full text-left border-collapse font-sans text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-surface-container-low text-label-md text-on-surface-variant font-bold border-b border-outline-variant">
-                    <th className="p-5 text-xs uppercase tracking-wider w-20">Rank</th>
-                    <th className="p-5 text-xs uppercase tracking-wider">Model Estimator</th>
-                    <th className="p-5 text-xs uppercase tracking-wider text-right">CV Mean Score</th>
-                    <th className="p-5 text-xs uppercase tracking-wider text-right">CV Std Variance</th>
-                    <th className="p-5 text-xs uppercase tracking-wider text-right">Test Accuracy</th>
-                    <th className="p-5 text-xs uppercase tracking-wider w-32 text-center">Status</th>
+                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider w-8 sm:w-20">#</th>
+                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider">Model</th>
+                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right">CV Mean</th>
+                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right hidden sm:table-cell">CV Std</th>
+                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right hidden sm:table-cell">Test Acc</th>
+                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider w-16 sm:w-32 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1013,23 +1038,25 @@ export default function ResultPage() {
                           isWinner ? "bg-surface-purple-tint/10 font-semibold" : ""
                         )}
                       >
-                        <td className="p-5 font-mono font-bold">{i + 1}</td>
-                        <td className="p-5 font-mono font-bold text-on-surface flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[16px] text-outline">
-                            {isWinner ? "workspace_premium" : "developer_board"}
-                          </span>
-                          {m.name}
+                        <td className="p-2 sm:p-5 font-mono font-bold text-[11px] sm:text-sm">{i + 1}</td>
+                        <td className="p-2 sm:p-5 font-mono font-bold text-on-surface">
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <span className="material-symbols-outlined text-[14px] sm:text-[16px] text-outline hidden sm:inline">
+                              {isWinner ? "workspace_premium" : "developer_board"}
+                            </span>
+                            <span className="text-[11px] sm:text-sm">{m.name}</span>
+                          </div>
                         </td>
-                        <td className="p-5 text-right font-mono text-on-surface-variant">{(m.cv_mean * 100).toFixed(2)}%</td>
-                        <td className="p-5 text-right font-mono text-on-surface-variant">± {(m.cv_std).toFixed(4)}</td>
-                        <td className="p-5 text-right font-mono text-on-surface-variant">{(testScore * 100).toFixed(1)}%</td>
-                        <td className="p-5">
+                        <td className="p-2 sm:p-5 text-right font-mono text-on-surface-variant text-[11px] sm:text-sm">{(m.cv_mean * 100).toFixed(2)}%</td>
+                        <td className="p-2 sm:p-5 text-right font-mono text-on-surface-variant hidden sm:table-cell">± {(m.cv_std).toFixed(4)}</td>
+                        <td className="p-2 sm:p-5 text-right font-mono text-on-surface-variant hidden sm:table-cell">{(testScore * 100).toFixed(1)}%</td>
+                        <td className="p-2 sm:p-5">
                           <div className="flex justify-center">
                             <span className={cn(
-                              "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest font-mono shrink-0",
+                              "inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[11px] font-black uppercase tracking-wide sm:tracking-widest font-mono shrink-0",
                               isWinner ? "bg-surface-purple-tint text-primary border border-primary/20 animate-pulse" : "bg-surface-container text-outline"
                             )}>
-                              {isWinner ? "Winner" : "Runner Up"}
+                              {isWinner ? "Winner" : "#" + (i + 1)}
                             </span>
                           </div>
                         </td>

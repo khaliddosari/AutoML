@@ -67,8 +67,11 @@ def preview(run_id: str) -> dict:
     if not storage.run_exists(run_id):
         raise HTTPException(404, "run_id not found")
     df = pd.read_csv(storage.dataset_path(run_id), nrows=20)
+    status_data = storage.read_status(run_id) or {}
+    filename = status_data.get("filename", "dataset.csv")
     return {
         "run_id": run_id,
+        "filename": filename,
         "n_columns": int(df.shape[1]),
         "columns": df.columns.tolist(),
         "preview": df.to_dict(orient="records"),
