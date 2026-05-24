@@ -46,12 +46,31 @@ async def upload_csv(file: UploadFile = File(...)) -> dict:
         raise HTTPException(400, "Only .csv files are accepted.")
     run_id = storage.new_run_id()
     dest = storage.dataset_path(run_id)
-    with dest.open("wb") as f:
-        while chunk := await file.read(1024 * 1024):
-            f.write(chunk)
+    
+    MAX_SIZE = 30 * 1024 * 1024  # 30 MB cap
+    total_bytes = 0
+    try:
+        with dest.open("wb") as f:
+            while chunk := await file.read(1024 * 1024):
+                total_bytes += len(chunk)
+                if total_bytes > MAX_SIZE:
+                    f.close()  # close the handle before deleting
+                    if dest.exists():
+                        dest.unlink()
+                    raise HTTPException(413, "File too large. Maximum size allowed is 30 MB.")
+                f.write(chunk)
+    except HTTPException:
+        raise
+    except Exception as e:
+        if dest.exists():
+            dest.unlink()
+        raise HTTPException(500, f"Failed to save file: {e}")
+
     try:
         df = pd.read_csv(dest, nrows=5)
     except Exception as e:
+        if dest.exists():
+            dest.unlink()
         raise HTTPException(400, f"Could not parse CSV: {e}")
     storage.write_status(run_id, "uploaded", filename=file.filename)
     return {

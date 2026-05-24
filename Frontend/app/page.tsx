@@ -68,6 +68,11 @@ export default function UploadPage() {
       setError("Only .csv files are supported right now.");
       return;
     }
+    const MAX_SIZE = 30 * 1024 * 1024;  // 30 MB cap
+    if (f.size > MAX_SIZE) {
+      setError("File is too large. Maximum size allowed is 30 MB.");
+      return;
+    }
     runVerification(f);
   }, []);
 
@@ -220,7 +225,7 @@ export default function UploadPage() {
                 <>
                   <h4 className="text-base sm:text-lg md:text-headline-md text-on-surface font-semibold mb-2 text-center">Drag &amp; Drop files here</h4>
                   <p className="text-[11px] sm:text-xs md:text-body-md text-on-surface-variant mb-5 text-center max-w-xs md:max-w-md px-2 leading-relaxed">
-                    Supported format: <strong className="font-semibold text-primary font-mono">.CSV</strong> (up to 500 MB). Files are parsed and verified on upload.
+                    Supported format: <strong className="font-semibold text-primary font-mono">.CSV</strong> (up to 30 MB). Files are parsed and verified on upload.
                   </p>
                   <button
                     className="bg-surface-container-high text-on-surface text-[12px] sm:text-label-md px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg border border-outline-variant group-hover:border-primary group-hover:text-primary transition-all font-semibold"
