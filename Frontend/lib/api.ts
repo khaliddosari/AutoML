@@ -1,15 +1,11 @@
+const PRODUCTION_BACKEND_URL = "https://modelforge-backend-9uwa.onrender.com";
+
 let BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && !process.env.NEXT_PUBLIC_BACKEND_URL) {
   const hostname = window.location.hostname;
   if (hostname.includes("onrender.com")) {
-    if (hostname.includes("modelforge-frontend")) {
-      const backendHostname = hostname.replace("modelforge-frontend", "modelforge-backend");
-      BASE = `https://${backendHostname}`;
-    } else if (hostname.includes("namtheg") && !hostname.includes("namtheg-b")) {
-      const backendHostname = hostname.replace("namtheg", "namtheg-b");
-      BASE = `https://${backendHostname}`;
-    }
+    BASE = PRODUCTION_BACKEND_URL;
   }
 }
 
