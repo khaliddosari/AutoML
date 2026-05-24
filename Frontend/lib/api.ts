@@ -1,4 +1,12 @@
-const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+let BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+if (typeof window !== "undefined") {
+  const hostname = window.location.hostname;
+  if (hostname.includes("onrender.com") && hostname.includes("modelforge-frontend")) {
+    const backendHostname = hostname.replace("modelforge-frontend", "modelforge-backend");
+    BASE = `https://${backendHostname}`;
+  }
+}
 
 export interface UploadResponse {
   run_id: string;
