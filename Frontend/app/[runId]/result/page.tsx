@@ -1022,14 +1022,14 @@ export default function ResultPage() {
                     <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider">Model</th>
                     <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right">CV Mean</th>
                     <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right hidden sm:table-cell">CV Std</th>
-                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right hidden sm:table-cell">Test Acc</th>
+                    <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider text-right hidden sm:table-cell">{isRegression ? "Test R²" : "Test Acc"}</th>
                     <th className="p-2 sm:p-5 text-[10px] sm:text-xs uppercase tracking-wider w-16 sm:w-32 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedModels.map((m, i) => {
                     const isWinner = m.name === modelName;
-                    const testScore = m.test_accuracy ?? m.test_r2 ?? 0;
+                    const testScore = isWinner ? score : null;
                     return (
                       <tr
                         key={m.name}
@@ -1049,7 +1049,7 @@ export default function ResultPage() {
                         </td>
                         <td className="p-2 sm:p-5 text-right font-mono text-on-surface-variant text-[11px] sm:text-sm">{(m.cv_mean * 100).toFixed(2)}%</td>
                         <td className="p-2 sm:p-5 text-right font-mono text-on-surface-variant hidden sm:table-cell">± {(m.cv_std).toFixed(4)}</td>
-                        <td className="p-2 sm:p-5 text-right font-mono text-on-surface-variant hidden sm:table-cell">{(testScore * 100).toFixed(1)}%</td>
+                        <td className="p-2 sm:p-5 text-right font-mono text-on-surface-variant hidden sm:table-cell">{testScore !== null ? `${(testScore * 100).toFixed(1)}%` : "—"}</td>
                         <td className="p-2 sm:p-5">
                           <div className="flex justify-center">
                             <span className={cn(
