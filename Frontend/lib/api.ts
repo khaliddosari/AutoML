@@ -1,4 +1,4 @@
-const PRODUCTION_BACKEND_URL = "https://modelforge-backend-9uwa.onrender.com";
+const PRODUCTION_BACKEND_URL = "https://modelforge-backend-wy4n.onrender.com";
 
 const envBackend = process.env.NEXT_PUBLIC_BACKEND_URL;
 const envIsAbsolute = !!envBackend && /^https?:\/\//i.test(envBackend);
