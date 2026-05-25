@@ -49,21 +49,15 @@ services:
   # 2. Next.js Frontend Service
   # -------------------------------------------------------------
   - type: web
-    name: modelforge-frontend
+    name: namtheg
     env: node
     plan: free
     rootDir: Frontend
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
-      # Automatically fetch the deployed backend URL and inject it:
       - key: BACKEND_URL
         fromService:
           type: web
           name: modelforge-backend
           property: host
-      - key: NEXT_PUBLIC_BACKEND_URL
-        fromService:
-          type: web
-          name: modelforge-backend
-          property: renderExternalUrl
