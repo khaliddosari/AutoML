@@ -1,12 +1,15 @@
 const PRODUCTION_BACKEND_URL = "https://modelforge-backend-9uwa.onrender.com";
 
-let BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const envBackend = process.env.NEXT_PUBLIC_BACKEND_URL;
+const envIsAbsolute = !!envBackend && /^https?:\/\//i.test(envBackend);
 
-if (typeof window !== "undefined" && !process.env.NEXT_PUBLIC_BACKEND_URL) {
-  const hostname = window.location.hostname;
-  if (hostname.includes("onrender.com")) {
-    BASE = PRODUCTION_BACKEND_URL;
-  }
+let BASE: string;
+if (envIsAbsolute) {
+  BASE = envBackend!;
+} else if (typeof window !== "undefined" && window.location.hostname.includes("onrender.com")) {
+  BASE = PRODUCTION_BACKEND_URL;
+} else {
+  BASE = "http://localhost:8000";
 }
 
 
