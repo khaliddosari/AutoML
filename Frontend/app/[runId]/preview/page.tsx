@@ -335,7 +335,7 @@ export default function PreviewPage() {
                 <span className="material-symbols-outlined text-primary">target</span>
                 <h3 className="text-headline-md font-bold text-on-surface">Target Variable Selection</h3>
               </div>
-              <div className="relative min-w-[240px] mx-auto sm:mx-0">
+              <div className="relative w-full sm:w-auto sm:min-w-[240px] mx-auto sm:mx-0">
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
@@ -406,7 +406,7 @@ export default function PreviewPage() {
 
             {/* Row Search Filter - only active in Data view */}
             {viewMode === "data" && (
-              <div className="relative w-64">
+              <div className="relative w-full md:w-64">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: "18px" }}>search</span>
                 <input
                   className="w-full bg-surface border border-outline-variant rounded-lg py-1.5 pl-9 pr-4 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
