@@ -24,7 +24,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-dvh flex-col md:flex-row relative">
+    <div className="flex h-dvh flex-col relative">
       {/* Mobile Top Navigation Header */}
       <header className="flex md:hidden items-center justify-between px-4 py-3 bg-surface-container-lowest border-b border-outline-variant shrink-0 select-none">
         <button
@@ -55,14 +55,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Sidebar Drawer */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      {/* Sidebar + Content row */}
+      <div className="flex flex-row flex-1 min-h-0 relative">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 min-h-0 ml-0 md:ml-64">
-        <main className="flex-1 min-h-0 flex flex-col">{children}</main>
-        <SiteFooter />
+        {/* Main Content Area */}
+        <div className="flex flex-col flex-1 min-h-0 ml-0 md:ml-64">
+          <main className="flex-1 min-h-0 flex flex-col">{children}</main>
+        </div>
       </div>
+
+      {/* Footer spans full width outside the sidebar offset */}
+      <SiteFooter />
     </div>
   );
 }
