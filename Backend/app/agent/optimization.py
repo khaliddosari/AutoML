@@ -185,7 +185,9 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
         log.warning("OPENROUTER_API_KEY not set. Skipping agentic fine-tuning loop.")
         return baseline_results
 
-    # Check dataset size to see if we should run a local grid search instead of sequential LLM queries
+    # Check dataset size — skip grid search entirely for small files to keep
+    # response times fast on shared-CPU infra (Render free tier). The baseline
+    # model is already well-fit for small data; grid gains are marginal.
     is_small_dataset = False
     try:
         csv_path = storage.engineered_path(run_id)
@@ -194,12 +196,8 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
     except Exception:
         pass
 
-    # PERF: when the baseline is already excellent, tuning rarely finds material
-    # gains and just burns LLM + training time. Skip the loop entirely.
-    # However, for small datasets, since local grid search is extremely fast (under 0.15s) and incurs zero LLM API cost,
-    # we NEVER skip tuning so the user always gets maximum accuracy and the Hyperparameter Tuning UI card remains complete.
-    EXCELLENT_THRESHOLD = 1.01 if is_small_dataset else (0.97 if metric == "accuracy" else 0.95)
-    if baseline_score >= EXCELLENT_THRESHOLD:
+    EXCELLENT_THRESHOLD = 0.97 if metric == "accuracy" else 0.95
+    if is_small_dataset or baseline_score >= EXCELLENT_THRESHOLD:
         log.info(
             "Skipping tuning — baseline %s=%.4f already at/above the excellence threshold (%.2f). Generating premium baseline justification.",
             metric, baseline_score, EXCELLENT_THRESHOLD,
@@ -246,140 +244,68 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
             {"trial": 0, "parameters": "Baseline Settings", "score": baseline_score, "result": "Champion baseline (CV mean)"}
         ]
 
-        # Check dataset size to see if we should run a local grid search instead of sequential LLM queries
-        is_small_dataset = False
-        try:
-            csv_path = storage.engineered_path(run_id)
-            if csv_path.exists() and csv_path.stat().st_size < 1 * 1024 * 1024:
-                is_small_dataset = True
-        except Exception:
-            pass
-
         current_best_model_data = None
+        max_loops = 3
+        EARLY_STOP_NO_IMPROVE = 2
+        consecutive_no_improve = 0
+        allowed_params_text = ALLOWED_PARAMS.get(champion_model, "- No adjustable parameters available.")
 
-        if is_small_dataset:
-            log.info("Small dataset detected for tuning. Running comprehensive local grid search instead of LLM tuning loop.")
-            candidates = get_grid_candidates(champion_model)
-            for idx, suggested_params in enumerate(candidates, 1):
-                try:
-                    trial_res = train_champion_with_params(
-                        run_id=run_id,
-                        target=target,
-                        problem_type=problem_type,
-                        model_name=champion_model,
-                        params=suggested_params
-                    )
-                    score = trial_res["cv_mean"]
-                    trial_test = trial_res["test_score"]
-                    improvement = score - best_score
-
-                    # Format a short, clean description of what parameters were tried
-                    param_desc = ", ".join([f"{k}={v}" for k, v in suggested_params.items()])
-
-                    if score > best_score:
-                        best_score = score
-                        best_test_score = trial_test
-                        best_params = suggested_params
-                        best_train_score = trial_res["train_score"]
-                        current_best_model_data = trial_res
-                        result_desc = f"New champion! CV +{improvement:.4f} | {param_desc}"
-                    else:
-                        result_desc = f"No improvement (CV={score:.4f}) | {param_desc}"
-                        
-                    history.append({
-                        "trial": idx,
-                        "parameters": json.dumps(suggested_params),
-                        "score": score,
-                        "result": result_desc
-                    })
-                except Exception as e:
-                    log.error("Local trial %d failed: %s", idx, e)
-                    history.append({
-                        "trial": idx,
-                        "parameters": json.dumps(suggested_params),
-                        "score": best_score,
-                        "result": f"Error: {str(e)[:40]}"
-                    })
-        else:
-            max_loops = 3
-            # PERF: bail out after this many back-to-back trials that don't beat best.
-            EARLY_STOP_NO_IMPROVE = 2
-            consecutive_no_improve = 0
-
-            allowed_params_text = ALLOWED_PARAMS.get(champion_model, "- No adjustable parameters available.")
-
-            for i in range(1, max_loops + 1):
-                history_text = "\n".join([
-                    f"- Trial {h['trial']}: Params={h['parameters']}, Score={h['score']:.4f} ({h['result']})"
-                    for h in history
-                ])
-                
-                messages = [
-                    ("system", OPTIMIZER_SYSTEM_PROMPT),
-                    ("human", OPTIMIZER_USER_PROMPT.format(
-                        champion_model=champion_model,
-                        metric=metric,
-                        problem_type=problem_type,
-                        best_score=best_score,
-                        best_params=json.dumps(best_params),
-                        history=history_text,
-                        allowed_params=allowed_params_text
-                    ))
-                ]
-                
-                response = llm.invoke(messages)
-                parsed = clean_json_text(response.content)
-                
-                suggested_params = parsed.get("parameters", {})
-                reasoning = remove_em_dashes(parsed.get("reasoning", "Exploring hyperparameters."))
-                stop_tuning = parsed.get("stop_tuning", False)
-                
-                if not suggested_params or stop_tuning:
-                    log.info("Agent decided to stop fine-tuning.")
+        for i in range(1, max_loops + 1):
+            history_text = "\n".join([
+                f"- Trial {h['trial']}: Params={h['parameters']}, Score={h['score']:.4f} ({h['result']})"
+                for h in history
+            ])
+            messages = [
+                ("system", OPTIMIZER_SYSTEM_PROMPT),
+                ("human", OPTIMIZER_USER_PROMPT.format(
+                    champion_model=champion_model,
+                    metric=metric,
+                    problem_type=problem_type,
+                    best_score=best_score,
+                    best_params=json.dumps(best_params),
+                    history=history_text,
+                    allowed_params=allowed_params_text
+                ))
+            ]
+            response = llm.invoke(messages)
+            parsed = clean_json_text(response.content)
+            suggested_params = parsed.get("parameters", {})
+            reasoning = remove_em_dashes(parsed.get("reasoning", "Exploring hyperparameters."))
+            stop_tuning = parsed.get("stop_tuning", False)
+            if not suggested_params or stop_tuning:
+                log.info("Agent decided to stop fine-tuning.")
+                break
+            log.info("Tuning loop %d: Trying parameters %s for %s", i, suggested_params, champion_model)
+            try:
+                trial_res = train_champion_with_params(
+                    run_id=run_id,
+                    target=target,
+                    problem_type=problem_type,
+                    model_name=champion_model,
+                    params=suggested_params
+                )
+                score = trial_res["cv_mean"]
+                trial_test = trial_res["test_score"]
+                improvement = score - best_score
+                if score > best_score:
+                    best_score = score
+                    best_test_score = trial_test
+                    best_params = suggested_params
+                    best_train_score = trial_res["train_score"]
+                    current_best_model_data = trial_res
+                    consecutive_no_improve = 0
+                    result_desc = f"New champion! CV +{improvement:.4f} | {reasoning}"
+                else:
+                    consecutive_no_improve += 1
+                    result_desc = f"No improvement (CV={score:.4f}) | {reasoning}"
+                history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
+                if consecutive_no_improve >= EARLY_STOP_NO_IMPROVE:
+                    log.info("Stopping tuning early — %d consecutive trials without CV improvement.", consecutive_no_improve)
                     break
-                    
-                log.info("Tuning loop %d: Trying parameters %s for %s", i, suggested_params, champion_model)
-                
-                try:
-                    # Train model with suggested parameters
-                    trial_res = train_champion_with_params(
-                        run_id=run_id,
-                        target=target,
-                        problem_type=problem_type,
-                        model_name=champion_model,
-                        params=suggested_params
-                    )
+            except Exception as e:
+                log.error("Trial %d failed: %s", i, e)
+                history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": best_score, "result": f"Error during training: {str(e)}"})
 
-                    # Compare on CV mean to keep the held-out test set unseen during
-                    # selection. test_score is logged for transparency only.
-                    score = trial_res["cv_mean"]
-                    trial_test = trial_res["test_score"]
-                    improvement = score - best_score
-
-                    if score > best_score:
-                        best_score = score
-                        best_test_score = trial_test
-                        best_params = suggested_params
-                        best_train_score = trial_res["train_score"]
-                        current_best_model_data = trial_res
-                        consecutive_no_improve = 0
-                        result_desc = f"New champion! CV +{improvement:.4f} | {reasoning}"
-                    else:
-                        consecutive_no_improve += 1
-                        result_desc = f"No improvement (CV={score:.4f}) | {reasoning}"
-                    history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
-
-                    # PERF: stop early when the optimizer has clearly plateaued.
-                    if consecutive_no_improve >= EARLY_STOP_NO_IMPROVE:
-                        log.info(
-                            "Stopping tuning early — %d consecutive trials without CV improvement.",
-                            consecutive_no_improve,
-                        )
-                        break
-                except Exception as e:
-                    log.error("Trial %d failed: %s", i, e)
-                    history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": best_score, "result": f"Error during training: {str(e)}"})
-        
         # Now, run the justification chain
         history_summary = "\n".join([
             f"- Trial {h['trial']}: {h['parameters']} => Score: {h['score']:.4f} ({h['result']})"
