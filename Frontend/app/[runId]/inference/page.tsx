@@ -199,16 +199,16 @@ export default function InferencePage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-gutter relative select-none">
-      <div className="max-w-[1280px] mx-auto w-full space-y-8">
+    <div className="flex-1 overflow-y-auto px-4 py-4 md:p-gutter relative select-none">
+      <div className="max-w-[1280px] mx-auto w-full space-y-4 md:space-y-8">
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row md:items-end justify-between gap-4 text-left"
         >
           <div>
-            <h1 className="text-headline-lg-mobile md:text-headline-lg font-bold text-on-background mb-2">Inference</h1>
-            <p className="text-body-md text-on-surface-variant">
+            <h1 className="text-xl md:text-headline-lg font-bold text-on-background mb-1 md:mb-2">Inference</h1>
+            <p className="text-sm md:text-body-md text-on-surface-variant">
               {deployed ? (
                 <>
                   Congratulations,{" "}

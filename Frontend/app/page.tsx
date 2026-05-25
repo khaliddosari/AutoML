@@ -107,7 +107,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-gutter relative select-none">
+    <div className="flex-1 overflow-y-auto px-4 py-4 md:p-gutter relative select-none">
 
       {/* Full-screen drag overlay */}
       <AnimatePresence>
@@ -144,10 +144,10 @@ export default function UploadPage() {
       <div className="max-w-[1280px] mx-auto w-full">
 
         {/* Page header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="mb-4 md:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-2 md:gap-4">
           <div>
-            <h2 className="text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2 font-bold">Data Ingestion</h2>
-            <p className="text-base md:text-body-lg text-on-surface-variant">
+            <h2 className="text-2xl md:text-headline-lg text-on-surface mb-1 md:mb-2 font-bold">Data Ingestion</h2>
+            <p className="text-sm md:text-body-lg text-on-surface-variant">
               Upload a dataset and <Brand /> will automatically configure and run the full training pipeline.
             </p>
           </div>

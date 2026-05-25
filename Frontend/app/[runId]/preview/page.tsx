@@ -147,16 +147,16 @@ export default function PreviewPage() {
   const catPct = 100 - numericPct;
 
   return (
-    <div className="flex-1 overflow-y-auto p-gutter relative select-none">
+    <div className="flex-1 overflow-y-auto px-4 py-4 md:p-gutter relative select-none">
       <div className="max-w-[1280px] mx-auto w-full">
         
         {/* Page Header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="mb-4 md:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-2 md:gap-4">
           <div>
-            <h1 className="text-headline-lg-mobile md:text-headline-lg font-bold text-on-background mb-2">
+            <h1 className="text-xl md:text-headline-lg font-bold text-on-background mb-1 md:mb-2">
               Dataset: {data.filename ?? runId?.slice(0, 16)}
             </h1>
-            <p className="text-base md:text-body-lg text-on-surface-variant">
+            <p className="text-sm md:text-body-lg text-on-surface-variant">
               Full feature breakdown, data quality metrics, and schema targets for training.
             </p>
           </div>
@@ -173,10 +173,10 @@ export default function PreviewPage() {
         </div>
 
         {/* Bento Grid with Gradients & Tooltips */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 mb-4 md:mb-8">
+
           {/* Card 1: Target Prediction Variable */}
-          <div className="col-span-1 lg:col-span-6 bg-gradient-to-br from-surface-purple-tint/30 to-surface-container rounded-xl border border-outline-variant p-6 card-shadow relative min-h-[220px] flex flex-col justify-between overflow-hidden">
+          <div className="col-span-1 lg:col-span-6 bg-gradient-to-br from-surface-purple-tint/30 to-surface-container rounded-xl border border-outline-variant p-4 md:p-6 card-shadow relative min-h-[160px] md:min-h-[220px] flex flex-col justify-between overflow-hidden">
             <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
             <div className="flex justify-between items-start relative z-10">
               <div>
@@ -225,7 +225,7 @@ export default function PreviewPage() {
           </div>
 
           {/* Card 2: Data Health Indicators */}
-          <div className="col-span-1 lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col justify-between card-shadow border-t-4 border-t-success-green relative">
+          <div className="col-span-1 lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 md:p-6 flex flex-col justify-between card-shadow border-t-4 border-t-success-green relative">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Quality Scan</span>
@@ -271,7 +271,7 @@ export default function PreviewPage() {
           </div>
 
           {/* Card 3: Feature Space Stacked bar */}
-          <div className="col-span-1 lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col justify-between card-shadow border-t-4 border-t-info-blue relative">
+          <div className="col-span-1 lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 md:p-6 flex flex-col justify-between card-shadow border-t-4 border-t-info-blue relative">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Dimension</span>
