@@ -142,4 +142,6 @@ modal deploy app/deploy/inference_app.py
 
 ## 📄 License
 
-This project is open-source and licensed under the permissive [MIT License](LICENSE).
+Copyright (c) 2026 Khalid. **All Rights Reserved.** See [LICENSE](LICENSE).
+
+This project is source-available for viewing only. No use, copying, modification, or distribution is permitted without prior written permission from the copyright holder.
