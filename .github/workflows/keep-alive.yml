@@ -2,21 +2,21 @@ name: Keep Alive
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # Every 5 minutes (GitHub minimum)
+    - cron: "*/5 * * * *"   # Every 5 minutes — backup only, GitHub may delay up to 30 min
   workflow_dispatch:          # Allow manual trigger from GitHub UI
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping backend
+      - name: Ping backend health
         run: |
-          curl -fsS --max-time 30 \
-            https://modelforge-backend-wy4n.onrender.com/ \
-            && echo "Backend alive" || echo "Backend ping failed (may be cold-starting)"
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 \
+            https://modelforge-backend-wy4n.onrender.com/health)
+          echo "Backend HTTP status: $STATUS"
 
       - name: Ping frontend
         run: |
-          curl -fsS --max-time 30 \
-            https://namtheg.onrender.com/ \
-            && echo "Frontend alive" || echo "Frontend ping failed"
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 \
+            https://namtheg.onrender.com/)
+          echo "Frontend HTTP status: $STATUS"
