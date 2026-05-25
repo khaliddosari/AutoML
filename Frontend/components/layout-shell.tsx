@@ -65,8 +65,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Footer spans full width outside the sidebar offset */}
-      <SiteFooter />
+      {/* Footer spans full width — hidden on mobile to preserve screen space */}
+      <div className="hidden md:block">
+        <SiteFooter />
+      </div>
     </div>
   );
 }
