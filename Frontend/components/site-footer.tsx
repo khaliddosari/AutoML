@@ -2,7 +2,7 @@ import { Linkedin } from "lucide-react";
 
 export function SiteFooter() {
   return (
-    <footer className="w-full border-t border-outline-variant/40 px-4 md:px-10 pt-5 pb-10 flex items-center justify-center gap-3 text-center whitespace-nowrap shrink-0">
+    <footer className="hidden md:flex w-full border-t border-outline-variant/40 px-4 md:px-10 pt-5 pb-10 items-center justify-center gap-3 text-center whitespace-nowrap shrink-0">
       <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest shrink-0">
         Made by
       </span>
