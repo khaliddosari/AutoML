@@ -56,6 +56,8 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
+      - key: NEXT_PUBLIC_BACKEND_URL
+        value: https://modelforge-backend-wy4n.onrender.com
       - key: BACKEND_URL
         fromService:
           type: web

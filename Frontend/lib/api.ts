@@ -1,16 +1,7 @@
-const PRODUCTION_BACKEND_URL = "https://modelforge-backend-wy4n.onrender.com";
-
 const envBackend = process.env.NEXT_PUBLIC_BACKEND_URL;
 const envIsAbsolute = !!envBackend && /^https?:\/\//i.test(envBackend);
 
-let BASE: string;
-if (envIsAbsolute) {
-  BASE = envBackend!;
-} else if (typeof window !== "undefined" && window.location.hostname.includes("onrender.com")) {
-  BASE = PRODUCTION_BACKEND_URL;
-} else {
-  BASE = "http://localhost:8000";
-}
+const BASE: string = envIsAbsolute ? envBackend! : "http://localhost:8000";
 
 
 export interface UploadResponse {
