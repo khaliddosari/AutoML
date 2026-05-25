@@ -165,11 +165,11 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
         csv_path = storage.engineered_path(run_id)
         if csv_path.exists():
             file_size_bytes = csv_path.stat().st_size
-            if file_size_bytes >= 5 * 1024 * 1024:
+            if file_size_bytes >= 1 * 1024 * 1024:
                 use_modal = True
             else:
                 log.info(
-                    "Dataset is small (%.2f KB < 5 MB). Training locally for optimal performance.",
+                    "Dataset is small (%.2f KB < 1 MB). Training locally for optimal performance.",
                     file_size_bytes / 1024
                 )
     except Exception as e:
