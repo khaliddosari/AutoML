@@ -151,7 +151,12 @@ def run_agent(run_id: str, target: str) -> dict:
             "accuracy_score": optimized.get("score"),
             "score_metric": score_metric,
             "plot_path": plot_path,
-            "justification": (optimized.get("justification") or "").replace("—", "-").replace("–", "-"),
+            "justification": (
+                (optimized.get("justification") or "").replace("—", "-").replace("–", "-")
+                or f"{optimized.get('model_name', 'The champion model')} achieved the strongest "
+                   f"cross-validation performance ({optimized.get('score', 0):.4f} {score_metric}) "
+                   f"among all candidates and was selected as champion."
+            ),
             "model_name": optimized.get("model_name"),
             "extra": optimized.get("extra", {}),
         }

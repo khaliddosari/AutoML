@@ -180,9 +180,13 @@ def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_r
     baseline_results["score"] = baseline_score
     baseline_results["accuracy_score"] = baseline_score
 
-    # If the OPENROUTER key is not configured, fallback to standard results with a nice note
+    # If the OPENROUTER key is not configured, fallback to standard results with a static justification
     if not settings.openrouter_api_key:
         log.warning("OPENROUTER_API_KEY not set. Skipping agentic fine-tuning loop.")
+        baseline_results["justification"] = (
+            f"{champion_model} achieved the strongest cross-validation performance "
+            f"({baseline_score:.4f} {metric}) among all candidates and was selected as champion."
+        )
         return baseline_results
 
     is_small_dataset = False
