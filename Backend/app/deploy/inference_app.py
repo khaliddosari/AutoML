@@ -1,4 +1,4 @@
-"""Shared Modal app that serves predictions for every ModelForge run.
+"""Shared Modal app that serves predictions for every Namtheg run.
 
 Deployed ONCE per workspace:
 

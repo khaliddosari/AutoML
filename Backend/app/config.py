@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     openrouter_model: str = "deepseek/deepseek-v4-flash"
     openrouter_referer: str = "http://localhost:8000"
-    openrouter_app_title: str = "ModelForge"
+    openrouter_app_title: str = "Namtheg"
 
     storage_dir: Path = Path("./storage")
     log_level: str = "INFO"

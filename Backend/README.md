@@ -1,4 +1,4 @@
-# ModelForge Backend (MVP Slice)
+# Namtheg Backend (MVP Slice)
 
 LangChain-orchestrated AutoML backend. See [../Docs/PRD.md](../Docs/PRD.md) for the full product spec and [../Docs/AGENTS.md](../Docs/AGENTS.md) for agent operating rules.
 

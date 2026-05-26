@@ -18,7 +18,7 @@ from app.schemas import StartRunRequest
 logging.basicConfig(level=settings.log_level)
 log = logging.getLogger("modelforge")
 
-app = FastAPI(title="ModelForge Backend (MVP)", version="0.1.0")
+app = FastAPI(title="Namtheg Backend (MVP)", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
