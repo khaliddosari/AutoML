@@ -2,7 +2,7 @@
 
 Namtheg is a premium, end-to-end agentic AutoML platform. It automates the entire machine learning pipeline—from raw CSV upload, profiling, target selection, and feature engineering to model training, evaluation plotting, and instant serverless API deployment.
 
-Driven by a **LangChain agentic brain (DeepSeek via OpenRouter)** and equipped with tailored Python execution tools, ModelForge makes training and deploying custom ML models a seamless, single-click experience.
+Driven by a **LangChain agentic brain (DeepSeek via OpenRouter)** and equipped with tailored Python execution tools, Namtheg makes training and deploying custom ML models a seamless, single-click experience.
 
 ---
 
@@ -119,8 +119,8 @@ Namtheg is fully ready for multi-tier production deployment:
 
 ### 1. FastAPI & Next.js on Render
 A pre-configured **Render Blueprint** (`render.yaml`) is located in the root. When pushed to GitHub and connected to Render:
-- It automatically provisions the FastAPI backend at `namthegbackend`.
-- It provisions the Next.js frontend at `namthegfrontend`, automatically wiring it to communicate internally with the backend.
+- It automatically provisions the FastAPI backend at `namtheg-b`.
+- It provisions the Next.js frontend at `namtheg`, automatically wiring it to communicate internally with the backend.
 - Environment variables (`OPENROUTER_API_KEY`, `MODAL_TOKEN_ID`, etc.) are securely requested during setup.
 
 ### 2. Serverless Predictors on Modal
