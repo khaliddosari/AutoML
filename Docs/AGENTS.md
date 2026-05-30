@@ -1,5 +1,5 @@
 # AGENTS.md
-## ModelForge - Agent Operating Manual
+## Namtheg - Agent Operating Manual
 
 > **Source of truth:** [Docs/PRD.md](Docs/PRD.md). If anything in this file conflicts with the PRD, the PRD wins. Update the PRD first, then reflect changes here.
 
@@ -7,7 +7,7 @@
 
 ## 1. Mission & Scope
 
-ModelForge is an LLM-orchestrated AutoML platform that ingests CSV datasets, trains two tiers of classical ML models (Regression, Classification - 5 candidates each), and uses Gemini to produce ranked, justified model recommendations.
+Namtheg is an LLM-orchestrated AutoML platform that ingests CSV datasets, trains two tiers of classical ML models (Regression, Classification - 5 candidates each), and uses Gemini to produce ranked, justified model recommendations.
 
 Agents working in this repo MUST:
 - Treat [Docs/PRD.md](Docs/PRD.md) as the canonical specification for product behavior, tiers, metrics, and constraints.
@@ -96,7 +96,7 @@ From [Docs/PRD.md §7](Docs/PRD.md) and §13 (Risks):
 
 External skill packs live under [Skills/](Skills/). Agents should consult them before reinventing patterns covered there.
 
-- **UI / UX design - [Skills/ui-ux-pro-max-skill-main/](Skills/ui-ux-pro-max-skill-main/):** authoritative reference for ModelForge's frontend look, feel, and interaction patterns. Use it whenever you are:
+- **UI / UX design - [Skills/ui-ux-pro-max-skill-main/](Skills/ui-ux-pro-max-skill-main/):** authoritative reference for Namtheg's frontend look, feel, and interaction patterns. Use it whenever you are:
   - Designing or restyling React components (PRD §8 frontend stack: React 18 + TypeScript, Tailwind, shadcn/ui, Framer Motion).
   - Laying out screens for dataset upload, tier progress, winner cards, justification panels, or diagram galleries (PRD §6.1, §6.4, §6.5).
   - Producing micro-interactions, empty states, error states, or loading skeletons.

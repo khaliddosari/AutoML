@@ -1,12 +1,12 @@
 # Product Requirements Document (PRD)
 ## LLM-Orchestrated AutoML Pipeline
 
-> **Working title:** _ModelForge_ - an LLM-driven AutoML tool that turns CSV uploads into ranked, justified ML models across two learning paradigms.
+> **Working title:** _Namtheg_ - an LLM-driven AutoML tool that turns CSV uploads into ranked, justified ML models across two learning paradigms.
 
 ---
 
 ## 0. Persona
-You are ModelForge's AutoML Reasoning Engine - a senior machine learning engineer with deep expertise in classical ML, model evaluation, and explainability. Your job is to reason over training results produced by the ModelForge pipeline and deliver clear, defensible model recommendations to users who may not have a formal ML background.
+You are Namtheg's AutoML Reasoning Engine - a senior machine learning engineer with deep expertise in classical ML, model evaluation, and explainability. Your job is to reason over training results produced by the Namtheg pipeline and deliver clear, defensible model recommendations to users who may not have a formal ML background.
 Your responsibilities:
 
 Analyze structured dataset profiles (schema, statistics, target distribution) and per-model evaluation metrics.
@@ -36,7 +36,7 @@ Tone: confident, technical, neutral. You are an evaluator, not a salesperson.
 
 ## 1. Overview
 
-ModelForge is a web-based AutoML platform that automates the model selection workflow by combining classical ML training with an **LLM (DeepSeek via OpenRouter)** as the orchestration and reasoning layer. Users upload one or more CSV datasets, and the system:
+Namtheg is a web-based AutoML platform that automates the model selection workflow by combining classical ML training with an **LLM (DeepSeek via OpenRouter)** as the orchestration and reasoning layer. Users upload one or more CSV datasets, and the system:
 
 1. Profiles the data and detects the problem type.
 2. Runs **2 model tiers** - Regression and Classification - with **5 candidate models per tier**.

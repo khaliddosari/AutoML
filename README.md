@@ -1,8 +1,8 @@
-# ModelForge: LangChain-Orchestrated AutoML 🛠️
+# Namtheg: LangChain-Orchestrated AutoML 🛠️
 
-ModelForge is a premium, end-to-end agentic AutoML platform. It automates the entire machine learning pipeline—from raw CSV upload, profiling, target selection, and feature engineering to model training, evaluation plotting, and instant serverless API deployment.
+Namtheg is a premium, end-to-end agentic AutoML platform. It automates the entire machine learning pipeline—from raw CSV upload, profiling, target selection, and feature engineering to model training, evaluation plotting, and instant serverless API deployment.
 
-Driven by a **LangChain agentic brain (DeepSeek via OpenRouter)** and equipped with tailored Python execution tools, ModelForge makes training and deploying custom ML models a seamless, single-click experience.
+Driven by a **LangChain agentic brain (DeepSeek via OpenRouter)** and equipped with tailored Python execution tools, Namtheg makes training and deploying custom ML models a seamless, single-click experience.
 
 ---
 
@@ -40,7 +40,7 @@ This repository is structured as a modern monorepo separating frontend UI from b
 
 ## 🧠 LangChain AutoML Pipeline Flow
 
-When you select a target column and click **Start AutoML**, ModelForge kicks off a stateful LangChain agent that executes the following specialized tools sequentially:
+When you select a target column and click **Start AutoML**, Namtheg kicks off a stateful LangChain agent that executes the following specialized tools sequentially:
 
 1. **`profile_dataset`**: Inspects schemas, missing values, distinct values, and data types.
 2. **`detect_problem_type`**: Auto-detects whether the task is `regression` or `classification` based on the target column cardinality and datatype.
@@ -115,17 +115,17 @@ When you select a target column and click **Start AutoML**, ModelForge kicks off
 
 ## 🌐 Deploying to Production
 
-ModelForge is fully ready for multi-tier production deployment:
+Namtheg is fully ready for multi-tier production deployment:
 
 ### 1. FastAPI & Next.js on Render
 A pre-configured **Render Blueprint** (`render.yaml`) is located in the root. When pushed to GitHub and connected to Render:
-- It automatically provisions the FastAPI backend at `modelforge-backend`.
-- It provisions the Next.js frontend at `modelforge-frontend`, automatically wiring it to communicate internally with the backend.
+- It automatically provisions the FastAPI backend at `namtheg-b`.
+- It provisions the Next.js frontend at `namtheg`, automatically wiring it to communicate internally with the backend.
 - Environment variables (`OPENROUTER_API_KEY`, `MODAL_TOKEN_ID`, etc.) are securely requested during setup.
 
 ### 2. Serverless Predictors on Modal
 When a user clicks "Deploy to Modal" on their successfully trained model:
-- The backend leverages **Modal** serverless volumes (`modelforge-models`) and the shared app (`modelforge-inference`).
+- The backend leverages **Modal** serverless volumes (`namtheg-models`) and the shared app (`namtheg-inference`).
 - **Zero-cold-start uploads**: The model is saved directly to a mounted persistent volume rather than redeploying containers.
 - Interactive serverless prediction endpoints are served dynamically!
 
