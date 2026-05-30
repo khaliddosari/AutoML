@@ -6,6 +6,7 @@ import { uploadCSV } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/brand";
+import { Icon } from "@/components/icon";
 
 const VERIFY_STEPS = [
   "Reading CSV byte stream into client buffer...",
@@ -116,7 +117,7 @@ export default function UploadPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-surface/75 backdrop-blur-md z-50 flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-2xl"
+            className="fixed inset-0 bg-surface/70 backdrop-blur-xl z-50 flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-2xl"
             onDragOver={(e) => e.preventDefault()}
             onDragLeave={() => setWindowDragging(false)}
             onDrop={(e) => {
@@ -129,9 +130,9 @@ export default function UploadPage() {
             <motion.div
               animate={{ y: [0, -15, 0] }}
               transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-              className="w-20 h-20 rounded-full bg-surface-purple-tint flex items-center justify-center mb-6 text-primary shadow-lg"
+              className="w-20 h-20 rounded-full bg-surface-purple-tint flex items-center justify-center mb-6 text-primary shadow-[0_0_40px_rgba(79,195,247,0.3)]"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "40px" }}>cloud_upload</span>
+              <Icon name="cloud_upload" style={{ fontSize: "40px" }} />
             </motion.div>
             <h3 className="text-headline-lg-mobile md:text-headline-lg text-primary font-bold mb-2">Drop your CSV here</h3>
             <p className="text-base md:text-body-lg text-on-surface-variant font-medium">
@@ -156,12 +157,12 @@ export default function UploadPage() {
 
         {/* Upload card */}
         <div className="max-w-4xl mx-auto w-full">
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 md:p-6 card-shadow">
+          <div className="glass p-4 md:p-6">
 
             {/* Card header */}
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-xl md:text-headline-md font-bold text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">upload_file</span>
+                <Icon name="upload_file" className="text-primary" />
                 Upload Dataset
               </h3>
 
@@ -183,7 +184,7 @@ export default function UploadPage() {
               {isVerifying ? (
                 <div className="flex flex-col items-center justify-center p-4">
                   <div className="relative w-16 h-16 mb-6 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-[36px] animate-pulse">cloud_upload</span>
+                    <Icon name="cloud_upload" className="text-primary text-[36px] animate-pulse" />
                     <svg className="absolute top-0 left-0 w-16 h-16 animate-[spin_3s_linear_infinite]" viewBox="0 0 36 36">
                       <circle className="text-surface-variant" strokeWidth="2.5" stroke="currentColor" fill="none" cx="18" cy="18" r="16" />
                       <circle className="text-primary" strokeDasharray="30, 100" strokeWidth="2.5" strokeLinecap="round" stroke="currentColor" fill="none" cx="18" cy="18" r="16" />
@@ -207,7 +208,7 @@ export default function UploadPage() {
               ) : file ? (
                 <>
                   <div className="w-14 h-14 rounded-xl bg-surface-green-tint flex items-center justify-center text-success-green mb-4 shadow-sm animate-scale">
-                    <span className="material-symbols-outlined text-[28px]">description</span>
+                    <Icon name="description" className="text-[28px]" />
                   </div>
                   <h4 className="text-base sm:text-lg md:text-headline-md text-on-surface font-bold truncate max-w-xs md:max-w-sm mb-1">{file.name}</h4>
                   <p className="text-xs text-on-surface-variant font-mono mb-4">
@@ -215,9 +216,9 @@ export default function UploadPage() {
                   </p>
                   <button
                     onClick={removeFile}
-                    className="bg-surface-container-high text-error hover:bg-error-container text-xs font-bold px-4 py-2 rounded-lg border border-outline-variant hover:border-error/20 transition-all flex items-center gap-1.5"
+                    className="bg-surface-container-high text-error hover:bg-error-container text-xs font-bold px-4 py-2 rounded-lg border border-outline-variant hover:border-error/40 transition-all flex items-center gap-1.5"
                   >
-                    <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+                    <Icon name="delete" style={{ fontSize: "16px" }} />
                     Remove File
                   </button>
                 </>
@@ -258,7 +259,7 @@ export default function UploadPage() {
                   <div className="mt-5 pt-5 border-t border-outline-variant flex flex-wrap items-center justify-between gap-4">
                     {/* Auto-pilot notice */}
                     <div className="flex items-center gap-2 text-xs text-on-surface-variant font-medium">
-                      <span className="material-symbols-outlined text-primary shrink-0" style={{ fontSize: "18px" }}>auto_awesome</span>
+                      <Icon name="auto_awesome" className="text-primary shrink-0" style={{ fontSize: "18px" }} />
                       <span>
                         Problem type, feature strategy and missing value handling are
                         <strong className="text-primary font-semibold"> detected automatically</strong> by the pipeline.
@@ -274,17 +275,16 @@ export default function UploadPage() {
                         onClick={handleUpload}
                         disabled={uploading}
                         className={cn(
-                          "bg-primary-container hover:bg-primary !text-white text-label-md px-6 py-2.5 rounded-lg shadow-sm font-bold transition-all flex items-center gap-2",
+                          "btn-primary text-label-md px-6 py-2.5 rounded-lg",
                           uploading && "opacity-60 cursor-not-allowed"
                         )}
                       >
-                        <span
-                          className={cn("material-symbols-outlined !text-white", uploading && "animate-spin")}
+                        <Icon
+                          name={uploading ? "sync" : "play_arrow"}
+                          className={cn(uploading && "animate-spin")}
                           style={{ fontSize: "18px" }}
-                        >
-                          {uploading ? "sync" : "play_arrow"}
-                        </span>
-                        <span className="!text-white">
+                        />
+                        <span>
                           {uploading ? "Uploading..." : "Start Ingestion"}
                         </span>
                       </motion.button>
@@ -302,9 +302,9 @@ export default function UploadPage() {
           <a
             href="/insurance.csv"
             download="insurance.csv"
-            className="text-xs font-bold text-primary hover:text-primary-container bg-surface-purple-tint/35 hover:bg-surface-purple-tint border border-primary/25 hover:border-primary/40 px-5 py-2.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            className="btn-glass text-xs font-bold px-5 py-2.5 rounded-lg cursor-pointer"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>download</span>
+            <Icon name="download" style={{ fontSize: "16px" }} />
             Download a free dataset
           </a>
         </div>

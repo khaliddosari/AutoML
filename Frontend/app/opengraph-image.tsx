@@ -7,9 +7,10 @@ export const alt = "Namtheg AutoML";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const PRIMARY = "#38009d";
-const CONTAINER = "#4f29b7";
-const MUTED = "#5b5b6b";
+const PRIMARY = "#4fc3f7";
+const CONTAINER = "#0288d1";
+const MUTED = "#9999a8";
+const TEXT = "#e8e8ed";
 
 const fontDir = join(process.cwd(), "app", "og-assets");
 const arabicFont = readFileSync(join(fontDir, "ibm-plex-arabic-700.woff"));
@@ -38,7 +39,9 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "76px",
-          background: "#ffffff",
+          backgroundColor: "#0a0a0f",
+          backgroundImage:
+            "radial-gradient(circle at 15% 10%, rgba(79,195,247,0.22), transparent 45%), radial-gradient(circle at 90% 100%, rgba(126,87,194,0.20), transparent 45%)",
           fontFamily: "Plex",
         }}
       >
@@ -79,7 +82,7 @@ export default function OpengraphImage() {
         </div>
 
         {/* Hero title */}
-        <div style={{ fontSize: "118px", fontWeight: 700, color: PRIMARY, lineHeight: 1 }}>
+        <div style={{ fontSize: "118px", fontWeight: 700, color: TEXT, lineHeight: 1 }}>
           Namtheg AutoML
         </div>
 

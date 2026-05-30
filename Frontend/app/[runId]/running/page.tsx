@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { getStatus, getDiagnostics } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/icon";
 
 const STEPS = [
   {
@@ -182,7 +183,7 @@ function ServerDiagnosticsWidget({ runId }: { runId: string }) {
   }, [runId]);
 
   return (
-    <div className="bg-surface border border-outline-variant rounded-xl p-4 font-sans space-y-3 shadow-sm select-none">
+    <div className="bg-surface-container border border-outline-variant rounded-xl p-4 font-sans space-y-3 shadow-sm select-none">
       <div className="flex items-center gap-1.5 border-b border-outline-variant pb-2">
         <span className="w-2 h-2 rounded-full bg-success-green animate-pulse" />
         <h4 className="text-[10px] font-bold text-outline uppercase tracking-wider">Compute Diagnostics</h4>
@@ -244,22 +245,22 @@ function SidebarStep({
       <div className="shrink-0 z-10 mt-0.5">
         {status === "done" ? (
           <div className="w-[25px] h-[25px] rounded-full bg-surface-green-tint border border-success-green flex items-center justify-center">
-            <span className="material-symbols-outlined text-success-green" style={{ fontSize: "14px" }}>check_circle</span>
+            <Icon name="check_circle" className="text-success-green" style={{ fontSize: "13px" }} />
           </div>
         ) : status === "active" ? (
           <div className="w-[25px] h-[25px] rounded-full bg-surface-purple-tint border border-primary flex items-center justify-center">
             <motion.span
               animate={{ scale: [1, 1.15, 1] }}
               transition={{ duration: 1.2, repeat: Infinity }}
-              className="material-symbols-outlined text-primary"
-              style={{ fontSize: "13px" }}
+              className="text-primary inline-flex"
+              style={{ fontSize: "12px" }}
             >
-              {step.icon}
+              <Icon name={step.icon} />
             </motion.span>
           </div>
         ) : status === "error" ? (
           <div className="w-[25px] h-[25px] rounded-full bg-error-container border border-error flex items-center justify-center">
-            <span className="material-symbols-outlined text-error" style={{ fontSize: "13px" }}>error</span>
+            <Icon name="error" className="text-error" style={{ fontSize: "12px" }} />
           </div>
         ) : (
           <div className="w-[25px] h-[25px] rounded-full bg-surface-container border border-outline-variant flex items-center justify-center">
@@ -379,10 +380,10 @@ function PipelineCell({
           />
         )}
         {status === "done" && (
-          <span className="material-symbols-outlined text-success-green shrink-0 animate-scale" style={{ fontSize: "14px" }}>check_circle</span>
+          <Icon name="check_circle" className="text-success-green shrink-0 animate-scale" style={{ fontSize: "14px" }} />
         )}
         {status === "error" && (
-          <span className="material-symbols-outlined text-error shrink-0 animate-scale" style={{ fontSize: "14px" }}>error</span>
+          <Icon name="error" className="text-error shrink-0 animate-scale" style={{ fontSize: "14px" }} />
         )}
 
         <span className="truncate flex-1 text-body-md font-mono text-xs text-on-surface">
@@ -402,7 +403,7 @@ function PipelineCell({
                 codeOpen ? "bg-surface-purple-tint border-primary/30 text-primary font-semibold" : "border-outline-variant text-outline"
               )}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>code</span>
+              <Icon name="code" style={{ fontSize: "12px" }} />
               <span className="hidden sm:inline">{codeOpen ? "Hide Code" : "Show Code"}</span>
             </button>
           )}
@@ -411,10 +412,8 @@ function PipelineCell({
             <span className="text-[10px] text-on-surface-variant font-mono font-bold">{elapsedAtDone}s</span>
           )}
           {isClickable && (
-            <button onClick={onToggle} className="text-outline hover:text-primary p-0.5 rounded hover:bg-surface-container">
-              <span className="material-symbols-outlined block" style={{ fontSize: "18px" }}>
-                {expanded ? "expand_less" : "expand_more"}
-              </span>
+            <button onClick={onToggle} aria-label={expanded ? "Collapse output" : "Expand output"} className="text-outline hover:text-primary p-0.5 rounded hover:bg-surface-container">
+              <Icon name={expanded ? "expand_less" : "expand_more"} className="block" style={{ fontSize: "16px" }} />
             </button>
           )}
         </div>
@@ -593,20 +592,20 @@ export default function RunningPage() {
   const progressPct = Math.min(100, (activeStep / STEPS.length) * 100);
 
   return (
-    <div className="flex-1 flex flex-row overflow-hidden bg-surface select-none relative">
+    <div className="flex-1 flex flex-row overflow-hidden select-none relative">
 
       {/* Left pipeline progress panel sidebar — completely detached, never scrolls with cells */}
       <motion.aside
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.35 }}
-        className="w-72 bg-surface-container-lowest border-r border-outline-variant px-5 py-6 hidden md:flex flex-col shrink-0 justify-between gap-6 absolute left-0 top-0 bottom-0 h-full overflow-y-auto z-10"
+        className="w-72 glass-strong border-r border-outline-variant px-5 py-6 hidden md:flex flex-col shrink-0 justify-between gap-6 absolute left-0 top-0 bottom-0 h-full overflow-y-auto z-10"
       >
         <div className="flex flex-col gap-5">
           {/* Header Progress status */}
           <div className="shrink-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="material-symbols-outlined text-primary" style={{ fontSize: "20px" }}>model_training</span>
+              <Icon name="model_training" className="text-primary" style={{ fontSize: "18px" }} />
               <h2 className="text-xs font-bold text-primary uppercase tracking-widest">Pipeline</h2>
             </div>
             <div className="flex items-center justify-between mb-2">
@@ -660,7 +659,7 @@ export default function RunningPage() {
         <div className="max-w-2xl mx-auto w-full flex-1 flex flex-col gap-3 overflow-hidden">
           
           {/* Jupyter Notebook top toolbar bar */}
-          <div className="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-2.5 card-shadow shrink-0 select-none">
+          <div className="flex items-center gap-3 glass rounded-xl px-4 py-2.5 shrink-0 select-none">
             <div className="flex gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-error-pink/70" />
               <div className="w-2.5 h-2.5 rounded-full bg-warning-orange/70" />
@@ -752,7 +751,7 @@ export default function RunningPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-surface-green-tint border border-success-green/30 flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-success-green" style={{ fontSize: "22px", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      <Icon name="check_circle" className="text-success-green" style={{ fontSize: "20px" }} />
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-bold text-on-surface">All pipeline stages completed</p>
@@ -763,10 +762,10 @@ export default function RunningPage() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => router.push(`/${runId}/result`)}
-                    className="bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm shrink-0"
+                    className="btn-primary text-sm font-bold px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 shrink-0"
                   >
                     View Results
-                    <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>arrow_forward</span>
+                    <Icon name="arrow_forward" style={{ fontSize: "16px" }} />
                   </motion.button>
                 </motion.div>
               )}

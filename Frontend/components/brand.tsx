@@ -6,12 +6,20 @@ import { cn } from "@/lib/utils";
  * IBM Plex Sans Arabic bold so it stays visually consistent everywhere it
  * appears across the UI.
  */
+/** OpenType feature set that lights up the Thmanyah serif ligatures/stylistic sets. */
+const THMANYAH_FEATURES: React.CSSProperties = {
+  fontFeatureSettings:
+    '"liga" 1, "dlig" 1, "clig" 1, "calt" 1, "salt" 1, "ss01" 1, "ss02" 1, "ss03" 1, "ss04" 1, "ss05" 1',
+  textRendering: "optimizeLegibility",
+};
+
 export function Brand({ className }: { className?: string }) {
   return (
     <span
       lang="ar"
       dir="rtl"
-      className={cn("font-arabic font-bold inline-flex items-center text-primary text-[1.18em] leading-none", className)}
+      style={THMANYAH_FEATURES}
+      className={cn("font-display font-bold inline-flex items-center text-primary text-[1.22em] leading-none", className)}
     >
       نَمذِج
     </span>
@@ -38,7 +46,8 @@ export function formatArabicBrand(text: string): React.ReactNode {
               key={index}
               lang="ar"
               dir="rtl"
-              className="font-arabic font-bold text-[1.18em] inline-flex items-center mx-0.5 text-primary leading-none"
+              style={THMANYAH_FEATURES}
+              className="font-display font-bold text-[1.22em] inline-flex items-center mx-0.5 text-primary leading-none"
             >
               نَمذِج
             </span>

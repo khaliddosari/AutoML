@@ -5,6 +5,12 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Brand } from "./brand";
 import { SiteFooter } from "./site-footer";
+import { Icon } from "./icon";
+
+/** Fixed cyan/blue/violet glow field the glass surfaces refract. Never remove. */
+function AmbientField() {
+  return <div className="ambient-field animate-drift" aria-hidden="true" />;
+}
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
@@ -17,26 +23,29 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   if (isPublicShare) {
     return (
-      <div className="min-h-dvh flex flex-col">
-        <main className="flex-1 flex flex-col">{children}</main>
+      <div className="min-h-dvh flex flex-col relative">
+        <AmbientField />
+        <main className="flex-1 flex flex-col relative z-10">{children}</main>
       </div>
     );
   }
 
   return (
     <div className="flex h-dvh flex-col relative">
+      <AmbientField />
       {/* Mobile Top Navigation Header */}
-      <header className="flex md:hidden items-center justify-between px-4 py-3 bg-surface-container-lowest border-b border-outline-variant shrink-0 select-none">
+      <header className="flex md:hidden items-center justify-between px-4 py-3 glass-strong border-b border-outline-variant shrink-0 select-none relative z-20">
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="text-primary p-1.5 rounded-lg hover:bg-surface-purple-tint/40 transition-colors flex items-center justify-center cursor-pointer"
+          aria-label="Open menu"
+          className="text-primary p-1.5 rounded-lg hover:bg-surface-purple-tint transition-colors flex items-center justify-center cursor-pointer"
         >
-          <span className="material-symbols-outlined block" style={{ fontSize: "24px" }}>menu</span>
+          <Icon name="menu" className="block" style={{ fontSize: "24px" }} />
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-on-primary" style={{ fontSize: "22px" }}>graph_3</span>
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(79,195,247,0.35)]">
+            <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "20px" }} />
           </div>
           <div className="leading-tight">
             <p className="text-lg text-on-background"><Brand /></p>
@@ -50,13 +59,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar Backdrop Overlay on Mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40 md:hidden transition-opacity cursor-pointer"
+          className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 md:hidden transition-opacity cursor-pointer"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar + Content row */}
-      <div className="flex flex-row flex-1 min-h-0 relative">
+      <div className="flex flex-row flex-1 min-h-0 relative z-10">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         {/* Main Content Area */}
@@ -66,7 +75,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Footer spans full width — hidden on mobile to preserve screen space */}
-      <div className="hidden md:block">
+      <div className="hidden md:block relative z-10">
         <SiteFooter />
       </div>
     </div>

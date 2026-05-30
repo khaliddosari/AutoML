@@ -14,6 +14,17 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { formatArabicBrand } from "@/components/brand";
+import { Icon } from "@/components/icon";
+
+// Stylesheets whose @font-face rules we inline (as base64) into the export
+// snapshot so the report's text + Font Awesome icon glyphs rasterize correctly.
+const FONT_EMBED_URLS = [
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
+  "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
+];
+// Built once and reused across exports — the inlined webfont CSS is large and
+// identical every time, so there's no reason to refetch it per click.
+let fontEmbedCSSCache: string | null = null;
 
 /* ─── Metric card ── */
 /* ─── Combined Accuracy + Feature Importance card ── */
@@ -51,16 +62,16 @@ function AccuracyAndFeaturesCard({
   const trendIcon = trendKind === "up" ? "trending_up" : trendKind === "down" ? "trending_down" : "horizontal_rule";
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sm:p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
+    <div className="glass p-4 sm:p-6 flex flex-col h-full relative overflow-hidden text-left">
       <div className="absolute top-0 left-0 w-full h-1 bg-success-green" />
 
       {/* Accuracy header */}
       <div className="flex justify-between items-start mb-4">
         <div className="p-2 rounded-lg shrink-0 bg-surface-green-tint text-success-green">
-          <span className="material-symbols-outlined block" style={{ fontSize: "20px" }}>target</span>
+          <Icon name="target" className="block" style={{ fontSize: "20px" }} />
         </div>
         <span className={cn("flex items-center text-sm font-bold gap-1 shrink-0", trendColor)}>
-          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>{trendIcon}</span>
+          <Icon name={trendIcon} style={{ fontSize: "15px" }} />
           {trendLabel}
         </span>
       </div>
@@ -82,7 +93,7 @@ function AccuracyAndFeaturesCard({
           <span>Train score: {(trainScore * 100).toFixed(1)}%</span>
           {overfitGap !== undefined && overfitGap > 0.12 && (
             <span className="text-warning-orange flex items-center gap-1.5 font-sans font-bold">
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>warning</span>
+              <Icon name="warning" style={{ fontSize: "13px" }} />
               Overfit warning: {(overfitGap * 100).toFixed(0)}% Gap
             </span>
           )}
@@ -95,7 +106,7 @@ function AccuracyAndFeaturesCard({
       {/* Feature importance section */}
       <div className="flex justify-between items-center mb-5">
         <h3 className="text-lg sm:text-headline-md font-bold text-on-background">Feature Importance</h3>
-        <span className="material-symbols-outlined text-outline" style={{ fontSize: "20px" }}>analytics</span>
+        <Icon name="analytics" className="text-outline" style={{ fontSize: "18px" }} />
       </div>
 
       <div className="flex-1 flex flex-col gap-4 relative">
@@ -132,7 +143,7 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
 
   return (
     <>
-      <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sm:p-6 flex flex-col h-full card-shadow relative overflow-hidden text-left">
+      <div className="glass p-4 sm:p-6 flex flex-col h-full relative overflow-hidden text-left">
         <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-headline-md font-bold text-on-background">
@@ -140,22 +151,22 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
           </h3>
           <button
             onClick={() => setLightboxOpen(true)}
-            className="text-primary hover:bg-surface-purple-tint/40 p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs font-bold"
+            className="text-primary hover:bg-surface-purple-tint p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs font-bold"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>zoom_in</span>
+            <Icon name="zoom_in" style={{ fontSize: "15px" }} />
             Zoom
           </button>
         </div>
 
         <div
           onClick={() => setLightboxOpen(true)}
-          className="flex-1 relative rounded-lg overflow-hidden bg-surface-container-lowest min-h-[220px] cursor-pointer group"
+          className="flex-1 relative rounded-lg overflow-hidden bg-transparent min-h-[220px] cursor-pointer group"
         >
           {!loaded && <div className="absolute inset-0 shimmer" />}
 
-          {/* Glassmorphic hover overlay */}
-          <div className="absolute inset-0 bg-surface/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 z-10">
-            <span className="material-symbols-outlined text-primary bg-surface-container-lowest p-3 rounded-full shadow-md" style={{ fontSize: "28px" }}>zoom_in</span>
+          {/* Hover overlay */}
+          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 z-10">
+            <Icon name="zoom_in" className="text-primary bg-surface-bright p-3 rounded-full shadow-md" style={{ fontSize: "28px" }} />
           </div>
 
           <img
@@ -173,7 +184,7 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
           {isClassification ? (
             <>
               <p>Diagonal = correct predictions.</p>
-              <p>Bright purple index indicates accurate validation.</p>
+              <p>Bright cyan cells indicate accurate validation.</p>
             </>
           ) : (
             <p>Closer plot clusters along correlation slope indicate tighter residual coefficients.</p>
@@ -189,27 +200,28 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setLightboxOpen(false)}
-            className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-6 cursor-zoom-out"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-6 cursor-zoom-out"
           >
             <motion.div
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-2xl max-w-2xl w-full relative"
+              className="glass-strong rounded-2xl p-6 shadow-2xl max-w-2xl w-full relative"
             >
               <button
                 onClick={() => setLightboxOpen(false)}
+                aria-label="Close"
                 className="absolute top-4 right-4 text-outline hover:text-primary hover:bg-surface-container p-1 rounded-full transition-colors cursor-pointer"
               >
-                <span className="material-symbols-outlined block">close</span>
+                <Icon name="close" className="block" />
               </button>
-              
+
               <h3 className="text-headline-md font-bold text-on-surface mb-4">
                 {isClassification ? "Confusion Matrix (High Res)" : "Predicted vs Actual Residuals"}
               </h3>
-              
-              <div className="bg-surface rounded-xl p-2 border border-outline-variant flex items-center justify-center max-h-[500px]">
+
+              <div className="bg-surface-container rounded-xl p-2 border border-outline-variant flex items-center justify-center max-h-[500px]">
                 <img src={url} alt="Large plot" crossOrigin="anonymous" className="max-h-[460px] object-contain rounded-lg" />
               </div>
             </motion.div>
@@ -240,9 +252,9 @@ function TuningResultsCard({
   const tuningTrials = trials.filter((t) => t.trial > 0);
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden card-shadow text-left">
+    <div className="glass overflow-hidden text-left">
       {/* Header */}
-      <div className="p-4 sm:p-5 border-b border-outline-variant flex flex-wrap justify-between items-center gap-3 bg-surface-bright">
+      <div className="p-4 sm:p-5 border-b border-outline-variant flex flex-wrap justify-between items-center gap-3 bg-surface-container-low">
         <div>
           <h3 className="text-xl sm:text-[28px] leading-tight font-bold tracking-tight text-on-background">Hyperparameter Tuning</h3>
           <p className="text-xs text-on-surface-variant mt-1.5 font-mono">
@@ -255,9 +267,7 @@ function TuningResultsCard({
             ? "bg-surface-green-tint text-success-green border-success-green/20"
             : "bg-surface-container text-outline border-outline-variant"
         )}>
-          <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-            {improved ? "trending_up" : "horizontal_rule"}
-          </span>
+          <Icon name={improved ? "trending_up" : "horizontal_rule"} style={{ fontSize: "13px" }} />
           {improved ? `Improved ${sign}${deltaPct}%` : "No Improvement Found"}
         </span>
       </div>
@@ -356,7 +366,7 @@ function TuningResultsCard({
                       </span>
                     ) : isBest ? (
                       <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-success-green bg-surface-green-tint px-3 py-1 rounded-full border border-success-green/20 font-mono">
-                        <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>star</span>
+                        <Icon name="star" style={{ fontSize: "11px" }} />
                         #{t.trial}
                       </span>
                     ) : (
@@ -484,16 +494,27 @@ export default function ResultPage() {
         const res = await fetch(cssUrl, { mode: "cors" });
         if (!res.ok) return "";
         let css = await res.text();
-        const urlRefs = Array.from(
+        // Capture every url(...) reference (quotes optional). Font Awesome's
+        // all.min.css points at its webfonts with *relative* paths, so we resolve
+        // each ref against the stylesheet URL before inlining it as base64.
+        const rawRefs = Array.from(
           new Set(
-            Array.from(css.matchAll(/url\((https?:\/\/[^)]+)\)/g)).map((m) => m[1])
+            Array.from(css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)).map((m) => m[1])
           )
-        );
+        ).filter((u) => u && !u.startsWith("data:"));
         const replacements = await Promise.all(
-          urlRefs.map(async (u) => ({ u, data: await fetchAsDataUrl(u) }))
+          rawRefs.map(async (raw) => {
+            let abs = raw;
+            try {
+              abs = new URL(raw, cssUrl).href;
+            } catch {
+              /* keep raw */
+            }
+            return { raw, data: await fetchAsDataUrl(abs) };
+          })
         );
-        for (const { u, data } of replacements) {
-          if (data) css = css.split(u).join(data);
+        for (const { raw, data } of replacements) {
+          if (data) css = css.split(raw).join(data);
         }
         return css;
       } catch {
@@ -513,7 +534,7 @@ export default function ResultPage() {
     sandbox.style.width = `${CAPTURE_WIDTH}px`;
     sandbox.style.zIndex = "-1";
     sandbox.style.pointerEvents = "none";
-    sandbox.style.background = "#ffffff";
+    sandbox.style.background = "#0a0a0f";
 
     const clone = node.cloneNode(true) as HTMLElement;
     clone.style.width = `${CAPTURE_WIDTH}px`;
@@ -627,15 +648,26 @@ export default function ResultPage() {
         )
       );
 
-      // Inline @font-face rules with base64 woff2 so Material Symbols ligatures
-      // render as glyphs in the snapshot instead of as literal text.
-      const FONT_URLS = [
-        "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
-        "https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0",
-      ];
-      const fontEmbedCSS = (
-        await Promise.all(FONT_URLS.map(fetchFontEmbedCSS))
-      ).join("\n");
+      // Make sure the live page's webfaces (Inter, IBM Plex, JetBrains Mono, and
+      // the Font Awesome icon faces) are fully loaded before snapshotting — the
+      // clone inherits them, and FA renders icons via ::before glyphs that won't
+      // rasterize until the face is ready.
+      if (document.fonts?.ready) {
+        try {
+          await document.fonts.ready;
+        } catch {
+          /* font loading API unavailable — proceed */
+        }
+      }
+
+      // Inline @font-face rules with base64 woff2 so the report's text and the
+      // Font Awesome icon glyphs render in the snapshot. Built once, then reused.
+      if (fontEmbedCSSCache === null) {
+        fontEmbedCSSCache = (
+          await Promise.all(FONT_EMBED_URLS.map(fetchFontEmbedCSS))
+        ).join("\n");
+      }
+      const fontEmbedCSS = fontEmbedCSSCache;
 
       // Wait one more frame after font load to make sure final layout is stable,
       // then take the maximum of every height measurement we can get to defend
@@ -648,7 +680,7 @@ export default function ResultPage() {
 
       const { toPng } = await import("html-to-image");
       const dataUrl = await toPng(clone, {
-        backgroundColor: "#ffffff",
+        backgroundColor: "#0a0a0f",
         pixelRatio: 2,
         cacheBust: true,
         width: CAPTURE_WIDTH,
@@ -670,7 +702,7 @@ export default function ResultPage() {
       if (!snap) return;
       const link = document.createElement("a");
       link.href = snap.dataUrl;
-      link.download = `modelforge-${runId}-report.png`;
+      link.download = `namtheg-${runId}-report.png`;
       link.click();
     } catch (e) {
       console.error("PNG export failed", e);
@@ -697,7 +729,7 @@ export default function ResultPage() {
           canvas.height = img.naturalHeight;
           const ctx = canvas.getContext("2d");
           if (!ctx) return reject(new Error("2d context unavailable"));
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = "#0a0a0f";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
           resolve(canvas.toDataURL("image/jpeg", 0.92));
@@ -721,7 +753,7 @@ export default function ResultPage() {
         compress: true,
       });
       pdf.addImage(jpegDataUrl, "JPEG", 0, 0, widthPt, heightPt);
-      pdf.save(`modelforge-${runId}-report.pdf`);
+      pdf.save(`namtheg-${runId}-report.pdf`);
     } catch (e) {
       console.error("PDF export failed", e);
     } finally {
@@ -770,9 +802,9 @@ export default function ResultPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-surface select-none">
+      <div className="flex-1 flex items-center justify-center select-none">
         <div className="flex flex-col items-center gap-3">
-          <span className="material-symbols-outlined text-primary animate-spin" style={{ fontSize: "36px" }}>sync</span>
+          <Icon name="sync" className="text-primary animate-spin" style={{ fontSize: "36px" }} />
           <p className="text-sm font-semibold text-on-surface-variant font-mono">Loading model analysis...</p>
         </div>
       </div>
@@ -781,8 +813,8 @@ export default function ResultPage() {
 
   if (!result || result.status === "failed") {
     return (
-      <div className="flex-1 flex items-center justify-center flex-col gap-4 bg-surface select-none">
-        <span className="material-symbols-outlined text-error animate-pulse" style={{ fontSize: "52px" }}>error_outline</span>
+      <div className="flex-1 flex items-center justify-center flex-col gap-4 select-none">
+        <Icon name="error_outline" className="text-error animate-pulse" style={{ fontSize: "52px" }} />
         <p className="text-sm font-semibold text-on-surface-variant font-mono">{result?.error ?? "No model metrics generated."}</p>
         <button
           onClick={() => router.push("/")}
@@ -833,7 +865,7 @@ export default function ResultPage() {
               onClick={() => router.push("/")}
               className="text-xs font-bold text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-lg hover:bg-surface-container transition-all flex items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>refresh</span>
+              <Icon name="refresh" style={{ fontSize: "15px" }} />
               New Run
             </button>
             <button
@@ -842,15 +874,11 @@ export default function ResultPage() {
               data-export-ignore
               className="flex text-xs font-bold text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-lg hover:bg-surface-container transition-all items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined",
-                  exporting && "animate-spin"
-                )}
-                style={{ fontSize: "16px" }}
-              >
-                {exporting ? "sync" : "image"}
-              </span>
+              <Icon
+                name={exporting ? "sync" : "image"}
+                className={cn(exporting && "animate-spin")}
+                style={{ fontSize: "15px" }}
+              />
               <span className="hidden sm:inline">{exporting ? "Exporting..." : "Export PNG"}</span>
               <span className="sm:hidden">{exporting ? "..." : "Export"}</span>
             </button>
@@ -860,15 +888,11 @@ export default function ResultPage() {
               data-export-ignore
               className="flex text-xs font-bold text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-lg hover:bg-surface-container transition-all items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <span
-                className={cn(
-                  "material-symbols-outlined",
-                  exporting && "animate-spin"
-                )}
-                style={{ fontSize: "16px" }}
-              >
-                {exporting ? "sync" : "picture_as_pdf"}
-              </span>
+              <Icon
+                name={exporting ? "sync" : "picture_as_pdf"}
+                className={cn(exporting && "animate-spin")}
+                style={{ fontSize: "15px" }}
+              />
               <span className="hidden sm:inline">{exporting ? "Exporting..." : "Export PDF"}</span>
               <span className="sm:hidden">{exporting ? "..." : "PDF"}</span>
             </button>
@@ -885,8 +909,8 @@ export default function ResultPage() {
           <div className="absolute -left-10 -top-10 w-44 h-44 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="flex items-start gap-4 flex-1 min-w-0 relative z-10">
-            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary-container to-primary text-white flex items-center justify-center shrink-0 shadow-md">
-              <span className="material-symbols-outlined text-[24px] sm:text-[32px] fill">workspace_premium</span>
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary-container to-primary text-white flex items-center justify-center shrink-0 shadow-[0_0_28px_rgba(79,195,247,0.4)]">
+              <Icon name="workspace_premium" className="text-[24px] sm:text-[32px]" />
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-primary bg-surface-purple-tint px-2 py-0.5 rounded-full font-mono">Champion Winner</span>
@@ -932,10 +956,10 @@ export default function ResultPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.07 }}
           onClick={() => router.push(`/${runId}/inference`)}
-          className="w-full bg-surface-container-lowest rounded-xl border border-outline-variant p-4 sm:p-6 card-shadow text-left hover:border-primary/40 hover:bg-surface-purple-tint transition-all group cursor-pointer flex items-center gap-3 sm:gap-4"
+          className="glass glass-hover w-full p-4 sm:p-6 text-left group cursor-pointer flex items-center gap-3 sm:gap-4"
         >
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-surface-purple-tint flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <span className="material-symbols-outlined text-primary" style={{ fontSize: "22px" }}>rocket_launch</span>
+            <Icon name="rocket_launch" className="text-primary" style={{ fontSize: "22px" }} />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base sm:text-headline-md font-bold text-on-background">Deploy & try this model</h3>
@@ -947,12 +971,11 @@ export default function ResultPage() {
             className="shrink-0 bg-primary text-on-primary px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 group-hover:bg-primary-container transition-colors"
           >
             <span className="hidden sm:inline">Try Now</span>
-            <span
-              className="material-symbols-outlined group-hover:translate-x-0.5 transition-transform"
-              style={{ fontSize: "18px" }}
-            >
-              arrow_forward
-            </span>
+            <Icon
+              name="arrow_forward"
+              className="group-hover:translate-x-0.5 transition-transform"
+              style={{ fontSize: "16px" }}
+            />
           </span>
         </motion.button>
 
@@ -975,8 +998,8 @@ export default function ResultPage() {
               overfitGap={overfitGap}
             />
           ) : (
-            <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 flex flex-col items-center justify-center min-h-[280px]">
-              <span className="material-symbols-outlined text-outline opacity-40 animate-pulse" style={{ fontSize: "48px" }}>bar_chart</span>
+            <div className="glass p-6 flex flex-col items-center justify-center min-h-[280px]">
+              <Icon name="bar_chart" className="text-outline opacity-40 animate-pulse" style={{ fontSize: "48px" }} />
               <p className="text-sm font-bold text-on-surface-variant font-mono mt-3">Feature diagnostics not available for model type</p>
             </div>
           )}
@@ -1007,9 +1030,9 @@ export default function ResultPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.24 }}
-            className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden card-shadow text-left select-none"
+            className="glass overflow-hidden text-left select-none"
           >
-            <div className="p-4 sm:p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between sm:items-center gap-1 bg-surface-bright">
+            <div className="p-4 sm:p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between sm:items-center gap-1 bg-surface-container-low">
               <h3 className="text-lg sm:text-headline-md font-bold text-on-background">Model Comparison Leaderboard</h3>
               <span className="text-[10px] sm:text-xs font-bold text-on-surface-variant font-mono">CV 5-Fold metrics rank</span>
             </div>
@@ -1041,9 +1064,7 @@ export default function ResultPage() {
                         <td className="p-2 sm:p-5 font-mono font-bold text-[11px] sm:text-sm">{i + 1}</td>
                         <td className="p-2 sm:p-5 font-mono font-bold text-on-surface">
                           <div className="flex items-center gap-1 sm:gap-2">
-                            <span className="material-symbols-outlined text-[14px] sm:text-[16px] text-outline hidden sm:inline">
-                              {isWinner ? "workspace_premium" : "developer_board"}
-                            </span>
+                            <Icon name={isWinner ? "workspace_premium" : "developer_board"} className="text-[13px] sm:text-[15px] text-outline hidden sm:inline" />
                             <span className="text-[11px] sm:text-sm">{m.name}</span>
                           </div>
                         </td>

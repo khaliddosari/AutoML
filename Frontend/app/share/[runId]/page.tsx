@@ -13,6 +13,7 @@ import {
 import { TryModelCard } from "@/components/try-model-card";
 import { Brand } from "@/components/brand";
 import { SiteFooter } from "@/components/site-footer";
+import { Icon } from "@/components/icon";
 
 export default function PublicSharePage() {
   const { runId } = useParams<{ runId: string }>();
@@ -35,12 +36,12 @@ export default function PublicSharePage() {
   const deployed = deployment?.status === "succeeded" && !!deployment.predict_url;
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-surface via-surface to-surface-purple-tint/20 select-none flex flex-col">
+    <div className="min-h-dvh select-none flex flex-col">
       {/* Top bar */}
-      <header className="w-full px-6 md:px-10 py-5 flex items-center justify-between border-b border-outline-variant/40">
+      <header className="w-full px-6 md:px-10 py-5 flex items-center justify-between border-b border-outline-variant glass-strong">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-on-primary" style={{ fontSize: "28px" }}>graph_3</span>
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_24px_rgba(79,195,247,0.4)]">
+            <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "24px" }} />
           </div>
           <div className="leading-tight">
             <p className="text-xl text-on-background group-hover:text-primary transition-colors"><Brand /></p>
@@ -52,7 +53,7 @@ export default function PublicSharePage() {
           className="text-xs font-bold text-primary hover:underline hidden sm:flex items-center gap-1"
         >
           Build your own
-          <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>arrow_outward</span>
+          <Icon name="arrow_outward" style={{ fontSize: "13px" }} />
         </Link>
       </header>
 
@@ -89,8 +90,8 @@ export default function PublicSharePage() {
 
           {/* Error states */}
           {loadError && (
-            <div className="bg-error/5 border border-error/30 rounded-xl p-5 text-center">
-              <span className="material-symbols-outlined text-error" style={{ fontSize: "32px" }}>error</span>
+            <div className="bg-error-container border border-error/30 rounded-xl p-5 text-center">
+              <Icon name="error" className="text-error" style={{ fontSize: "32px" }} />
               <h3 className="text-sm font-bold text-on-background mt-2">Model unavailable</h3>
               <p className="text-xs text-on-surface-variant mt-1 font-mono break-words">{loadError}</p>
             </div>

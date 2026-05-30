@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Brand } from "./brand";
+import { Icon } from "./icon";
 
 const NAV_ITEMS = [
   { key: "ingestion", icon: "upload_file", label: "Data Ingestion", pattern: /^\/$/ },
@@ -39,7 +40,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   return (
     <nav
       className={cn(
-        "w-64 h-screen flex flex-col fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-50 overflow-hidden select-none transition-transform duration-300 ease-in-out md:translate-x-0",
+        "w-64 h-screen flex flex-col fixed left-0 top-0 glass-strong border-r border-outline-variant z-50 overflow-hidden select-none transition-transform duration-300 ease-in-out md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
@@ -51,9 +52,9 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             <motion.div
               whileHover={{ rotate: 15, scale: 1.08 }}
               transition={{ type: "spring", stiffness: 300, damping: 12 }}
-              className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0"
+              className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_24px_rgba(79,195,247,0.4)]"
             >
-              <span className="material-symbols-outlined text-on-primary" style={{ fontSize: "28px" }}>graph_3</span>
+              <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "24px" }} />
             </motion.div>
 
             <div className="leading-tight">
@@ -64,9 +65,10 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             {/* Mobile close button */}
             <button
               onClick={onClose}
+              aria-label="Close menu"
               className="md:hidden ml-auto text-outline hover:text-primary p-1 rounded-full transition-colors cursor-pointer flex items-center justify-center"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>close</span>
+              <Icon name="close" style={{ fontSize: "20px" }} />
             </button>
           </div>
 
@@ -80,15 +82,15 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                 router.push("/");
               }}
               className={cn(
-                "relative overflow-hidden w-full bg-gradient-to-r from-primary-container to-primary text-white text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:shadow-md transition-shadow group shrink-0"
+                "btn-primary relative overflow-hidden w-full text-label-md py-3 rounded-lg group shrink-0"
               )}
             >
               {/* Shimmer overlay */}
-              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:animate-shimmer" style={{ backgroundSize: "200% 100%" }} />
-              
-              <span className="material-symbols-outlined z-10 text-white" style={{ fontSize: "18px", fontVariationSettings: "'FILL' 1" }}>add</span>
-              
-              <span className="z-10 text-sm font-semibold whitespace-nowrap text-white">
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:animate-shimmer" style={{ backgroundSize: "200% 100%" }} />
+
+              <Icon name="add" className="z-10" style={{ fontSize: "18px" }} />
+
+              <span className="z-10 text-sm font-semibold whitespace-nowrap">
                 Create New Model
               </span>
             </motion.button>
@@ -130,18 +132,14 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                       />
                     )}
 
-                    <span
+                    <Icon
+                      name={icon}
                       className={cn(
-                        "material-symbols-outlined z-10 transition-transform duration-200 group-hover:scale-108",
+                        "z-10 transition-transform duration-200 group-hover:scale-110 w-5 text-center",
                         isActive && "text-primary"
                       )}
-                      style={{
-                        fontSize: "20px",
-                        fontVariationSettings: isActive ? "'FILL' 1" : undefined
-                      }}
-                    >
-                      {icon}
-                    </span>
+                      style={{ fontSize: "18px" }}
+                    />
 
                     <span className="text-sm font-medium z-10 whitespace-nowrap">
                       {label}

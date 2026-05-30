@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { predict as predictApi, type ModelSchema, type PredictionResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { Icon } from "./icon";
 
 export function TryModelCard({
   runId,
@@ -92,11 +93,11 @@ export function TryModelCard({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 card-shadow text-left opacity-60"
+        className="glass p-6 text-left opacity-60"
       >
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: "26px" }}>science</span>
+            <Icon name="science" className="text-on-surface-variant" style={{ fontSize: "24px" }} />
           </div>
           <div>
             <h3 className="text-headline-md font-bold text-on-background">Try the Model</h3>
@@ -118,12 +119,12 @@ export function TryModelCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05 }}
-      className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 card-shadow text-left"
+      className="glass p-6 text-left"
     >
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4 min-w-0">
           <div className="w-12 h-12 rounded-xl bg-surface-purple-tint flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-primary" style={{ fontSize: "26px" }}>science</span>
+            <Icon name="science" className="text-primary" style={{ fontSize: "24px" }} />
           </div>
           <div className="min-w-0">
             <h3 className="text-headline-md font-bold text-on-background">Try the Model</h3>
@@ -161,7 +162,7 @@ export function TryModelCard({
 
       {!schema ? (
         <div className="mt-5 flex items-center gap-2 text-xs text-on-surface-variant">
-          <span className="material-symbols-outlined animate-spin" style={{ fontSize: "16px" }}>sync</span>
+          <Icon name="sync" className="animate-spin" style={{ fontSize: "16px" }} />
           Loading model schema…
         </div>
       ) : (
@@ -201,9 +202,9 @@ export function TryModelCard({
             {mode === "form" && (
               <button
                 onClick={resetToSample}
-                className="self-center text-sm font-bold text-primary hover:bg-surface-purple-tint/40 px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="self-center text-sm font-bold text-primary hover:bg-surface-purple-tint px-4 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>restart_alt</span>
+                <Icon name="restart_alt" style={{ fontSize: "18px" }} />
                 Reset to sample
               </button>
             )}
@@ -212,17 +213,17 @@ export function TryModelCard({
               disabled={busy}
               className={cn(
                 "w-full px-5 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer",
-                busy ? "bg-surface-container text-on-surface-variant cursor-not-allowed" : "bg-primary text-on-primary hover:opacity-90",
+                busy ? "bg-surface-container text-on-surface-variant cursor-not-allowed" : "btn-primary hover:opacity-95",
               )}
             >
               {busy ? (
                 <>
-                  <span className="material-symbols-outlined animate-spin" style={{ fontSize: "18px" }}>sync</span>
+                  <Icon name="sync" className="animate-spin" style={{ fontSize: "18px" }} />
                   Predicting…
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>send</span>
+                  <Icon name="send" style={{ fontSize: "18px" }} />
                   Predict
                 </>
               )}
@@ -231,7 +232,7 @@ export function TryModelCard({
 
           {error && (
             <div className="mt-4 p-3 bg-error/5 border border-error/30 rounded-lg flex items-start gap-2">
-              <span className="material-symbols-outlined text-error shrink-0" style={{ fontSize: "16px" }}>error</span>
+              <Icon name="error" className="text-error shrink-0" style={{ fontSize: "16px" }} />
               <p className="text-xs text-error font-mono break-words">{error}</p>
             </div>
           )}
@@ -301,7 +302,7 @@ export function TryModelCard({
 
           {result?.error && (
             <div className="mt-4 p-3 bg-error/5 border border-error/30 rounded-lg flex items-start gap-2">
-              <span className="material-symbols-outlined text-error shrink-0" style={{ fontSize: "16px" }}>error</span>
+              <Icon name="error" className="text-error shrink-0" style={{ fontSize: "16px" }} />
               <p className="text-xs text-error font-mono break-words">{result.error}</p>
             </div>
           )}

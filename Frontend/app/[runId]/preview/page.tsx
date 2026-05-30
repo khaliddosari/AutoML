@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { startRun, getPreview } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/icon";
 
 interface PreviewData {
   run_id: string;
@@ -69,9 +70,9 @@ export default function PreviewPage() {
 
   if (!data) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-surface select-none">
+      <div className="flex-1 flex items-center justify-center select-none">
         <div className="flex flex-col items-center gap-3">
-          <span className="material-symbols-outlined text-primary animate-spin" style={{ fontSize: "36px" }}>sync</span>
+          <Icon name="sync" className="text-primary animate-spin" style={{ fontSize: "36px" }} />
           <p className="text-sm font-semibold text-on-surface-variant font-mono">Compiling dataset metrics...</p>
         </div>
       </div>
@@ -161,12 +162,12 @@ export default function PreviewPage() {
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-green-tint text-success-green rounded-full text-xs font-bold border border-success-green/10">
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>check_circle</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-green-tint text-success-green rounded-full text-xs font-bold border border-success-green/30">
+              <Icon name="check_circle" style={{ fontSize: "13px" }} />
               Schema Verified
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-purple-tint text-primary rounded-full text-xs font-bold border border-primary/10">
-              <span className="material-symbols-outlined fill" style={{ fontSize: "14px" }}>cloud_done</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-purple-tint text-primary rounded-full text-xs font-bold border border-primary/30">
+              <Icon name="cloud_done" style={{ fontSize: "13px" }} />
               Synced
             </span>
           </div>
@@ -186,14 +187,15 @@ export default function PreviewPage() {
                   <span
                     onMouseEnter={() => setActiveTooltip("target")}
                     onMouseLeave={() => setActiveTooltip(null)}
-                    className="material-symbols-outlined text-outline cursor-help hover:text-primary transition-colors"
-                    style={{ fontSize: "16px" }}
+                    role="img"
+                    aria-label="About the target variable"
+                    className="text-outline cursor-help hover:text-primary transition-colors inline-flex"
                   >
-                    help_outline
+                    <Icon name="help_outline" style={{ fontSize: "15px" }} />
                   </span>
                 </h3>
               </div>
-              <span className="material-symbols-outlined text-primary bg-surface-purple-tint p-2 rounded-lg" style={{ fontSize: "24px" }}>target</span>
+              <Icon name="target" className="text-primary bg-surface-purple-tint p-2 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
             <div className="relative z-10 flex justify-between items-end gap-3 mt-4">
@@ -225,7 +227,7 @@ export default function PreviewPage() {
           </div>
 
           {/* Card 2: Data Health Indicators */}
-          <div className="col-span-1 lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 md:p-6 flex flex-col justify-between card-shadow border-t-4 border-t-success-green relative">
+          <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between border-t-4 border-t-success-green relative">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Quality Scan</span>
@@ -234,14 +236,15 @@ export default function PreviewPage() {
                   <span
                     onMouseEnter={() => setActiveTooltip("health")}
                     onMouseLeave={() => setActiveTooltip(null)}
-                    className="material-symbols-outlined text-outline cursor-help hover:text-primary transition-colors"
-                    style={{ fontSize: "16px" }}
+                    role="img"
+                    aria-label="About the data health score"
+                    className="text-outline cursor-help hover:text-primary transition-colors inline-flex"
                   >
-                    help_outline
+                    <Icon name="help_outline" style={{ fontSize: "15px" }} />
                   </span>
                 </h3>
               </div>
-              <span className="material-symbols-outlined text-success-green bg-surface-green-tint p-2 rounded-lg" style={{ fontSize: "24px" }}>health_and_safety</span>
+              <Icon name="health_and_safety" className="text-success-green bg-surface-green-tint p-2 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
             <div className="mt-4">
@@ -271,7 +274,7 @@ export default function PreviewPage() {
           </div>
 
           {/* Card 3: Feature Space Stacked bar */}
-          <div className="col-span-1 lg:col-span-3 bg-surface-container-lowest rounded-xl border border-outline-variant p-4 md:p-6 flex flex-col justify-between card-shadow border-t-4 border-t-info-blue relative">
+          <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between border-t-4 border-t-info-blue relative">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Dimension</span>
@@ -280,14 +283,15 @@ export default function PreviewPage() {
                   <span
                     onMouseEnter={() => setActiveTooltip("features")}
                     onMouseLeave={() => setActiveTooltip(null)}
-                    className="material-symbols-outlined text-outline cursor-help hover:text-primary transition-colors"
-                    style={{ fontSize: "16px" }}
+                    role="img"
+                    aria-label="About the feature space"
+                    className="text-outline cursor-help hover:text-primary transition-colors inline-flex"
                   >
-                    help_outline
+                    <Icon name="help_outline" style={{ fontSize: "15px" }} />
                   </span>
                 </h3>
               </div>
-              <span className="material-symbols-outlined text-info-blue bg-surface-purple-tint/50 p-2 rounded-lg" style={{ fontSize: "24px" }}>category</span>
+              <Icon name="category" className="text-info-blue bg-surface-purple-tint p-2 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
             <div className="mt-4">
@@ -328,11 +332,11 @@ export default function PreviewPage() {
         </div>
 
         {/* Target Column Selection + Run */}
-        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 card-shadow mb-8">
+        <div className="glass p-6 mb-8">
           <div className="flex items-center justify-between gap-6 flex-wrap">
             <div className="flex flex-col sm:flex-row items-center gap-4 flex-1 min-w-0 w-full">
               <div className="flex items-center gap-2 text-center sm:text-left">
-                <span className="material-symbols-outlined text-primary">target</span>
+                <Icon name="target" className="text-primary" />
                 <h3 className="text-headline-md font-bold text-on-surface">Target Variable Selection</h3>
               </div>
               <div className="relative w-full sm:w-auto sm:min-w-[240px] mx-auto sm:mx-0">
@@ -345,7 +349,7 @@ export default function PreviewPage() {
                     <option key={col} value={col}>{col}</option>
                   ))}
                 </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: "20px" }}>expand_more</span>
+                <Icon name="expand_more" className="absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: "16px" }} />
               </div>
               <p className="text-xs text-on-surface-variant text-center sm:text-left">The models will attempt to map patterns to classify or regress this output.</p>
             </div>
@@ -356,14 +360,12 @@ export default function PreviewPage() {
                 onClick={handleStart}
                 disabled={!target || starting}
                 className={cn(
-                  "bg-primary-container !text-white text-label-md px-6 py-3 rounded-lg shadow-sm font-bold hover:bg-primary transition-all flex items-center gap-2",
+                  "btn-primary text-label-md px-6 py-3 rounded-lg",
                   (!target || starting) && "opacity-50 cursor-not-allowed"
                 )}
               >
-                <span className="material-symbols-outlined !text-white animate-pulse" style={{ fontSize: "18px" }}>
-                  {starting ? "sync" : "play_arrow"}
-                </span>
-                <span className="!text-white">
+                <Icon name={starting ? "sync" : "play_arrow"} className={cn(starting && "animate-spin")} style={{ fontSize: "18px" }} />
+                <span>
                   {starting ? "Starting..." : "Run AutoML Pipeline"}
                 </span>
               </button>
@@ -372,10 +374,10 @@ export default function PreviewPage() {
         </div>
 
         {/* Data Table with Raw/Stats Toggle & Search */}
-        <div className="bg-surface-container-lowest rounded-xl border border-outline-variant card-shadow overflow-hidden">
-          
+        <div className="glass overflow-hidden">
+
           {/* Table Toolbar controls */}
-          <div className="p-5 border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-bright">
+          <div className="p-5 border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-low">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 items-start sm:items-center">
               <h3 className="text-headline-md font-bold text-on-background">
                 {viewMode === "data" ? "Dataset Raw Preview" : "Features Profiling Statistics"}
@@ -407,7 +409,7 @@ export default function PreviewPage() {
             {/* Row Search Filter - only active in Data view */}
             {viewMode === "data" && (
               <div className="relative w-full md:w-64">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: "18px" }}>search</span>
+                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: "15px" }} />
                 <input
                   className="w-full bg-surface border border-outline-variant rounded-lg py-1.5 pl-9 pr-4 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                   placeholder="Filter rows..."
@@ -434,13 +436,11 @@ export default function PreviewPage() {
                         )}
                       >
                         <div className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 300" }}>
-                            {numericCols.includes(col) ? "tag" : "text_fields"}
-                          </span>
+                          <Icon name={numericCols.includes(col) ? "tag" : "text_fields"} className="text-[12px]" />
                           {col}
                         </div>
                         {col === target && (
-                          <span className="ml-1.5 text-[8px] bg-primary text-white px-1.5 py-0.5 rounded-full font-sans uppercase tracking-widest font-black">
+                          <span className="ml-1.5 text-[8px] bg-primary text-on-primary px-1.5 py-0.5 rounded-full font-sans uppercase tracking-widest font-black">
                             Target
                           </span>
                         )}
@@ -502,12 +502,10 @@ export default function PreviewPage() {
                       )}
                     >
                       <td className="p-4 font-bold text-on-surface flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 300" }}>
-                          {stat.type === "numeric" ? "tag" : "text_fields"}
-                        </span>
+                        <Icon name={stat.type === "numeric" ? "tag" : "text_fields"} className="text-[12px]" />
                         {stat.column}
                         {stat.column === target && (
-                          <span className="text-[8px] bg-primary text-white px-1.5 py-0.5 rounded-full font-sans uppercase font-black tracking-widest shrink-0 ml-1">Target</span>
+                          <span className="text-[8px] bg-primary text-on-primary px-1.5 py-0.5 rounded-full font-sans uppercase font-black tracking-widest shrink-0 ml-1">Target</span>
                         )}
                       </td>
                       <td className="p-4">

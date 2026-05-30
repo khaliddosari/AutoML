@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import QRCode from "react-qr-code";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/icon";
 
 /* ─── Cloud deploy CTA shown until the model is live ── */
 function DeployCallout({
@@ -30,10 +31,10 @@ function DeployCallout({
     <motion.section
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-surface-container-lowest rounded-xl border border-outline-variant p-10 card-shadow flex flex-col items-center justify-center text-center"
+      className="glass p-10 flex flex-col items-center justify-center text-center"
     >
-      <div className="w-16 h-16 rounded-2xl bg-surface-purple-tint flex items-center justify-center mb-5">
-        <span className="material-symbols-outlined text-primary" style={{ fontSize: "34px" }}>cloud_upload</span>
+      <div className="w-16 h-16 rounded-2xl bg-surface-purple-tint flex items-center justify-center mb-5 shadow-[0_0_28px_rgba(79,195,247,0.25)]">
+        <Icon name="cloud_upload" className="text-primary" style={{ fontSize: "34px" }} />
       </div>
 
       <h2 className="text-2xl font-black text-on-background">Deploy your model to the cloud</h2>
@@ -50,22 +51,22 @@ function DeployCallout({
           "mt-6 px-6 py-3 rounded-lg text-sm font-bold flex items-center gap-2 transition-all",
           isDeploying
             ? "bg-surface-container text-on-surface-variant cursor-not-allowed"
-            : "bg-primary text-on-primary hover:opacity-90 cursor-pointer shadow-sm"
+            : "btn-primary cursor-pointer"
         )}
       >
         {isDeploying ? (
           <>
-            <span className="material-symbols-outlined animate-spin" style={{ fontSize: "20px" }}>sync</span>
+            <Icon name="sync" className="animate-spin" style={{ fontSize: "20px" }} />
             Deploying…
           </>
         ) : isFailed ? (
           <>
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>refresh</span>
+            <Icon name="refresh" style={{ fontSize: "20px" }} />
             Retry deployment
           </>
         ) : (
           <>
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>rocket_launch</span>
+            <Icon name="rocket_launch" style={{ fontSize: "20px" }} />
             Deploy model to the cloud
           </>
         )}
@@ -141,8 +142,8 @@ export default function InferencePage() {
   // Schema fetch failed - most likely the run hasn't finished yet.
   if (schemaError) {
     return (
-      <div className="flex-1 flex items-center justify-center flex-col gap-4 bg-surface select-none p-gutter">
-        <span className="material-symbols-outlined text-outline" style={{ fontSize: "52px" }}>hourglass_empty</span>
+      <div className="flex-1 flex items-center justify-center flex-col gap-4 select-none p-gutter">
+        <Icon name="hourglass_empty" className="text-outline" style={{ fontSize: "52px" }} />
         <h2 className="text-headline-md font-bold text-on-background">No model available yet</h2>
         <p className="text-sm text-on-surface-variant text-center max-w-md font-mono">
           Inference needs a trained model. Finish the training run for this dataset first, then come back here to deploy.
@@ -150,7 +151,7 @@ export default function InferencePage() {
         <div className="flex gap-3">
           <button
             onClick={() => router.push(`/${runId}/result`)}
-            className="text-xs font-bold text-primary border border-outline-variant px-5 py-2.5 rounded-lg hover:bg-surface-purple-tint/40 transition-all"
+            className="text-xs font-bold text-primary border border-outline-variant px-5 py-2.5 rounded-lg hover:bg-surface-purple-tint transition-all"
           >
             ← Back to Analytics
           </button>
@@ -227,13 +228,13 @@ export default function InferencePage() {
 
           <div className="shrink-0 flex justify-center md:justify-end">
             {deployed ? (
-              <span className="bg-surface-green-tint text-success-green border border-success-green/10 px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap">
-                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>bolt</span>
+              <span className="bg-surface-green-tint text-success-green border border-success-green/30 px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap">
+                <Icon name="bolt" style={{ fontSize: "18px" }} />
                 Model Deployed
               </span>
             ) : (
               <span className="bg-surface-container text-on-surface-variant border border-outline-variant px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap">
-                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>cloud_off</span>
+                <Icon name="cloud_off" style={{ fontSize: "18px" }} />
                 Not Deployed
               </span>
             )}
@@ -245,15 +246,15 @@ export default function InferencePage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 card-shadow text-center"
+            className="glass p-6 text-center"
           >
             {shareUrl && (
               <div className="flex flex-col items-center gap-3 mb-6">
-                <div className="bg-white p-4 rounded-xl border border-outline-variant">
+                <div className="bg-white p-4 rounded-xl border border-white/20 shadow-[0_0_30px_rgba(79,195,247,0.2)]">
                   <QRCode
                     value={shareUrl}
                     size={176}
-                    fgColor="#38009d"
+                    fgColor="#0a0a0f"
                     bgColor="#ffffff"
                     level="M"
                   />
@@ -274,16 +275,14 @@ export default function InferencePage() {
                 )}
                 title="Copy a public link non-technical viewers can open"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-                  {shareCopied ? "check" : "share"}
-                </span>
+                <Icon name={shareCopied ? "check" : "share"} style={{ fontSize: "18px" }} />
                 {shareCopied ? "URL copied!" : "Copy shareable URL"}
               </button>
               <button
                 onClick={() => router.push(`/share/${runId}`)}
-                className="text-sm font-bold bg-primary text-on-primary border border-primary px-4 py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-sm"
+                className="btn-primary text-sm font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>open_in_new</span>
+                <Icon name="open_in_new" style={{ fontSize: "18px" }} />
                 Go to test page
               </button>
             </div>
