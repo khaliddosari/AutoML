@@ -353,15 +353,14 @@ function TuningResultsCard({
                   key={idx}
                   className={cn(
                     "border-b border-outline-variant/40 last:border-0 transition-colors",
-                    isBaseline && "bg-surface-container-low/40",
-                    isBest && "bg-surface-green-tint/20",
-                    !isBaseline && !isBest && "hover:bg-surface-container-low/60"
+                    isBest && "bg-surface-green-tint",
+                    !isBest && "hover:bg-surface-container-low"
                   )}
                 >
                   {/* Trial # */}
                   <td className="p-3 sm:p-5 align-middle">
                     {isBaseline ? (
-                      <span className="inline-block text-[11px] font-black uppercase tracking-widest text-outline bg-surface-container px-3 py-1 rounded-full border border-outline-variant font-mono">
+                      <span className="inline-block text-[11px] font-black uppercase tracking-widest text-primary bg-surface-purple-tint px-3 py-1 rounded-full border border-primary/20 font-mono">
                         Base
                       </span>
                     ) : isBest ? (
@@ -376,7 +375,7 @@ function TuningResultsCard({
                   {/* Params — render each changed hyperparameter as a chip */}
                   <td className="p-3 sm:p-5 align-middle hidden sm:table-cell">
                     {isBaseline ? (
-                      <span className="font-mono text-on-surface-variant italic">
+                      <span className="font-mono text-primary italic">
                         Model defaults
                       </span>
                     ) : paramEntries.length > 0 ? (
@@ -402,7 +401,7 @@ function TuningResultsCard({
                   <td className="p-3 sm:p-5 text-right font-mono font-bold align-middle">
                     <span className={cn(
                       isBest ? "text-success-green" :
-                      isBaseline ? "text-on-surface-variant" : "text-on-surface"
+                      isBaseline ? "text-primary" : "text-on-surface"
                     )}>
                       {(t.score * 100).toFixed(2)}%
                     </span>
@@ -1057,7 +1056,7 @@ export default function ResultPage() {
                       <tr
                         key={m.name}
                         className={cn(
-                          "hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/40 last:border-0",
+                          "hover:bg-surface-container-low transition-colors border-b border-outline-variant/40 last:border-0",
                           isWinner ? "bg-surface-purple-tint/10 font-semibold" : ""
                         )}
                       >

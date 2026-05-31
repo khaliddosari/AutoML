@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import { startRun, getPreview } from "@/lib/api";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/icon";
 
@@ -39,8 +39,48 @@ export default function PreviewPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"data" | "stats">("data");
   
-  // Tooltip Hover States
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  // Custom dropdown
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Points at whichever responsive trigger (desktop or mobile) was last clicked.
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+          triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // While open, keep the fixed-position menu pinned to its trigger as the page
+  // scrolls or the viewport resizes. Capture phase catches scrolls on inner
+  // containers (scroll events don't bubble).
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const reposition = () => {
+      if (triggerRef.current) setDropdownRect(triggerRef.current.getBoundingClientRect());
+    };
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [dropdownOpen]);
+
+  // Measure the button that was actually clicked — there are two responsive
+  // triggers (desktop + mobile) and only one is visible at a time, so a single
+  // shared ref would resolve to the hidden one and mis-position the menu.
+  function openDropdown(e: React.MouseEvent<HTMLButtonElement>) {
+    triggerRef.current = e.currentTarget;
+    setDropdownRect(e.currentTarget.getBoundingClientRect());
+    setDropdownOpen((o) => !o);
+  }
 
   const pageSize = 10;
 
@@ -133,6 +173,24 @@ export default function PreviewPage() {
 
   const summaryStats = calculateSummaryStats();
 
+  // Real Data Health Metrics
+  const nullRows = data.preview.filter(row =>
+    data.columns.some(col => {
+      const v = row[col];
+      return v === null || v === undefined || String(v).trim() === "" || String(v).trim() === "-";
+    })
+  ).length;
+  const totalCells = data.preview.length * data.columns.length;
+  const nullCells = data.columns.reduce((acc, col) => {
+    return acc + data.preview.filter(row => {
+      const v = row[col];
+      return v === null || v === undefined || String(v).trim() === "" || String(v).trim() === "-";
+    }).length;
+  }, 0);
+  const healthScore = totalCells > 0 ? Math.round(((totalCells - nullCells) / totalCells) * 100) : 100;
+  const healthColor = healthScore >= 90 ? "text-success-green" : healthScore >= 70 ? "text-warning-orange" : "text-error";
+  const healthBarColor = healthScore >= 90 ? "bg-success-green" : healthScore >= 70 ? "bg-warning-orange" : "bg-error";
+
   // Search & Pagination Logic
   const filteredRows = data.preview.filter(row => {
     return data.columns.some(col => {
@@ -161,16 +219,6 @@ export default function PreviewPage() {
               Full feature breakdown, data quality metrics, and schema targets for training.
             </p>
           </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-green-tint text-success-green rounded-full text-xs font-bold border border-success-green/30">
-              <Icon name="check_circle" style={{ fontSize: "13px" }} />
-              Schema Verified
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-purple-tint text-primary rounded-full text-xs font-bold border border-primary/30">
-              <Icon name="cloud_done" style={{ fontSize: "13px" }} />
-              Synced
-            </span>
-          </div>
         </div>
 
         {/* Bento Grid with Gradients & Tooltips */}
@@ -182,17 +230,8 @@ export default function PreviewPage() {
             <div className="flex justify-between items-start relative z-10">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-primary mb-1 block">Prediction Goal</span>
-                <h3 className="text-headline-md font-bold text-on-background flex items-center gap-1.5">
+                <h3 className="text-headline-md font-bold text-on-background">
                   Target Variable
-                  <span
-                    onMouseEnter={() => setActiveTooltip("target")}
-                    onMouseLeave={() => setActiveTooltip(null)}
-                    role="img"
-                    aria-label="About the target variable"
-                    className="text-outline cursor-help hover:text-primary transition-colors inline-flex"
-                  >
-                    <Icon name="help_outline" style={{ fontSize: "15px" }} />
-                  </span>
                 </h3>
               </div>
               <Icon name="target" className="text-primary bg-surface-purple-tint p-2 rounded-lg" style={{ fontSize: "24px" }} />
@@ -207,91 +246,48 @@ export default function PreviewPage() {
               </div>
               <div className="text-right shrink-0">
                 <span className="text-3xl font-black text-on-background font-mono leading-none">{data.preview.length.toLocaleString()}</span>
-                <span className="text-[10px] font-bold text-outline uppercase tracking-wider block mt-1">Preview Rows</span>
+                <span className="text-[13px] font-bold text-outline uppercase tracking-wider block mt-1">Rows</span>
               </div>
             </div>
-
-            {/* Floating target tooltip */}
-            <AnimatePresence>
-              {activeTooltip === "target" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute bottom-16 left-6 right-6 bg-inverse-surface text-inverse-on-surface text-xs rounded-lg p-3 z-30 shadow-md leading-relaxed"
-                >
-                  The target variable is the dependent label model algorithms learn to predict. Ensuring it has balanced classes or clean distribution prevents major skewing.
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {/* Card 2: Data Health Indicators */}
-          <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between border-t-4 border-t-success-green relative">
+          <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between relative">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Quality Scan</span>
-                <h3 className="text-headline-md font-bold text-on-background flex items-center gap-1">
+                <h3 className="text-headline-md font-bold text-on-background">
                   Data Health
-                  <span
-                    onMouseEnter={() => setActiveTooltip("health")}
-                    onMouseLeave={() => setActiveTooltip(null)}
-                    role="img"
-                    aria-label="About the data health score"
-                    className="text-outline cursor-help hover:text-primary transition-colors inline-flex"
-                  >
-                    <Icon name="help_outline" style={{ fontSize: "15px" }} />
-                  </span>
                 </h3>
               </div>
-              <Icon name="health_and_safety" className="text-success-green bg-surface-green-tint p-2 rounded-lg" style={{ fontSize: "24px" }} />
+              <Icon name="health_and_safety" className="text-success-green bg-surface-green-tint p-3 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
             <div className="mt-4">
               <div className="flex items-baseline gap-1.5 mb-2">
-                <span className="text-3xl font-black text-success-green font-mono leading-none">100%</span>
-                <span className="text-xs font-semibold text-on-surface-variant">Optimal Score</span>
+                <span className={cn("text-3xl font-black font-mono leading-none", healthColor)}>{healthScore}%</span>
+                <span className="text-xs font-semibold text-on-surface-variant">Health Score</span>
               </div>
               <div className="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
-                <div className="h-full bg-success-green rounded-full" style={{ width: "100%" }} />
+                <div className={cn("h-full rounded-full", healthBarColor)} style={{ width: `${healthScore}%` }} />
               </div>
-              <p className="text-[10px] text-outline uppercase tracking-wider mt-3 font-semibold font-mono">0 Null rows · 0 Schema errors</p>
+              <div className="flex justify-between text-[11px] text-outline uppercase tracking-wider mt-3 font-bold font-mono">
+                <span>{nullRows} Null {nullRows === 1 ? "row" : "rows"}</span>
+                <span>{nullCells} Null {nullCells === 1 ? "cell" : "cells"}</span>
+              </div>
             </div>
-
-            {/* Health tooltip */}
-            <AnimatePresence>
-              {activeTooltip === "health" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute bottom-16 left-6 right-6 bg-inverse-surface text-inverse-on-surface text-xs rounded-lg p-3 z-30 shadow-md leading-relaxed"
-                >
-                  Quality scanning runs checksum analyses to detect corrupt formatting, high rates of missing fields, or empty data files before training pipelines start.
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {/* Card 3: Feature Space Stacked bar */}
-          <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between border-t-4 border-t-info-blue relative">
+          <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between relative">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Dimension</span>
-                <h3 className="text-headline-md font-bold text-on-background flex items-center gap-1">
+                <h3 className="text-headline-md font-bold text-on-background">
                   Feature Space
-                  <span
-                    onMouseEnter={() => setActiveTooltip("features")}
-                    onMouseLeave={() => setActiveTooltip(null)}
-                    role="img"
-                    aria-label="About the feature space"
-                    className="text-outline cursor-help hover:text-primary transition-colors inline-flex"
-                  >
-                    <Icon name="help_outline" style={{ fontSize: "15px" }} />
-                  </span>
                 </h3>
               </div>
-              <Icon name="category" className="text-info-blue bg-surface-purple-tint p-2 rounded-lg" style={{ fontSize: "24px" }} />
+              <Icon name="category" className="text-info-blue bg-surface-purple-tint p-3 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
             <div className="mt-4">
@@ -308,69 +304,106 @@ export default function PreviewPage() {
                 <div className="h-full bg-warning-orange" style={{ width: `${catPct}%` }} title={`Categorical: ${catCols.length}`} />
               </div>
               
-              <div className="flex justify-between text-[9px] text-outline uppercase tracking-wider mt-3 font-bold font-mono">
-                <span className="text-info-blue">{numericCols.length} Numeric ({numericPct.toFixed(0)}%)</span>
+              <div className="flex justify-between text-[12px] text-outline uppercase tracking-wider mt-3 font-bold font-mono">
+                <span className="text-info-blue">{numericCols.length} Numeric</span>
                 <span className="text-warning-orange">{catCols.length} Categorical</span>
               </div>
             </div>
-
-            {/* Features tooltip */}
-            <AnimatePresence>
-              {activeTooltip === "features" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute bottom-16 left-6 right-6 bg-inverse-surface text-inverse-on-surface text-xs rounded-lg p-3 z-30 shadow-md leading-relaxed"
-                >
-                  Feature space represents the dataset's dimensional columns. Stacked indicator compares numeric integers/decimals with label text categoricals.
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
         </div>
 
         {/* Target Column Selection + Run */}
-        <div className="glass p-6 mb-8">
-          <div className="flex items-center justify-between gap-6 flex-wrap">
-            <div className="flex flex-col sm:flex-row items-center gap-4 flex-1 min-w-0 w-full">
-              <div className="flex items-center gap-2 text-center sm:text-left">
-                <Icon name="target" className="text-primary" />
-                <h3 className="text-headline-md font-bold text-on-surface">Target Variable Selection</h3>
-              </div>
-              <div className="relative w-full sm:w-auto sm:min-w-[240px] mx-auto sm:mx-0">
-                <select
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                  className="w-full bg-surface border border-outline-variant rounded-lg py-2.5 px-3 appearance-none text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer font-semibold text-center sm:text-left"
-                >
-                  {data.columns.map((col) => (
-                    <option key={col} value={col}>{col}</option>
-                  ))}
-                </select>
-                <Icon name="expand_more" className="absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" style={{ fontSize: "16px" }} />
-              </div>
-              <p className="text-xs text-on-surface-variant text-center sm:text-left">The models will attempt to map patterns to classify or regress this output.</p>
+        <div className="glass p-4 md:p-6 mb-8 flex flex-col gap-3">
+
+          {/* Top row: title + run button (always a row) */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 shrink-0">
+              <Icon name="target" className="text-primary" />
+              <h3 className="text-headline-md font-bold text-on-surface whitespace-nowrap">Target Variable</h3>
             </div>
-            
-            <div className="flex items-center gap-3 w-full justify-center md:w-auto md:ml-auto">
+
+            {/* Dropdown — hidden on mobile, fills space on desktop */}
+            <div className="relative flex-1 hidden md:block">
+              <button
+                type="button"
+                onClick={openDropdown}
+                className="w-full bg-surface-variant border border-outline-variant rounded-lg py-2.5 px-3 text-sm text-on-surface font-semibold flex items-center justify-between gap-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+              >
+                <span>{target}</span>
+                <Icon
+                  name="expand_more"
+                  className={cn("text-outline transition-transform duration-200", dropdownOpen && "rotate-180")}
+                  style={{ fontSize: "16px" }}
+                />
+              </button>
+            </div>
+
+            {/* Run button — pushed to far right */}
+            <div className="flex items-center gap-3 shrink-0 ml-auto md:ml-0">
               {error && <p className="text-xs text-error font-medium">{error}</p>}
               <button
                 onClick={handleStart}
                 disabled={!target || starting}
                 className={cn(
-                  "btn-primary text-label-md px-6 py-3 rounded-lg",
+                  "btn-primary text-label-md px-4 md:px-6 py-3 rounded-lg",
                   (!target || starting) && "opacity-50 cursor-not-allowed"
                 )}
               >
-                <Icon name={starting ? "sync" : "play_arrow"} className={cn(starting && "animate-spin")} style={{ fontSize: "18px" }} />
-                <span>
-                  {starting ? "Starting..." : "Run AutoML Pipeline"}
-                </span>
+                <span>{starting ? "Running..." : "Run"}</span>
               </button>
             </div>
           </div>
+
+          {/* Dropdown — full width on mobile only */}
+          <div className="relative md:hidden">
+            <button
+              type="button"
+              onClick={openDropdown}
+              className="w-full bg-surface-variant border border-outline-variant rounded-lg py-2.5 px-3 text-sm text-on-surface font-semibold flex items-center justify-between gap-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer"
+            >
+              <span>{target}</span>
+              <Icon
+                name="expand_more"
+                className={cn("text-outline transition-transform duration-200", dropdownOpen && "rotate-180")}
+                style={{ fontSize: "16px" }}
+              />
+            </button>
+          </div>
+
+          {/* Portal dropdown list — shared for both triggers */}
+          {dropdownOpen && dropdownRect && createPortal(
+            <div
+              ref={dropdownRef}
+              style={{
+                position: "fixed",
+                top: dropdownRect.bottom + 4,
+                left: dropdownRect.left,
+                width: dropdownRect.width,
+                zIndex: 9999,
+                backgroundColor: "#0e0e16",
+              }}
+              className="rounded-lg border border-outline-variant overflow-auto max-h-60 shadow-lg"
+            >
+              <ul>
+                {data.columns.map((col) => (
+                  <li
+                    key={col}
+                    onClick={() => { setTarget(col); setDropdownOpen(false); }}
+                    className={cn(
+                      "px-3 py-2 text-sm font-semibold cursor-pointer transition-colors",
+                      col === target
+                        ? "text-primary bg-surface-purple-tint"
+                        : "text-on-surface hover:bg-surface-variant"
+                    )}
+                  >
+                    {col}
+                  </li>
+                ))}
+              </ul>
+            </div>,
+            document.body
+          )}
         </div>
 
         {/* Data Table with Raw/Stats Toggle & Search */}
@@ -411,7 +444,7 @@ export default function PreviewPage() {
               <div className="relative w-full md:w-64">
                 <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: "15px" }} />
                 <input
-                  className="w-full bg-surface border border-outline-variant rounded-lg py-1.5 pl-9 pr-4 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  className="w-full bg-surface-variant border border-outline-variant rounded-lg py-1.5 pl-9 pr-4 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                   placeholder="Filter rows..."
                   type="text"
                   value={searchQuery}
@@ -453,7 +486,7 @@ export default function PreviewPage() {
                     filteredRows.map((row, i) => (
                       <tr
                         key={i}
-                        className="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/40 last:border-0"
+                        className="hover:bg-surface-container-low transition-colors border-b border-outline-variant/40 last:border-0"
                       >
                         {data.columns.map((col) => (
                           <td
@@ -497,7 +530,7 @@ export default function PreviewPage() {
                     <tr
                       key={stat.column}
                       className={cn(
-                        "hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/40 last:border-0",
+                        "hover:bg-surface-container-low transition-colors border-b border-outline-variant/40 last:border-0",
                         stat.column === target ? "bg-surface-purple-tint/10" : ""
                       )}
                     >

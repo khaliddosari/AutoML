@@ -354,7 +354,7 @@ function PipelineCell({
       {/* Header */}
       <div
         className={cn(
-          "flex items-center gap-2.5 px-3.5 py-2 border-b select-none",
+          "flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 border-b select-none",
           status === "active" && "bg-surface-purple-tint/50 border-primary/20",
           status === "done" && "bg-surface-green-tint/30 border-success-green/20",
           status === "error" && "bg-error-container/30 border-error/20",
@@ -386,15 +386,15 @@ function PipelineCell({
           <Icon name="error" className="text-error shrink-0 animate-scale" style={{ fontSize: "14px" }} />
         )}
 
-        <span className="truncate flex-1 text-body-md font-mono text-xs text-on-surface">
-          <span className="text-primary font-bold">{step.fn.split("(")[0]}</span>
+        <span className="truncate flex-1 font-mono text-xs text-on-surface">
+          <span className="hidden sm:inline text-primary font-bold">{step.fn.split("(")[0]}</span>
           <span className="text-outline">(</span>
           <span className="text-warning-orange font-semibold">{step.fn.split("(")[1]?.replace(")", "")}</span>
           <span className="text-outline">)</span>
         </span>
 
         {/* Expanders and Code toggle actions */}
-        <div className="ml-auto flex flex-col-reverse sm:flex-row items-center gap-1 sm:gap-3 shrink-0">
+        <div className="ml-auto flex flex-row items-center gap-1 sm:gap-3 shrink-0">
           {status !== "waiting" && (
             <button
               onClick={() => setCodeOpen(!codeOpen)}

@@ -48,18 +48,13 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
         
         <div className="px-4 py-4 flex-1 flex flex-col">
           {/* Brand Logo & Name */}
-          <div className="flex items-center gap-2 mb-6 px-2 overflow-hidden shrink-0">
-            <motion.div
-              whileHover={{ rotate: 15, scale: 1.08 }}
-              transition={{ type: "spring", stiffness: 300, damping: 12 }}
-              className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_24px_rgba(79,195,247,0.4)]"
-            >
-              <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "24px" }} />
-            </motion.div>
+          <div className="flex items-center gap-2 mb-6 px-2 shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_24px_rgba(79,195,247,0.4)]">
+              <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "20px" }} />
+            </div>
 
             <div className="leading-tight">
-              <p className="text-xl text-on-background"><Brand /></p>
-              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">Live AI Model</p>
+              <p className="text-2xl text-on-background"><Brand /></p>
             </div>
 
             {/* Mobile close button */}
@@ -115,22 +110,14 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                       }
                     }}
                     className={cn(
-                      "relative flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all duration-300 select-none group",
+                      "flex items-center gap-3 px-3.5 py-3 rounded-lg transition-all duration-300 select-none group origin-left",
                       isActive
-                        ? "text-primary font-bold"
+                        ? "text-primary font-bold scale-[1.04]"
                         : isDisabled
                         ? "text-outline opacity-40 cursor-not-allowed"
                         : "text-on-surface-variant hover:text-primary hover:bg-surface-container-low"
                     )}
                   >
-                    {/* Animated Sliding Background Active Pill */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="active-nav-pill"
-                        className="absolute inset-0 bg-surface-purple-tint border-l-4 border-primary rounded-lg z-0"
-                        transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                      />
-                    )}
 
                     <Icon
                       name={icon}

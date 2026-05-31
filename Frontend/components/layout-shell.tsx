@@ -44,12 +44,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(79,195,247,0.35)]">
-            <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "20px" }} />
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(79,195,247,0.35)]">
+            <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "18px" }} />
           </div>
           <div className="leading-tight">
-            <p className="text-lg text-on-background"><Brand /></p>
-            <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mt-0.5">Live AI Model</p>
+            <p className="text-xl text-on-background"><Brand /></p>
           </div>
         </div>
 
@@ -64,8 +63,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Sidebar + Content row */}
-      <div className="flex flex-row flex-1 min-h-0 relative z-10">
+      {/* Sidebar + Content row — no z-index here so the fixed sidebar's z-50 competes at root */}
+      <div className="flex flex-row flex-1 min-h-0 relative">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         {/* Main Content Area */}

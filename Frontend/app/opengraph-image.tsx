@@ -68,16 +68,6 @@ export default function OpengraphImage() {
             >
               نَمذِج
             </div>
-            <div
-              style={{
-                fontSize: "20px",
-                letterSpacing: "6px",
-                color: MUTED,
-                fontWeight: 700,
-              }}
-            >
-              LIVE AI MODEL
-            </div>
           </div>
         </div>
 

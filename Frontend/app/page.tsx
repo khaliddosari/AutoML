@@ -19,7 +19,6 @@ const VERIFY_STEPS = [
 export default function UploadPage() {
   const router = useRouter();
   const [dragging, setDragging] = useState(false);
-  const [windowDragging, setWindowDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,24 +26,13 @@ export default function UploadPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyStepIndex, setVerifyStepIndex] = useState(0);
 
-  const handleDragEnter = (e: DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer?.types.includes("Files")) setWindowDragging(true);
-  };
-
-  const handleDragLeave = (e: DragEvent) => {
-    e.preventDefault();
-    if (e.clientX === 0 && e.clientY === 0) setWindowDragging(false);
-  };
-
   useEffect(() => {
-    window.addEventListener("dragenter", handleDragEnter);
-    window.addEventListener("dragleave", handleDragLeave);
-    window.addEventListener("dragover", (e) => e.preventDefault());
-    window.addEventListener("drop", (e) => { e.preventDefault(); setWindowDragging(false); });
+    const prevent = (e: DragEvent) => e.preventDefault();
+    window.addEventListener("dragover", prevent);
+    window.addEventListener("drop", prevent);
     return () => {
-      window.removeEventListener("dragenter", handleDragEnter);
-      window.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("dragover", prevent);
+      window.removeEventListener("drop", prevent);
     };
   }, []);
 
@@ -81,7 +69,6 @@ export default function UploadPage() {
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragging(false);
-      setWindowDragging(false);
       const f = e.dataTransfer.files[0];
       if (f) handleFile(f);
     },
@@ -110,39 +97,8 @@ export default function UploadPage() {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-4 md:p-gutter relative select-none">
 
-      {/* Full-screen drag overlay */}
-      <AnimatePresence>
-        {windowDragging && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-surface/70 backdrop-blur-xl z-50 flex flex-col items-center justify-center border-4 border-dashed border-primary m-4 rounded-2xl"
-            onDragOver={(e) => e.preventDefault()}
-            onDragLeave={() => setWindowDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setWindowDragging(false);
-              const f = e.dataTransfer.files[0];
-              if (f) handleFile(f);
-            }}
-          >
-            <motion.div
-              animate={{ y: [0, -15, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-              className="w-20 h-20 rounded-full bg-surface-purple-tint flex items-center justify-center mb-6 text-primary shadow-[0_0_40px_rgba(79,195,247,0.3)]"
-            >
-              <Icon name="cloud_upload" style={{ fontSize: "40px" }} />
-            </motion.div>
-            <h3 className="text-headline-lg-mobile md:text-headline-lg text-primary font-bold mb-2">Drop your CSV here</h3>
-            <p className="text-base md:text-body-lg text-on-surface-variant font-medium">
-              <Brand /> will automatically parse features and check schema health.
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      <div className="max-w-[1280px] mx-auto w-full">
+      <div className="max-w-4xl mx-auto w-full">
 
         {/* Page header */}
         <div className="mb-4 md:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-2 md:gap-4">
@@ -156,7 +112,7 @@ export default function UploadPage() {
         </div>
 
         {/* Upload card */}
-        <div className="max-w-4xl mx-auto w-full">
+        <div className="w-full">
           <div className="glass p-4 md:p-6">
 
             {/* Card header */}
@@ -173,7 +129,9 @@ export default function UploadPage() {
               className={cn(
                 "border-2 border-dashed rounded-xl p-4 sm:p-6 md:p-10 flex flex-col items-center justify-center cursor-pointer group transition-all duration-300 select-none min-h-[200px] md:min-h-[260px] relative overflow-hidden",
                 dragging
-                  ? "border-primary bg-surface-purple-tint/40 shadow-sm"
+                  ? "border-primary bg-surface-container-low"
+                  : file
+                  ? "border-outline-variant/40 bg-transparent"
                   : "border-outline-variant bg-surface hover:border-primary/50 hover:bg-surface-container-low"
               )}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -225,11 +183,11 @@ export default function UploadPage() {
               ) : (
                 <>
                   <h4 className="text-base sm:text-lg md:text-headline-md text-on-surface font-semibold mb-2 text-center">Drag &amp; Drop files here</h4>
-                  <p className="text-[11px] sm:text-xs md:text-body-md text-on-surface-variant mb-5 text-center max-w-xs md:max-w-md px-2 leading-relaxed">
+                  <p className="text-[12px] sm:text-xs md:text-body-md text-on-surface-variant mb-5 text-center max-w-xs md:max-w-md px-2 leading-relaxed">
                     Supported format: <strong className="font-semibold text-primary font-mono">.CSV</strong> (up to 30 MB). Files are parsed and verified on upload.
                   </p>
                   <button
-                    className="bg-surface-container-high text-on-surface text-[12px] sm:text-label-md px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg border border-outline-variant group-hover:border-primary group-hover:text-primary transition-all font-semibold"
+                    className="bg-surface-container-high text-on-surface text-[11px] sm:text-label-md px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg border border-outline-variant group-hover:border-primary group-hover:text-primary transition-all font-semibold"
                     onClick={(e) => { e.stopPropagation(); document.getElementById("csv-input-main")?.click(); }}
                   >
                     Browse Files
@@ -250,11 +208,10 @@ export default function UploadPage() {
             <AnimatePresence>
               {file && !isVerifying && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
                 >
                   <div className="mt-5 pt-5 border-t border-outline-variant flex flex-wrap items-center justify-between gap-4">
                     {/* Auto-pilot notice */}
@@ -267,8 +224,7 @@ export default function UploadPage() {
                     </div>
 
                     {/* Error + CTA */}
-                    <div className="flex items-center gap-3 w-full justify-center md:w-auto md:ml-auto shrink-0">
-                      {error && <p className="text-xs text-error font-medium">{error}</p>}
+                    <div className="flex flex-col items-center gap-1.5 w-full md:w-auto md:ml-auto shrink-0">
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.97 }}
@@ -288,6 +244,7 @@ export default function UploadPage() {
                           {uploading ? "Uploading..." : "Start Ingestion"}
                         </span>
                       </motion.button>
+                      {error && <p className="text-xs text-error font-medium">{error}</p>}
                     </div>
                   </div>
                 </motion.div>
