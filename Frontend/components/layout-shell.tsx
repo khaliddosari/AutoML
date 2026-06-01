@@ -44,8 +44,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(79,195,247,0.35)]">
-            <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "18px" }} />
+          <div className="w-8 h-8 rounded-lg bg-surface-purple-tint flex items-center justify-center shrink-0">
+            <Icon name="graph_3" className="text-primary" style={{ fontSize: "18px" }} />
           </div>
           <div className="leading-tight">
             <p className="text-xl text-on-background"><Brand /></p>
@@ -68,13 +68,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
         {/* Main Content Area */}
-        <div className="flex flex-col flex-1 min-h-0 ml-0 md:ml-64 overflow-x-hidden">
-          <main className="flex-1 min-h-0 flex flex-col">{children}</main>
+        <div className="flex flex-col flex-1 min-h-0 ml-0 md:ml-52 overflow-x-hidden">
+          <main className="flex-1 min-h-0 flex flex-col md:pb-20">{children}</main>
         </div>
       </div>
 
-      {/* Footer spans full width — hidden on mobile to preserve screen space */}
-      <div className="hidden md:block relative z-10">
+      {/* Footer — fixed at bottom on desktop only; mobile footer lives inside each page scroll area */}
+      <div className="hidden md:block md:fixed md:bottom-0 md:left-0 md:right-0 z-50">
         <SiteFooter />
       </div>
     </div>

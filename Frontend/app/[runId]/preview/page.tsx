@@ -225,42 +225,35 @@ export default function PreviewPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 mb-4 md:mb-8">
 
           {/* Card 1: Target Prediction Variable */}
-          <div className="col-span-1 lg:col-span-6 bg-gradient-to-br from-surface-purple-tint/30 to-surface-container rounded-xl border border-outline-variant p-4 md:p-6 card-shadow relative min-h-[160px] md:min-h-[220px] flex flex-col justify-between overflow-hidden">
-            <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-            <div className="flex justify-between items-start relative z-10">
+          <div className="col-span-1 lg:col-span-6 glass p-4 md:p-6 min-h-[160px] md:min-h-[220px] flex flex-col justify-between">
+            <div className="flex items-start gap-3">
+              <Icon name="target" className="text-primary bg-surface-purple-tint p-3 rounded-lg shrink-0" style={{ fontSize: "24px" }} />
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-primary mb-1 block">Prediction Goal</span>
                 <h3 className="text-headline-md font-bold text-on-background">
                   Target Variable
                 </h3>
               </div>
-              <Icon name="target" className="text-primary bg-surface-purple-tint p-2 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
-            <div className="relative z-10 flex justify-between items-end gap-3 mt-4">
-              <div className="flex-1 min-w-0">
-                <h2 className="text-2xl font-black text-primary font-mono break-words" title={target || "Awaiting target selection..."}>
-                  {target || "Select target..."}
-                </h2>
-                <p className="text-xs text-on-surface-variant mt-1.5">Selected column model will learn to predict.</p>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="text-3xl font-black text-on-background font-mono leading-none">{data.preview.length.toLocaleString()}</span>
-                <span className="text-[13px] font-bold text-outline uppercase tracking-wider block mt-1">Rows</span>
-              </div>
+            <div className="mt-4">
+              <h2 className="text-2xl font-black text-primary font-mono break-words" title={target || "Awaiting target selection..."}>
+                {target || "Select target..."}
+              </h2>
+              <p className="text-xs text-on-surface-variant mt-1.5">Selected column model will learn to predict.</p>
             </div>
           </div>
 
           {/* Card 2: Data Health Indicators */}
           <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between relative">
-            <div className="flex justify-between items-start">
+            <div className="flex items-start gap-3">
+              <Icon name="health_and_safety" className="text-success-green bg-surface-green-tint p-3 rounded-lg shrink-0" style={{ fontSize: "24px" }} />
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Quality Scan</span>
                 <h3 className="text-headline-md font-bold text-on-background">
                   Data Health
                 </h3>
               </div>
-              <Icon name="health_and_safety" className="text-success-green bg-surface-green-tint p-3 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
             <div className="mt-4">
@@ -280,14 +273,14 @@ export default function PreviewPage() {
 
           {/* Card 3: Feature Space Stacked bar */}
           <div className="col-span-1 lg:col-span-3 glass p-4 md:p-6 flex flex-col justify-between relative">
-            <div className="flex justify-between items-start">
+            <div className="flex items-start gap-3">
+              <Icon name="category" className="text-info-blue bg-surface-purple-tint p-3 rounded-lg shrink-0" style={{ fontSize: "24px" }} />
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-outline mb-1 block">Dimension</span>
-                <h3 className="text-headline-md font-bold text-on-background">
+                <h3 className="text-headline-md font-bold text-on-background whitespace-nowrap">
                   Feature Space
                 </h3>
               </div>
-              <Icon name="category" className="text-info-blue bg-surface-purple-tint p-3 rounded-lg" style={{ fontSize: "24px" }} />
             </div>
 
             <div className="mt-4">
@@ -350,7 +343,9 @@ export default function PreviewPage() {
                   (!target || starting) && "opacity-50 cursor-not-allowed"
                 )}
               >
-                <span>{starting ? "Running..." : "Run"}</span>
+                <span className="hidden sm:inline">{starting ? "Running..." : "Run"}</span>
+                <span className="sm:hidden">{!starting && "Run"}</span>
+                <Icon name={starting ? "sync" : "arrow_forward"} className={cn(starting && "animate-spin")} style={{ fontSize: "16px" }} />
               </button>
             </div>
           </div>
@@ -410,48 +405,52 @@ export default function PreviewPage() {
         <div className="glass overflow-hidden">
 
           {/* Table Toolbar controls */}
-          <div className="p-5 border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-low">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 items-start sm:items-center">
-              <h3 className="text-headline-md font-bold text-on-background">
-                {viewMode === "data" ? "Dataset Raw Preview" : "Features Profiling Statistics"}
-              </h3>
-              
-              {/* Raw vs Stats Toggle */}
-              <div className="flex border border-outline-variant rounded-lg p-0.5 bg-surface-container-low shrink-0 select-none w-fit">
-                <button
-                  onClick={() => setViewMode("data")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md text-xs font-bold transition-all",
-                    viewMode === "data" ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"
-                  )}
-                >
-                  Raw Data
-                </button>
-                <button
-                  onClick={() => setViewMode("stats")}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md text-xs font-bold transition-all",
-                    viewMode === "stats" ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"
-                  )}
-                >
-                  Summary Stats
-                </button>
+          <div className="p-5 border-b border-outline-variant flex flex-col gap-3 sm:grid sm:grid-cols-3 sm:items-center sm:gap-4 bg-surface-container-low">
+            <h3 className="text-headline-md font-bold text-on-background">
+              {viewMode === "data" ? `Dataset Preview - ${data.preview.length.toLocaleString()} rows` : "Features Profiling"}
+            </h3>
+
+            {/* Toggle + Search in one row on mobile; separate grid columns on sm+ */}
+            <div className="flex items-center gap-3 sm:contents">
+              <div className="flex flex-1 sm:flex-none sm:justify-center">
+                <div className="flex border border-outline-variant rounded-lg p-0.5 bg-surface-container-low select-none w-full">
+                  <button
+                    onClick={() => setViewMode("data")}
+                    className={cn(
+                      "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center",
+                      viewMode === "data" ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"
+                    )}
+                  >
+                    Raw Data
+                  </button>
+                  <button
+                    onClick={() => setViewMode("stats")}
+                    className={cn(
+                      "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center",
+                      viewMode === "stats" ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant hover:text-primary"
+                    )}
+                  >
+                    Summary Stats
+                  </button>
+                </div>
+              </div>
+
+              {/* Row Search Filter — right-aligned, only in Data view */}
+              <div className="hidden sm:flex justify-end sm:flex-1">
+              {viewMode === "data" && (
+                <div className="relative w-40 md:w-56">
+                  <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: "15px" }} />
+                  <input
+                    className="w-full bg-surface-variant border border-outline-variant rounded-lg py-1.5 pl-9 pr-4 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                    placeholder="Filter rows..."
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  />
+                </div>
+              )}
               </div>
             </div>
-
-            {/* Row Search Filter - only active in Data view */}
-            {viewMode === "data" && (
-              <div className="relative w-full md:w-64">
-                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" style={{ fontSize: "15px" }} />
-                <input
-                  className="w-full bg-surface-variant border border-outline-variant rounded-lg py-1.5 pl-9 pr-4 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                  placeholder="Filter rows..."
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                />
-              </div>
-            )}
           </div>
 
           <div className="overflow-auto max-h-[600px] border-b border-outline-variant">

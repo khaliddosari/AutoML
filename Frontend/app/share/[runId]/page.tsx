@@ -38,19 +38,18 @@ export default function PublicSharePage() {
   return (
     <div className="min-h-dvh select-none flex flex-col">
       {/* Top bar */}
-      <header className="w-full px-6 md:px-10 py-5 flex items-center justify-between border-b border-outline-variant glass-strong">
+      <header className="w-full px-6 md:px-10 py-5 flex items-center justify-center border-b border-outline-variant glass-strong relative">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shrink-0 shadow-[0_0_24px_rgba(79,195,247,0.4)]">
-            <Icon name="graph_3" className="text-on-primary" style={{ fontSize: "24px" }} />
+          <div className="w-8 h-8 rounded-lg bg-surface-purple-tint flex items-center justify-center shrink-0">
+            <Icon name="graph_3" className="text-primary" style={{ fontSize: "18px" }} />
           </div>
           <div className="leading-tight">
             <p className="text-xl text-on-background group-hover:text-primary transition-colors"><Brand /></p>
-            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">Live AI Model</p>
           </div>
         </Link>
         <Link
           href="/"
-          className="text-xs font-bold text-primary hover:underline hidden sm:flex items-center gap-1"
+          className="absolute right-6 md:right-10 text-xs font-bold text-primary hover:underline hidden sm:flex items-center gap-1"
         >
           Build your own
           <Icon name="arrow_outward" style={{ fontSize: "13px" }} />
@@ -102,9 +101,11 @@ export default function PublicSharePage() {
             <TryModelCard runId={runId} schema={schema} deployed={deployed} variant="simple" />
           )}
         </div>
-      </main>
 
-      <SiteFooter />
+        <div className="md:hidden mt-10">
+          <SiteFooter />
+        </div>
+      </main>
     </div>
   );
 }

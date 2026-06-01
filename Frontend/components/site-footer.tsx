@@ -1,6 +1,6 @@
 export function SiteFooter() {
   return (
-    <footer className="w-full border-t border-outline-variant px-4 md:px-10 pt-5 pb-10 flex items-center justify-center gap-3 text-center whitespace-nowrap shrink-0">
+    <footer className="w-full bg-surface/70 backdrop-blur-md border-t border-outline-variant px-4 md:px-10 pt-5 pb-10 flex items-center justify-center gap-3 text-center whitespace-nowrap shrink-0">
       <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest shrink-0">
         Made by
       </span>

@@ -73,7 +73,7 @@ def generate_plot(
         lo = float(min(np.min(y_test_arr), np.min(y_pred_arr)))
         hi = float(max(np.max(y_test_arr), np.max(y_pred_arr)))
         ax.plot([lo, hi], [lo, hi], color=ACCENT, linestyle="--", linewidth=1.2)
-        ax.grid(True, color=GRID, linewidth=0.6, alpha=0.6)
+        ax.grid(True, color=MUTED, linewidth=0.6, alpha=0.6)
         ax.set_axisbelow(True)
         ax.set_xlabel(f"Actual {target}")
         ax.set_ylabel(f"Predicted {target}")

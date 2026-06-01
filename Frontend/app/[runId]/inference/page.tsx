@@ -13,6 +13,7 @@ import {
 import QRCode from "react-qr-code";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/icon";
+import { SiteFooter } from "@/components/site-footer";
 
 /* ─── Cloud deploy CTA shown until the model is live ── */
 function DeployCallout({
@@ -65,10 +66,7 @@ function DeployCallout({
             Retry deployment
           </>
         ) : (
-          <>
-            <Icon name="rocket_launch" style={{ fontSize: "20px" }} />
-            Deploy model to the cloud
-          </>
+          "Deploy model to the cloud"
         )}
       </button>
 
@@ -188,20 +186,27 @@ export default function InferencePage() {
   };
 
   const copyShareLink = async () => {
-    const base = typeof window !== "undefined" ? window.location.origin : "";
-    const link = `${base}/share/${runId}`;
+    const link = `${window.location.origin}/share/${runId}`;
     try {
       await navigator.clipboard.writeText(link);
-      setShareCopied(true);
-      setTimeout(() => setShareCopied(false), 1800);
     } catch {
-      /* clipboard blocked - ignore */
+      // fallback for mobile browsers where async clipboard API is blocked
+      const el = document.createElement("textarea");
+      el.value = link;
+      el.style.cssText = "position:fixed;opacity:0;pointer-events:none";
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
     }
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 1800);
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4 md:p-gutter relative select-none">
-      <div className="max-w-[1280px] mx-auto w-full space-y-4 md:space-y-8">
+    <div className="flex-1 overflow-y-auto flex flex-col px-4 py-3 md:p-gutter relative select-none">
+      <div className="max-w-[1280px] mx-auto w-full space-y-3 md:space-y-8">
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -226,52 +231,51 @@ export default function InferencePage() {
             </p>
           </div>
 
-          <div className="shrink-0 flex justify-center md:justify-end">
-            {deployed ? (
-              <span className="bg-surface-green-tint text-success-green border border-success-green/30 px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap">
-                <Icon name="bolt" style={{ fontSize: "18px" }} />
-                Model Deployed
-              </span>
-            ) : (
-              <span className="bg-surface-container text-on-surface-variant border border-outline-variant px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap">
-                <Icon name="cloud_off" style={{ fontSize: "18px" }} />
-                Not Deployed
-              </span>
-            )}
-          </div>
         </motion.div>
+
+        <div className="flex justify-center">
+          {deployed ? (
+            <span className="bg-surface-green-tint text-success-green border border-success-green/30 px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap">
+              <Icon name="bolt" style={{ fontSize: "18px" }} />
+              Model Deployed
+            </span>
+          ) : (
+            <span className="bg-surface-container text-on-surface-variant border border-outline-variant px-5 py-2.5 rounded-full text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap">
+              <Icon name="cloud_off" style={{ fontSize: "18px" }} />
+              Not Deployed
+            </span>
+          )}
+        </div>
 
         {deployed ? (
           <motion.section
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="glass p-6 text-center"
+            className="glass p-6 text-center max-w-sm mx-auto w-full"
           >
             {shareUrl && (
               <div className="flex flex-col items-center gap-3 mb-6">
-                <div className="bg-white p-4 rounded-xl border border-white/20 shadow-[0_0_30px_rgba(79,195,247,0.2)]">
-                  <QRCode
+                <QRCode
                     value={shareUrl}
                     size={176}
-                    fgColor="#0a0a0f"
-                    bgColor="#ffffff"
+                    fgColor="#4fc3f7"
+                    bgColor="transparent"
                     level="M"
                   />
-                </div>
                 <p className="text-xs font-medium text-on-surface-variant max-w-xs">
                   Scan to open the live test page on any device.
                 </p>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3">
               <button
                 onClick={copyShareLink}
                 className={cn(
-                  "text-sm font-bold px-4 py-3 rounded-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer border",
+                  "text-sm font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer",
                   shareCopied
-                    ? "bg-surface-green-tint text-success-green border-success-green/30"
-                    : "text-on-surface-variant border-outline-variant hover:bg-surface-container"
+                    ? "bg-surface-green-tint text-success-green border border-success-green/30 transition-all"
+                    : "btn-glass"
                 )}
                 title="Copy a public link non-technical viewers can open"
               >
@@ -294,6 +298,9 @@ export default function InferencePage() {
             error={deployError ?? deployment?.error ?? null}
           />
         )}
+      </div>
+      <div className="md:hidden mt-20">
+        <SiteFooter />
       </div>
     </div>
   );

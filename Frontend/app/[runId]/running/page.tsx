@@ -762,7 +762,7 @@ export default function RunningPage() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => router.push(`/${runId}/result`)}
-                    className="btn-primary text-sm font-bold px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 shrink-0"
+                    className="bg-success-green text-black text-sm font-bold px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 shrink-0 transition-all hover:brightness-110 hover:shadow-[0_0_15px_rgba(95,208,127,0.5),0_0_30px_rgba(95,208,127,0.25)]"
                   >
                     View Results
                     <Icon name="arrow_forward" style={{ fontSize: "16px" }} />

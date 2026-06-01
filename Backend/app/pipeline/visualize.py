@@ -67,7 +67,7 @@ def generate_visualization(run_id: str, target: str, problem_type: str) -> dict:
         lo = float(min(np.min(y_test), np.min(y_pred)))
         hi = float(max(np.max(y_test), np.max(y_pred)))
         ax.plot([lo, hi], [lo, hi], color=ACCENT, linestyle="--", linewidth=1.2)
-        ax.grid(True, color=GRID, linewidth=0.6, alpha=0.6)
+        ax.grid(True, color=MUTED, linewidth=0.6, alpha=0.6)
         ax.set_axisbelow(True)
         ax.set_xlabel(f"Actual {target}")
         ax.set_ylabel(f"Predicted {target}")
