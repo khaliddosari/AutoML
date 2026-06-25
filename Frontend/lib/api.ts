@@ -1,17 +1,19 @@
-const PRODUCTION_BACKEND_URL = "https://modelforge-backend-wy4n.onrender.com";
-
-const envBackend = process.env.NEXT_PUBLIC_BACKEND_URL;
-const envIsAbsolute = !!envBackend && /^https?:\/\//i.test(envBackend);
-
-let BASE: string;
-if (envIsAbsolute) {
-  BASE = envBackend!;
-} else if (typeof window !== "undefined" && window.location.hostname.includes("onrender.com")) {
-  // Fallback for when NEXT_PUBLIC_BACKEND_URL isn't set in the Render dashboard.
-  BASE = PRODUCTION_BACKEND_URL;
-} else {
-  BASE = "http://localhost:8000";
+// Every request goes through the same-origin /api/backend proxy defined in
+// next.config.ts. The browser never contacts the backend directly, so the backend
+// URL is never baked into the client bundle and there are no CORS concerns — a
+// down/suspended backend surfaces as a normal HTTP error instead of an opaque
+// "Failed to fetch". Each Render account only needs its own BACKEND_URL set on the
+// frontend service (see render.yaml). In local dev the proxy forwards to
+// http://localhost:8000 (next.config.ts default).
+function resolveBase(): string {
+  // Browser — the only real caller, since every page using this is a client component.
+  if (typeof window !== "undefined") return "/api/backend";
+  // Defensive SSR/build fallback: talk to the backend directly if ever called server-side.
+  const raw = process.env.BACKEND_URL ?? "http://localhost:8000";
+  return /^https?:\/\//i.test(raw) ? raw.replace(/\/+$/, "") : `https://${raw}`;
 }
+
+const BASE = resolveBase();
 
 
 export interface UploadResponse {

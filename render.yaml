@@ -56,14 +56,16 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
-      # Set per-account in the Render dashboard to THAT account's own backend
-      # public URL (e.g. https://modelforge-backend-xxxx.onrender.com).
-      # sync:false stops the blueprint from overwriting it on every re-sync.
-      # NOTE: this is a build-time var — change it, then "Clear build cache & deploy".
-      - key: NEXT_PUBLIC_BACKEND_URL
-        sync: false
+      # The browser never calls the backend directly — it proxies through this
+      # frontend's own /api/backend/* route (see Frontend/next.config.ts and
+      # Frontend/lib/api.ts). Set BACKEND_URL PER ACCOUNT in the Render dashboard to
+      # THAT account's backend PUBLIC url, e.g. https://modelforge-backend-xxxx.onrender.com.
+      #
+      # Why public and not Render's private network (fromService)? Free-tier web
+      # services can SEND private-network requests but cannot RECEIVE them, so the
+      # proxy must target the public URL.
+      #
+      # Read at build time, so after changing it use "Clear build cache & deploy".
+      # sync:false stops the blueprint from overwriting your dashboard value on re-sync.
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: modelforge-backend
-          property: host
+        sync: false
