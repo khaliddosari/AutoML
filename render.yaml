@@ -56,8 +56,12 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
+      # Set per-account in the Render dashboard to THAT account's own backend
+      # public URL (e.g. https://modelforge-backend-xxxx.onrender.com).
+      # sync:false stops the blueprint from overwriting it on every re-sync.
+      # NOTE: this is a build-time var — change it, then "Clear build cache & deploy".
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://modelforge-backend-wy4n.onrender.com
+        sync: false
       - key: BACKEND_URL
         fromService:
           type: web
