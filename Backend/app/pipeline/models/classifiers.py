@@ -1,4 +1,5 @@
-from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, RandomForestClassifier
+from lightgbm import LGBMClassifier
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
@@ -19,15 +20,18 @@ CLASSIFIERS: list[tuple[str, object]] = [
         ExtraTreesClassifier(n_estimators=100, random_state=_RS, n_jobs=-1),
     ),
     (
-        "GradientBoosting",
-        # n_iter_no_change + validation_fraction enable early stopping so the model
-        # doesn't blindly run all rounds on small datasets and overfit.
-        GradientBoostingClassifier(
-            n_estimators=150,
-            n_iter_no_change=10,
-            validation_fraction=0.1,
-            tol=1e-4,
+        "LightGBM",
+        # Histogram-based gradient boosting: far faster than sklearn's
+        # GradientBoosting on CPU and usually more accurate on tabular data.
+        # verbose=-1 silences LightGBM's per-iteration chatter (and the benign
+        # "no positive gain" warnings on small datasets).
+        LGBMClassifier(
+            n_estimators=200,
+            learning_rate=0.05,
+            num_leaves=31,
             random_state=_RS,
+            n_jobs=-1,
+            verbose=-1,
         ),
     ),
     (

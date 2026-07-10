@@ -8,8 +8,11 @@ import modal
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
+    # libgomp1 provides the OpenMP runtime LightGBM links against at import time.
+    .apt_install("libgomp1")
     .pip_install(
         "scikit-learn>=1.5,<2.0",
+        "lightgbm>=4.1,<5.0",
         "pandas>=2.2,<3.0",
         "numpy>=1.26,<3.0",
         "joblib>=1.3,<2.0",
@@ -36,14 +39,13 @@ def run_training(csv_bytes: bytes, target: str, problem_type: str) -> dict:
     import joblib
     import numpy as np
     import pandas as pd
+    from lightgbm import LGBMClassifier, LGBMRegressor
     from pandas.api.types import is_numeric_dtype
     from sklearn.base import clone
     from sklearn.compose import ColumnTransformer
     from sklearn.ensemble import (
         ExtraTreesClassifier,
         ExtraTreesRegressor,
-        GradientBoostingClassifier,
-        GradientBoostingRegressor,
         RandomForestClassifier,
         RandomForestRegressor,
     )
@@ -68,14 +70,14 @@ def run_training(csv_bytes: bytes, target: str, problem_type: str) -> dict:
     CLASSIFIERS = [
         ("RandomForest",       RandomForestClassifier(n_estimators=100, random_state=RANDOM_STATE, n_jobs=-1)),
         ("ExtraTrees",         ExtraTreesClassifier(n_estimators=100, random_state=RANDOM_STATE, n_jobs=-1)),
-        ("GradientBoosting",   GradientBoostingClassifier(n_estimators=150, n_iter_no_change=10, validation_fraction=0.1, tol=1e-4, random_state=RANDOM_STATE)),
+        ("LightGBM",           LGBMClassifier(n_estimators=200, learning_rate=0.05, num_leaves=31, random_state=RANDOM_STATE, n_jobs=-1, verbose=-1)),
         ("LogisticRegression", Pipeline([("scaler", StandardScaler()), ("model", LogisticRegression(max_iter=500, random_state=RANDOM_STATE, n_jobs=-1))])),
         ("KNN",                Pipeline([("scaler", StandardScaler()), ("model", KNeighborsClassifier(n_neighbors=5, n_jobs=-1))])),
     ]
     REGRESSORS = [
         ("RandomForest",     RandomForestRegressor(n_estimators=100, random_state=RANDOM_STATE, n_jobs=-1)),
         ("ExtraTrees",       ExtraTreesRegressor(n_estimators=100, random_state=RANDOM_STATE, n_jobs=-1)),
-        ("GradientBoosting", GradientBoostingRegressor(n_estimators=150, n_iter_no_change=10, validation_fraction=0.1, tol=1e-4, random_state=RANDOM_STATE)),
+        ("LightGBM",         LGBMRegressor(n_estimators=200, learning_rate=0.05, num_leaves=31, random_state=RANDOM_STATE, n_jobs=-1, verbose=-1)),
         ("Ridge",            Pipeline([("scaler", StandardScaler()), ("model", Ridge())])),
         ("KNN",              Pipeline([("scaler", StandardScaler()), ("model", KNeighborsRegressor(n_neighbors=5, n_jobs=-1))])),
     ]

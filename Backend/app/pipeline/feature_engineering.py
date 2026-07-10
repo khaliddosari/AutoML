@@ -8,7 +8,7 @@ HIGH_MISSING_THRESHOLD = 0.5
 ONE_HOT_MAX_CARDINALITY = 10
 
 
-def feature_engineer(run_id: str, target: str) -> dict:
+def feature_engineer(run_id: str, target: str, df: pd.DataFrame | None = None) -> dict:
     """Filter columns/rows and emit a ready-but-unencoded engineered.csv.
 
     Structural decisions live here (drop high-missing columns, drop id-like
@@ -17,8 +17,13 @@ def feature_engineer(run_id: str, target: str) -> dict:
     on its own train portion - that closes the encoder-leakage source and
     lets the deployed Modal endpoint accept raw inputs (the Pipeline encodes
     them internally before predicting).
+
+    When `df` is supplied the orchestrator's shared raw frame is reused instead
+    of re-reading dataset.csv. Every mutation below rebinds `df` to a fresh frame
+    (drop/dropna return copies), so the caller's shared frame is never modified.
     """
-    df = pd.read_csv(storage.dataset_path(run_id))
+    if df is None:
+        df = pd.read_csv(storage.dataset_path(run_id))
     if target not in df.columns:
         raise ValueError(f"Target column '{target}' not found.")
 

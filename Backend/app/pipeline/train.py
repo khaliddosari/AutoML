@@ -18,10 +18,11 @@ from sklearn.metrics import (
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
-from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier, RandomForestClassifier
+from lightgbm import LGBMClassifier, LGBMRegressor
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor, RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsRegressor
 
@@ -34,6 +35,39 @@ log = logging.getLogger(__name__)
 ONE_HOT_MAX_CARDINALITY = 10
 
 RANDOM_STATE = 42
+
+# Above this row count the CV sweep is run on a deterministic subsample. 5-fold
+# CV across 5 candidate models (plus the tuning trials) scales linearly with row
+# count, so an unbounded large upload makes every sweep crawl. 50k rows is ample
+# signal for model *ranking* and hyperparameter comparison while capping wall time.
+MAX_CV_SAMPLE_ROWS = 50_000
+
+
+def _maybe_sample(df: pd.DataFrame, target: str, problem_type: str) -> pd.DataFrame:
+    """Deterministically down-sample very large frames before the CV sweep.
+
+    The sample is keyed on RANDOM_STATE so the initial candidate sweep and every
+    subsequent tuning trial train on the *exact same* subset - otherwise the
+    tuning loop would be comparing CV scores measured on different rows. For
+    classification we draw a stratified sample so class proportions (and rare
+    classes) survive; regression uses a uniform sample.
+    """
+    n = len(df)
+    if n <= MAX_CV_SAMPLE_ROWS:
+        return df
+
+    if problem_type == "classification":
+        try:
+            frac = MAX_CV_SAMPLE_ROWS / n
+            sampled = df.groupby(target, group_keys=False, observed=True).sample(
+                frac=frac, random_state=RANDOM_STATE
+            )
+            if not sampled.empty:
+                return sampled.reset_index(drop=True)
+        except Exception as e:
+            log.warning("Stratified subsample failed (%s); falling back to uniform.", e)
+
+    return df.sample(n=MAX_CV_SAMPLE_ROWS, random_state=RANDOM_STATE).reset_index(drop=True)
 
 
 def _inner_estimator(model):
@@ -153,11 +187,16 @@ def _feature_importances(model, columns: list[str]) -> list[dict]:
     return [{"feature": f, "importance": round(float(i), 4)} for f, i in pairs]
 
 
-def train_model(run_id: str, target: str, problem_type: str) -> dict:
+def train_model(run_id: str, target: str, problem_type: str, df: pd.DataFrame | None = None) -> dict:
     """Train all candidate models and save artifacts.
 
     Tries to run on Modal (8 CPUs) first for speed. Falls back to local
     execution automatically if Modal is unavailable or not configured.
+
+    `df` is the already-loaded engineered frame passed by the orchestrator so
+    training doesn't re-read engineered.csv. The Modal path still ships the CSV
+    bytes (it trains remotely on the full dataset); the local path samples large
+    frames via `_maybe_sample` before the sweep.
     """
     # ── try Modal ─────────────────────────────────────────────────────────────
     use_modal = False
@@ -202,9 +241,12 @@ def train_model(run_id: str, target: str, problem_type: str) -> dict:
             log.warning("Modal training failed for run %s (%s) — falling back to local", run_id, exc)
 
     # ── local fallback ────────────────────────────────────────────────────────
-    df = pd.read_csv(storage.engineered_path(run_id))
+    if df is None:
+        df = pd.read_csv(storage.engineered_path(run_id))
     if target not in df.columns:
         raise ValueError(f"Target '{target}' missing from engineered dataset.")
+
+    df = _maybe_sample(df, target, problem_type)
 
     X = df.drop(columns=[target])
     y = df[target]
@@ -363,15 +405,15 @@ def get_classifier(model_name: str, params: dict):
             random_state=rs,
             n_jobs=-1
         )
-    elif model_name == "GradientBoosting":
-        return GradientBoostingClassifier(
+    elif model_name == "LightGBM":
+        return LGBMClassifier(
             n_estimators=int(params.get("n_estimators", 200)),
-            learning_rate=float(params.get("learning_rate", 0.1)),
-            max_depth=int(params.get("max_depth", 3)),
-            n_iter_no_change=10,
-            validation_fraction=0.1,
-            tol=1e-4,
-            random_state=rs
+            learning_rate=float(params.get("learning_rate", 0.05)),
+            num_leaves=int(params.get("num_leaves", 31)),
+            max_depth=int(params.get("max_depth", -1)),
+            random_state=rs,
+            n_jobs=-1,
+            verbose=-1,
         )
     elif model_name == "LogisticRegression":
         return Pipeline([
@@ -413,15 +455,15 @@ def get_regressor(model_name: str, params: dict):
             random_state=rs,
             n_jobs=-1
         )
-    elif model_name == "GradientBoosting":
-        return GradientBoostingRegressor(
+    elif model_name == "LightGBM":
+        return LGBMRegressor(
             n_estimators=int(params.get("n_estimators", 200)),
-            learning_rate=float(params.get("learning_rate", 0.1)),
-            max_depth=int(params.get("max_depth", 3)),
-            n_iter_no_change=10,
-            validation_fraction=0.1,
-            tol=1e-4,
-            random_state=rs
+            learning_rate=float(params.get("learning_rate", 0.05)),
+            num_leaves=int(params.get("num_leaves", 31)),
+            max_depth=int(params.get("max_depth", -1)),
+            random_state=rs,
+            n_jobs=-1,
+            verbose=-1,
         )
     elif model_name == "Ridge":
         return Pipeline([
@@ -441,10 +483,26 @@ def get_regressor(model_name: str, params: dict):
         raise ValueError(f"Unknown regressor model_name: {model_name}")
 
 
-def train_champion_with_params(run_id: str, target: str, problem_type: str, model_name: str, params: dict) -> dict:
-    df = pd.read_csv(storage.engineered_path(run_id))
+def train_champion_with_params(
+    run_id: str,
+    target: str,
+    problem_type: str,
+    model_name: str,
+    params: dict,
+    df: pd.DataFrame | None = None,
+) -> dict:
+    # `df` is the shared engineered frame threaded in by the tuning loop so each
+    # trial reuses one in-memory frame instead of re-parsing engineered.csv. The
+    # frame is only read here (drop/split return copies), so concurrent trials in
+    # the tuning thread pool can safely share the same object.
+    if df is None:
+        df = pd.read_csv(storage.engineered_path(run_id))
     if target not in df.columns:
         raise ValueError(f"Target '{target}' missing from engineered dataset.")
+
+    # Same deterministic subsample as the baseline sweep (keyed on RANDOM_STATE),
+    # so tuning CV scores are measured on identical rows and stay comparable.
+    df = _maybe_sample(df, target, problem_type)
 
     X = df.drop(columns=[target])
     y = df[target]

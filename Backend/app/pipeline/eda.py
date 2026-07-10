@@ -4,8 +4,11 @@ from pandas.api.types import is_numeric_dtype
 from app import storage
 
 
-def run_eda(run_id: str, target: str) -> dict:
-    df = pd.read_csv(storage.dataset_path(run_id))
+def run_eda(run_id: str, target: str, df: pd.DataFrame | None = None) -> dict:
+    # Shares the orchestrator's already-loaded raw frame when provided; reads
+    # from disk only when called standalone (LangChain tool wrapper).
+    if df is None:
+        df = pd.read_csv(storage.dataset_path(run_id))
     if target not in df.columns:
         raise ValueError(f"Target column '{target}' not found.")
 
