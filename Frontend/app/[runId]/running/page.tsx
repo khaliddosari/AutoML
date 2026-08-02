@@ -121,7 +121,7 @@ scores = {name: cross_val_score(model, X, y, cv=5).mean() for name, model in mod
       "[INFO] Fitting Imputation Imputer on training samples only",
       "[INFO] Training RandomForestClassifier (n_estimators=200)...",
       "[INFO] Training ExtraTreesClassifier (n_estimators=200)...",
-      "[INFO] Training LGBMClassifier (histogram-based boosting)...",
+      "[INFO] Training GradientBoostingClassifier (early stopping enabled)...",
       "[INFO] Training LogisticRegression estimator...",
       "[INFO] Evaluating 5-Fold cross-validation scores on all estimators",
       "[INFO] Selecting champion architecture by Cross-Validation mean",

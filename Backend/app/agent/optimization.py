@@ -1,5 +1,7 @@
 import json
 import logging
+import re
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from app.config import settings
 from app.pipeline.train import train_champion_with_params, _feature_importances, save_model_bundle
@@ -28,10 +30,46 @@ def remove_em_dashes(text: str) -> str:
     return text.replace("—", "-").replace("–", "-")
 
 
-# NOTE: The old LLM-driven hyperparameter search (OPTIMIZER_SYSTEM/USER_PROMPT +
-# ALLOWED_PARAMS + clean_json_text) has been replaced by a parallel grid search
-# (see run_fine_tuning_loop). The LLM is now used only for the closing
-# justification below, removing the per-trial sequential LLM round-trips.
+OPTIMIZER_SYSTEM_PROMPT = """You are نَمذِج's AutoML Hyperparameter Fine-Tuning Agent.
+Your goal is to optimize hyperparameters for a champion model to maximize the prediction metric.
+
+Suggest the parameters in standard JSON. Provide EXACTLY a JSON block. No markdown code fences, no extra text.
+Return ONLY this JSON shape:
+{
+  "parameters": {
+     "<param_name>": <value>,
+     ...
+  },
+  "reasoning": "<A very short 3-5 word phrase explaining the change, e.g., 'Lowering learning rate to prevent overfitting' or 'Increasing depth to capture patterns'>",
+  "stop_tuning": <true or false. Set to true if you believe no further improvements can be found or you have reached a plateau>
+}
+
+CRITICAL constraint: Never use an em dash (—) or en dash (–) in your reasoning or any output under any circumstances.
+"""
+
+OPTIMIZER_USER_PROMPT = """Champion Model: {champion_model}
+Task Problem Type: {problem_type}
+Metric to Maximize: {metric}
+
+Current best score achieved so far: {best_score}
+Hyperparameters that achieved this best score: {best_params}
+
+History of attempted runs:
+{history}
+
+Based on the run history, suggest a NEW set of hyperparameters to try.
+Here are the valid hyperparameters you can suggest for the model '{champion_model}':
+{allowed_params}
+"""
+
+ALLOWED_PARAMS = {
+    "RandomForest": "- n_estimators: integer between 10 and 300\n- min_samples_split: integer between 2 and 15\n- max_depth: integer between 3 and 25, or null",
+    "ExtraTrees": "- n_estimators: integer between 10 and 300\n- max_depth: integer between 3 and 25, or null",
+    "GradientBoosting": "- n_estimators: integer between 10 and 250\n- learning_rate: float between 0.01 and 0.3\n- max_depth: integer between 2 and 8",
+    "LogisticRegression": "- C: float between 0.01 and 50.0",
+    "Ridge": "- alpha: float between 0.01 and 50.0",
+    "KNN": "- n_neighbors: integer between 2 and 20\n- weights: string, either 'uniform' or 'distance'"
+}
 
 JUSTIFICATION_SYSTEM_PROMPT = """You are نَمذِج's AutoML Champion Architect.
 You have just run an agentic fine-tuning optimization loop that searched for the best model configuration.
@@ -60,6 +98,17 @@ Tuning Process History details:
 """
 
 
+def clean_json_text(text: str) -> dict:
+    cleaned = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        match = re.search(r"\{[\s\S]*\}", cleaned)
+        if not match:
+            raise
+        return json.loads(match.group(0))
+
+
 def get_grid_candidates(model_name: str) -> list[dict]:
     if model_name == "RandomForest":
         return [
@@ -77,13 +126,13 @@ def get_grid_candidates(model_name: str) -> list[dict]:
             {"n_estimators": 200, "max_depth": None},
             {"n_estimators": 250, "max_depth": 8},
         ]
-    elif model_name == "LightGBM":
+    elif model_name == "GradientBoosting":
         return [
-            {"n_estimators": 100, "learning_rate": 0.05, "num_leaves": 31},
-            {"n_estimators": 200, "learning_rate": 0.05, "num_leaves": 31},
-            {"n_estimators": 300, "learning_rate": 0.03, "num_leaves": 63},
-            {"n_estimators": 200, "learning_rate": 0.1, "num_leaves": 15},
-            {"n_estimators": 400, "learning_rate": 0.02, "num_leaves": 31},
+            {"n_estimators": 50, "learning_rate": 0.05, "max_depth": 3},
+            {"n_estimators": 100, "learning_rate": 0.08, "max_depth": 4},
+            {"n_estimators": 150, "learning_rate": 0.1, "max_depth": 5},
+            {"n_estimators": 200, "learning_rate": 0.12, "max_depth": 4},
+            {"n_estimators": 100, "learning_rate": 0.03, "max_depth": 3},
         ]
     elif model_name == "LogisticRegression":
         return [
@@ -112,13 +161,7 @@ def get_grid_candidates(model_name: str) -> list[dict]:
     return []
 
 
-def run_fine_tuning_loop(
-    run_id: str,
-    target: str,
-    problem_type: str,
-    baseline_results: dict,
-    df=None,
-) -> dict:
+def run_fine_tuning_loop(run_id: str, target: str, problem_type: str, baseline_results: dict) -> dict:
     champion_model = baseline_results.get("model_name", "Best Model")
     metric = baseline_results.get("score_metric", "accuracy")
     extra = baseline_results.get("extra", {})
@@ -146,12 +189,15 @@ def run_fine_tuning_loop(
         )
         return baseline_results
 
-    # Lean harder on already-strong baselines: if the winning candidate is
-    # already performing well, skip the entire tuning search (and its retrains +
-    # LLM justification round-trip) rather than grinding for marginal gains.
-    # Thresholds are intentionally lower than the old 0.97/0.95 so more good
-    # baselines short-circuit here.
-    EXCELLENT_THRESHOLD = 0.90 if metric == "accuracy" else 0.85
+    is_small_dataset = False
+    try:
+        csv_path = storage.engineered_path(run_id)
+        if csv_path.exists() and csv_path.stat().st_size < 1 * 1024 * 1024:
+            is_small_dataset = True
+    except Exception:
+        pass
+
+    EXCELLENT_THRESHOLD = 0.97 if metric == "accuracy" else 0.95
     if baseline_score >= EXCELLENT_THRESHOLD:
         log.info("Skipping tuning — baseline %s=%.4f is already excellent.", metric, baseline_score)
         try:
@@ -194,49 +240,101 @@ def run_fine_tuning_loop(
 
         current_best_model_data = None
 
-        # Parallel grid search for ALL dataset sizes. The old large-dataset path
-        # ran up to 3 *sequential* LLM round-trips (3-8s each) interleaved with
-        # blocking retrains - the single biggest source of tuning latency. We now
-        # evaluate a fixed grid of well-chosen configs concurrently, so wall time
-        # is ~one trial instead of N, and the LLM is reserved for the single
-        # closing justification call. Row sampling (train._maybe_sample) keeps each
-        # concurrent retrain tractable even on large uploads.
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        candidates = get_grid_candidates(champion_model)
-        # Cap concurrency: each estimator already fans out internally (n_jobs=-1),
-        # so unbounded workers would oversubscribe cores. A small pool keeps the
-        # parallelism win without thrashing on constrained hosts.
-        max_workers = min(len(candidates), 4) or 1
-        log.info("Running %d grid trials in parallel (max_workers=%d).", len(candidates), max_workers)
-        futures_map = {}
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for idx, params in enumerate(candidates, 1):
-                f = executor.submit(
-                    train_champion_with_params,
-                    run_id, target, problem_type, champion_model, params, df
-                )
-                futures_map[f] = (idx, params)
-            for future in as_completed(futures_map):
-                idx, suggested_params = futures_map[future]
-                param_desc = ", ".join(f"{k}={v}" for k, v in suggested_params.items())
+        if is_small_dataset:
+            # Run all grid candidates in parallel — wall time ≈ one trial instead of N×one.
+            # train_champion_with_params only reads files + pure compute, so it's thread-safe.
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            candidates = get_grid_candidates(champion_model)
+            log.info("Small dataset: running %d grid trials in parallel.", len(candidates))
+            futures_map = {}
+            with ThreadPoolExecutor(max_workers=len(candidates)) as executor:
+                for idx, params in enumerate(candidates, 1):
+                    f = executor.submit(
+                        train_champion_with_params,
+                        run_id, target, problem_type, champion_model, params
+                    )
+                    futures_map[f] = (idx, params)
+                for future in as_completed(futures_map):
+                    idx, suggested_params = futures_map[future]
+                    param_desc = ", ".join(f"{k}={v}" for k, v in suggested_params.items())
+                    try:
+                        trial_res = future.result()
+                        score = trial_res["cv_mean"]
+                        improvement = score - best_score
+                        if score > best_score:
+                            best_score = score
+                            best_test_score = trial_res["test_score"]
+                            best_params = suggested_params
+                            best_train_score = trial_res["train_score"]
+                            current_best_model_data = trial_res
+                            result_desc = f"New champion! CV +{improvement:.4f} | {param_desc}"
+                        else:
+                            result_desc = f"No improvement (CV={score:.4f}) | {param_desc}"
+                        history.append({"trial": idx, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
+                    except Exception as e:
+                        log.error("Parallel grid trial %d failed: %s", idx, e)
+                        history.append({"trial": idx, "parameters": json.dumps(suggested_params), "score": best_score, "result": f"Error: {str(e)[:40]}"})
+            history.sort(key=lambda h: h["trial"])
+        else:
+            max_loops = 3
+            EARLY_STOP_NO_IMPROVE = 2
+            consecutive_no_improve = 0
+            allowed_params_text = ALLOWED_PARAMS.get(champion_model, "- No adjustable parameters available.")
+            for i in range(1, max_loops + 1):
+                history_text = "\n".join([
+                    f"- Trial {h['trial']}: Params={h['parameters']}, Score={h['score']:.4f} ({h['result']})"
+                    for h in history
+                ])
+                messages = [
+                    ("system", OPTIMIZER_SYSTEM_PROMPT),
+                    ("human", OPTIMIZER_USER_PROMPT.format(
+                        champion_model=champion_model,
+                        metric=metric,
+                        problem_type=problem_type,
+                        best_score=best_score,
+                        best_params=json.dumps(best_params),
+                        history=history_text,
+                        allowed_params=allowed_params_text
+                    ))
+                ]
+                response = llm.invoke(messages)
+                parsed = clean_json_text(response.content)
+                suggested_params = parsed.get("parameters", {})
+                reasoning = remove_em_dashes(parsed.get("reasoning", "Exploring hyperparameters."))
+                stop_tuning = parsed.get("stop_tuning", False)
+                if not suggested_params or stop_tuning:
+                    log.info("Agent decided to stop fine-tuning.")
+                    break
+                log.info("Tuning loop %d: Trying parameters %s for %s", i, suggested_params, champion_model)
                 try:
-                    trial_res = future.result()
+                    trial_res = train_champion_with_params(
+                        run_id=run_id,
+                        target=target,
+                        problem_type=problem_type,
+                        model_name=champion_model,
+                        params=suggested_params
+                    )
                     score = trial_res["cv_mean"]
+                    trial_test = trial_res["test_score"]
                     improvement = score - best_score
                     if score > best_score:
                         best_score = score
-                        best_test_score = trial_res["test_score"]
+                        best_test_score = trial_test
                         best_params = suggested_params
                         best_train_score = trial_res["train_score"]
                         current_best_model_data = trial_res
-                        result_desc = f"New champion! CV +{improvement:.4f} | {param_desc}"
+                        consecutive_no_improve = 0
+                        result_desc = f"New champion! CV +{improvement:.4f} | {reasoning}"
                     else:
-                        result_desc = f"No improvement (CV={score:.4f}) | {param_desc}"
-                    history.append({"trial": idx, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
+                        consecutive_no_improve += 1
+                        result_desc = f"No improvement (CV={score:.4f}) | {reasoning}"
+                    history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": score, "result": result_desc})
+                    if consecutive_no_improve >= EARLY_STOP_NO_IMPROVE:
+                        log.info("Stopping tuning early — %d consecutive trials without CV improvement.", consecutive_no_improve)
+                        break
                 except Exception as e:
-                    log.error("Parallel grid trial %d failed: %s", idx, e)
-                    history.append({"trial": idx, "parameters": json.dumps(suggested_params), "score": best_score, "result": f"Error: {str(e)[:40]}"})
-        history.sort(key=lambda h: h["trial"])
+                    log.error("Trial %d failed: %s", i, e)
+                    history.append({"trial": i, "parameters": json.dumps(suggested_params), "score": best_score, "result": f"Error during training: {str(e)}"})
 
         # Now, run the justification chain
         history_summary = "\n".join([

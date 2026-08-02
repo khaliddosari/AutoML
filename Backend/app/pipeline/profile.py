@@ -3,13 +3,8 @@ import pandas as pd
 from app import storage
 
 
-def profile_dataset(run_id: str, df: pd.DataFrame | None = None) -> dict:
-    # `df` lets the orchestrator pass the already-loaded raw dataset so the same
-    # frame is shared across profile/detect/eda/feature_engineer instead of each
-    # step re-reading dataset.csv from disk. Falls back to a read when called
-    # standalone (e.g. via the LangChain tool wrapper).
-    if df is None:
-        df = pd.read_csv(storage.dataset_path(run_id))
+def profile_dataset(run_id: str) -> dict:
+    df = pd.read_csv(storage.dataset_path(run_id))
     columns = []
     for col in df.columns:
         s = df[col]

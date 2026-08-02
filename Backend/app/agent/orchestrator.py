@@ -2,8 +2,6 @@ import json
 import logging
 import re
 
-import pandas as pd
-
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
@@ -95,44 +93,32 @@ def run_agent(run_id: str, target: str) -> dict:
     storage.write_status(run_id, "running", target=target)
     try:
         log.info("Starting direct Python orchestration pipeline for run %s", run_id)
-
-        # Load the raw dataset ONCE and thread the same in-memory frame through
-        # every step that reads it (profile -> detect -> EDA -> feature_engineer),
-        # instead of each step re-parsing dataset.csv from disk. These steps only
-        # read the frame, so sharing one object is safe.
-        raw_df = pd.read_csv(storage.dataset_path(run_id))
-
+        
         # Step 1: profile_dataset(run_id)
         from app.pipeline import profile
         log.info("Direct pipeline: profiling dataset...")
-        profile.profile_dataset(run_id, df=raw_df)
+        profile.profile_dataset(run_id)
 
         # Step 2: detect_problem_type(run_id, target) -> reads problem_type
         from app.pipeline import detect
         log.info("Direct pipeline: detecting problem type...")
-        detection = detect.detect_problem_type(run_id, target, df=raw_df)
+        detection = detect.detect_problem_type(run_id, target)
         problem_type = detection.get("problem_type", "classification")
 
         # Step 3: run_eda(run_id, target)
         from app.pipeline import eda
         log.info("Direct pipeline: running EDA...")
-        eda.run_eda(run_id, target, df=raw_df)
+        eda.run_eda(run_id, target)
 
-        # Step 4: feature_engineer(run_id, target) -> writes engineered.csv
+        # Step 4: feature_engineer(run_id, target)
         from app.pipeline import feature_engineering
         log.info("Direct pipeline: engineering features...")
-        feature_engineering.feature_engineer(run_id, target, df=raw_df)
-
-        # Load the engineered frame ONCE here, then hand the same object to
-        # train_model AND every tuning trial, so the CV sweep and the fine-tuning
-        # loop never re-read engineered.csv (previously 1 read in train + one per
-        # tuning trial).
-        engineered_df = pd.read_csv(storage.engineered_path(run_id))
+        feature_engineering.feature_engineer(run_id, target)
 
         # Step 5: train_model(run_id, target, problem_type) -> reads score and score_metric
         from app.pipeline import train
         log.info("Direct pipeline: training model candidates...")
-        metrics = train.train_model(run_id, target, problem_type, df=engineered_df)
+        metrics = train.train_model(run_id, target, problem_type)
         accuracy_score = metrics.get("score", 0.0)
         score_metric = metrics.get("score_metric", "accuracy")
 
@@ -154,8 +140,7 @@ def run_agent(run_id: str, target: str) -> dict:
                 "score": accuracy_score,
                 "score_metric": score_metric,
                 "extra": metrics.get("extra", {}),
-            },
-            df=engineered_df,
+            }
         )
 
         final = {
