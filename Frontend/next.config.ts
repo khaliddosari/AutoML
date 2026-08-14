@@ -4,10 +4,16 @@ import type { NextConfig } from "next";
 // those requests to the real backend here. This keeps the backend URL out of the
 // client bundle and avoids browser CORS entirely.
 //
-// Set BACKEND_URL to the backend's PUBLIC https URL, e.g.
-// https://modelforge-backend-2ht9.onrender.com. We use the public URL (not Render's
-// private network) because free-tier web services cannot receive private traffic.
-// A bare hostname is assumed public and gets https://. Defaults to local dev.
+// This app is deployed on Vercel; the backend stays on Render (see Docs/DEPLOYMENT.md).
+// Set BACKEND_URL in the Vercel project's Environment Variables to the backend's
+// PUBLIC https URL, e.g. https://modelforge-backend-wy4n.onrender.com. A bare
+// hostname is assumed public and gets https://. Defaults to local dev.
+//
+// Rewrites with an absolute external destination are served by Vercel's routing
+// layer rather than a Serverless Function, so the Hobby function timeout does not
+// apply to these proxied calls — which matters for slow backend cold starts.
+//
+// Read at build time, so redeploy after changing it.
 const rawBackend = process.env.BACKEND_URL ?? "http://localhost:8000";
 const backendOrigin = (
   /^https?:\/\//i.test(rawBackend) ? rawBackend : `https://${rawBackend}`
