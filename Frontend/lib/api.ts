@@ -2,9 +2,9 @@
 // next.config.ts. The browser never contacts the backend directly, so the backend
 // URL is never baked into the client bundle and there are no CORS concerns — a
 // down/suspended backend surfaces as a normal HTTP error instead of an opaque
-// "Failed to fetch". Each Render account only needs its own BACKEND_URL set on the
-// frontend service (see render.yaml). In local dev the proxy forwards to
-// http://localhost:8000 (next.config.ts default).
+// "Failed to fetch". Set BACKEND_URL in the Vercel project's Environment Variables
+// to your Render backend's public URL (see Docs/DEPLOYMENT.md). In local dev the
+// proxy forwards to http://localhost:8000 (next.config.ts default).
 function resolveBase(): string {
   // Browser — the only real caller, since every page using this is a client component.
   if (typeof window !== "undefined") return "/api/backend";

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { LayoutShell } from "@/components/layout-shell";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://namtheg.onrender.com";
+// Canonical/OG base URL. On Vercel, set NEXT_PUBLIC_SITE_URL to the production
+// domain so preview deploys don't leak their URLs into metadata.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://namtheg.vercel.app";
 const TITLE = "Namtheg AutoML";
 const DESCRIPTION =
   "Upload a CSV, pick a target column, and Namtheg trains and compares ML models, then uses an LLM to pick the best one and explain why in plain language.";

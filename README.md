@@ -26,13 +26,15 @@ This repository is structured as a modern monorepo separating frontend UI from b
 │   ├── components/          # Reusable UI component library (TailwindCSS + Framer Motion)
 │   ├── lib/                 # Frontend API client library
 │   ├── package.json         # Node.js dependencies and scripts
+│   ├── vercel.json          # Vercel build config (set Root Directory to Frontend)
 │   └── .env.local.example   # Example local frontend environment variables
 │
 ├── Docs/                    # Product specs and agent rules
 │   ├── PRD.md               # Product Requirements Document
+│   ├── DEPLOYMENT.md        # Vercel + Render + Modal deployment guide
 │   └── AGENTS.md            # Agent Operational guidelines
 │
-├── render.yaml              # Render Deployment Blueprint config
+├── render.yaml              # Render Blueprint config (backend only)
 └── insurance.csv            # Sample dataset for demonstration
 ```
 
@@ -117,13 +119,19 @@ When you select a target column and click **Start AutoML**, Namtheg kicks off a 
 
 Namtheg is fully ready for multi-tier production deployment:
 
-### 1. FastAPI & Next.js on Render
+Full instructions live in **[Docs/DEPLOYMENT.md](Docs/DEPLOYMENT.md)**. In short:
+
+### 1. FastAPI backend on Render
 A pre-configured **Render Blueprint** (`render.yaml`) is located in the root. When pushed to GitHub and connected to Render:
-- It automatically provisions the FastAPI backend at `namtheg-b`.
-- It provisions the Next.js frontend at `namtheg`, automatically wiring it to communicate internally with the backend.
+- It provisions the FastAPI backend as a free web service.
 - Environment variables (`OPENROUTER_API_KEY`, `MODAL_TOKEN_ID`, etc.) are securely requested during setup.
 
-### 2. Serverless Predictors on Modal
+### 2. Next.js frontend on Vercel
+Import the repo at [vercel.com/new](https://vercel.com/new), **set the Root Directory to `Frontend`**, and add `BACKEND_URL` (your Render backend's public URL) plus `NEXT_PUBLIC_SITE_URL`. The frontend proxies the browser's calls to the backend through its own `/api/backend/*` rewrite, so there is no CORS setup.
+
+> **Why not both on Render?** Render's 750 free instance-hours are pooled *per workspace*, not per service. Two always-on free services burn ~1,460 h/month, exhausting the pool around day 15 — at which point Render suspends *every* free service until the 1st. Splitting the frontend onto Vercel keeps the backend under the cap all month. Don't add a second `plan: free` service to `render.yaml`.
+
+### 3. Serverless Predictors on Modal
 When a user clicks "Deploy to Modal" on their successfully trained model:
 - The backend leverages **Modal** serverless volumes (`namtheg-models`) and the shared app (`namtheg-inference`).
 - **Zero-cold-start uploads**: The model is saved directly to a mounted persistent volume rather than redeploying containers.
