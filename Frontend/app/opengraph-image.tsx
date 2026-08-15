@@ -1,6 +1,5 @@
-import { readFileSync } from "fs";
-import { join } from "path";
 import { ImageResponse } from "next/og";
+import { IBM_PLEX_ARABIC_700_B64, IBM_PLEX_LATIN_700_B64 } from "./og-fonts";
 
 export const runtime = "nodejs";
 export const alt = "Namtheg AutoML";
@@ -11,10 +10,6 @@ const PRIMARY = "#4fc3f7";
 const CONTAINER = "#0288d1";
 const MUTED = "#9999a8";
 const TEXT = "#e8e8ed";
-
-const fontDir = join(process.cwd(), "app", "og-assets");
-const arabicFont = readFileSync(join(fontDir, "ibm-plex-arabic-700.woff"));
-const latinFont = readFileSync(join(fontDir, "ibm-plex-latin-700.woff"));
 
 // Three-node graph mark, mirroring the Material "graph_3" icon in the header.
 const graphMark = `data:image/svg+xml,${encodeURIComponent(
@@ -27,6 +22,16 @@ const graphMark = `data:image/svg+xml,${encodeURIComponent(
     <circle cx="18" cy="18" r="2.6" fill="#ffffff"/>
   </svg>`,
 )}`;
+
+function decodeFont(b64: string): ArrayBuffer {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+const arabicFont = decodeFont(IBM_PLEX_ARABIC_700_B64);
+const latinFont = decodeFont(IBM_PLEX_LATIN_700_B64);
 
 export default function OpengraphImage() {
   return new ImageResponse(
