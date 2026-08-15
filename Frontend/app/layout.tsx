@@ -2,15 +2,23 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { LayoutShell } from "@/components/layout-shell";
 
-// Canonical/OG base URL. On Vercel, set NEXT_PUBLIC_SITE_URL to the production
-// domain so preview deploys don't leak their URLs into metadata.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://namtheg.vercel.app";
+const rawSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://namtheg.vercel.app";
+const SITE_URL = /^https?:\/\//i.test(rawSiteUrl) ? rawSiteUrl : `https://${rawSiteUrl}`;
+
+function getMetadataBase(): URL {
+  try {
+    return new URL(SITE_URL);
+  } catch {
+    return new URL("https://namtheg.vercel.app");
+  }
+}
+
 const TITLE = "Namtheg AutoML";
 const DESCRIPTION =
   "Upload a CSV, pick a target column, and Namtheg trains and compares ML models, then uses an LLM to pick the best one and explain why in plain language.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: getMetadataBase(),
   title: TITLE,
   description: DESCRIPTION,
   openGraph: {

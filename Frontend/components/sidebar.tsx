@@ -33,7 +33,7 @@ function getNavHref(key: string, runId: string | null): string {
 }
 
 export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const router = useRouter();
   const runId = getRunId(pathname);
 
