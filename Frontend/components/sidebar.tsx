@@ -40,7 +40,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   return (
     <nav
       className={cn(
-        "w-52 h-screen flex flex-col fixed left-0 top-0 glass-strong border-r border-outline-variant z-50 overflow-hidden select-none transition-transform duration-300 ease-in-out md:translate-x-0",
+        "w-52 h-dvh flex flex-col fixed left-0 top-0 glass-strong border-r border-outline-variant z-50 overflow-hidden select-none transition-transform duration-300 ease-in-out md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
@@ -64,7 +64,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           <div className="w-9 h-9" />
         </div>
 
-        <div className="px-4 py-4 flex-1 flex flex-col">
+        <div className="px-4 pt-4 pb-8 md:pb-4 flex-1 flex flex-col min-h-0 overflow-y-auto">
           {/* Desktop Brand Logo & Name */}
           <div className="hidden md:flex items-center gap-2 mb-6 px-2 shrink-0">
             <div className="w-10 h-10 rounded-lg bg-surface-purple-tint flex items-center justify-center shrink-0">
@@ -145,7 +145,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           </ul>
 
           {/* Made By / LinkedIn links — at bottom on all devices */}
-          <div className="mt-auto pt-6 flex flex-col gap-2 shrink-0">
+          <div className="mt-auto pt-6 pb-6 md:pb-1 flex flex-col gap-2 shrink-0">
             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center">Made by</span>
             <div className="border-t border-outline-variant/40 pt-3 flex flex-col gap-3.5 px-1">
               <a
