@@ -132,9 +132,17 @@ function AccuracyAndFeaturesCard({
 /* ─── Full Plot Lightbox Zoom ── */
 function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: string }) {
   const [loaded, setLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const isClassification = problemType === "classification";
   const url = plotUrl(runId);
+
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+      setLoaded(true);
+    }
+  }, [url]);
 
   return (
     <>
@@ -154,9 +162,9 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
 
         <div
           onClick={() => setLightboxOpen(true)}
-          className="flex-1 relative rounded-lg overflow-hidden bg-transparent min-h-[220px] cursor-pointer group"
+          className="flex-1 relative rounded-lg overflow-hidden bg-transparent min-h-[220px] cursor-pointer group flex items-center justify-center"
         >
-          {!loaded && <div className="absolute inset-0 shimmer" />}
+          {!loaded && !hasError && <div className="absolute inset-0 shimmer" />}
 
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 z-10">
@@ -164,14 +172,15 @@ function ResultPlotCard({ runId, problemType }: { runId: string; problemType?: s
           </div>
 
           <img
+            ref={imgRef}
             src={url}
             alt="Model result plot"
-            crossOrigin="anonymous"
             className={cn(
-              "w-full h-full object-contain transition-all duration-500 group-hover:scale-103",
-              loaded ? "opacity-100" : "opacity-0"
+              "w-full h-full object-contain transition-all duration-300 group-hover:scale-103",
+              loaded ? "opacity-100" : "opacity-90"
             )}
             onLoad={() => setLoaded(true)}
+            onError={() => setHasError(true)}
           />
         </div>
         <div className="text-xs font-medium text-on-surface-variant mt-3 uppercase tracking-wider font-mono space-y-1">

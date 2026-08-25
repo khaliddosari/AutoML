@@ -121,15 +121,20 @@ Namtheg is fully ready for multi-tier production deployment:
 
 Full instructions live in **[Docs/DEPLOYMENT.md](Docs/DEPLOYMENT.md)**. In short:
 
-### 1. FastAPI backend on Render
-A pre-configured **Render Blueprint** (`render.yaml`) is located in the root. When pushed to GitHub and connected to Render:
-- It provisions the FastAPI backend as a free web service.
-- Environment variables (`OPENROUTER_API_KEY`, `MODAL_TOKEN_ID`, etc.) are securely requested during setup.
+### 1. FastAPI backend on Modal (Recommended)
+Deploy the FastAPI backend serverlessly using Modal ASGI:
+```bash
+cd Backend
+modal deploy app/deploy/backend_app.py
+```
+- Provisions the backend on Modal with persistent `modal.Volume` storage at `/storage`.
+- Scales to zero when idle, wakes in 1–2s, and uses Modal's $30/month free compute credits without Render's 750h quota limits or 512MB RAM constraints.
+
+*(Alternatively, legacy Render Blueprint is available in `render.yaml`).*
 
 ### 2. Next.js frontend on Vercel
-Import the repo at [vercel.com/new](https://vercel.com/new), **set the Root Directory to `Frontend`**, and add `BACKEND_URL` (your Render backend's public URL) plus `NEXT_PUBLIC_SITE_URL`. The frontend proxies the browser's calls to the backend through its own `/api/backend/*` rewrite, so there is no CORS setup.
+Import the repo at [vercel.com/new](https://vercel.com/new), **set the Root Directory to `Frontend`**, and add `BACKEND_URL` (your Modal backend's public URL, e.g. `https://<workspace>--namtheg-backend-fastapi-app.modal.run`) plus `NEXT_PUBLIC_SITE_URL`. The frontend proxies the browser's calls to the backend through its own `/api/backend/*` rewrite, so there is no CORS setup.
 
-> **Why not both on Render?** Render's 750 free instance-hours are pooled *per workspace*, not per service. Two always-on free services burn ~1,460 h/month, exhausting the pool around day 15 — at which point Render suspends *every* free service until the 1st. Splitting the frontend onto Vercel keeps the backend under the cap all month. Don't add a second `plan: free` service to `render.yaml`.
 
 ### 3. Serverless Predictors on Modal
 When a user clicks "Deploy to Modal" on their successfully trained model:

@@ -144,15 +144,15 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             })}
           </ul>
 
-          {/* Made By — shown in sidebar on mobile since footer is desktop-only */}
-          <div className="md:hidden mt-4 flex flex-col gap-2">
-            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest pt-4 text-center">Made by</span>
-            <div className="border-t border-outline-variant/40 pt-3 flex flex-col gap-4">
+          {/* Made By / LinkedIn links — at bottom on all devices */}
+          <div className="mt-auto pt-6 flex flex-col gap-2 shrink-0">
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest text-center">Made by</span>
+            <div className="border-t border-outline-variant/40 pt-3 flex flex-col gap-3.5 px-1">
               <a
                 href="https://www.linkedin.com/in/khalid-al-dosari/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:text-primary-container transition-colors"
+                className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-primary-container transition-colors"
               >
                 <i className="fab fa-linkedin text-[15px]" aria-hidden="true" />
                 Khalid Al Dosari
@@ -161,7 +161,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                 href="https://www.linkedin.com/in/ahmed-alasmari-sa/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:text-primary-container transition-colors"
+                className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-primary-container transition-colors"
               >
                 <i className="fab fa-linkedin text-[15px]" aria-hidden="true" />
                 Ahmed Alasmari

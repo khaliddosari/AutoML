@@ -59,6 +59,7 @@ async def upload_csv(file: UploadFile = File(...)) -> dict:
                         dest.unlink()
                     raise HTTPException(413, "File too large. Maximum size allowed is 30 MB.")
                 f.write(chunk)
+        storage.sync_commit()
     except HTTPException:
         raise
     except Exception as e:

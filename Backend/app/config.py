@@ -9,13 +9,13 @@ class Settings(BaseSettings):
     openrouter_referer: str = "http://localhost:8000"
     openrouter_app_title: str = "Namtheg"
 
-    storage_dir: Path = Path("./storage")
+    storage_dir: Path = Path("/storage" if Path("/storage").is_dir() else "./storage")
     log_level: str = "INFO"
 
     # Modal workspace username (visible in `modal app list` output). Used to
     # construct shared-inference endpoint URLs without shelling out. Set via
-    # MODAL_WORKSPACE in .env. If unset, deploys fail with a clear error.
-    modal_workspace: str = ""
+    # MODAL_WORKSPACE in .env.
+    modal_workspace: str = "swager2014"
     # Name of the deployed shared inference app — must match the `modal.App`
     # name in app/deploy/inference_app.py.
     modal_inference_app: str = "modelforge-inference"
@@ -26,4 +26,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+if Path("/storage").is_dir():
+    settings.storage_dir = Path("/storage")
 settings.storage_dir.mkdir(parents=True, exist_ok=True)

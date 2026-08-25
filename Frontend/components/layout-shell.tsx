@@ -4,7 +4,6 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Brand } from "./brand";
-import { SiteFooter } from "./site-footer";
 import { Icon } from "./icon";
 
 /** Fixed cyan/blue/violet glow field the glass surfaces refract. Never remove. */
@@ -69,13 +68,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
         {/* Main Content Area */}
         <div className="flex flex-col flex-1 min-h-0 ml-0 md:ml-52 overflow-x-hidden">
-          <main className="flex-1 min-h-0 flex flex-col md:pb-20">{children}</main>
+          <main className="flex-1 min-h-0 flex flex-col">{children}</main>
         </div>
-      </div>
-
-      {/* Footer — fixed at bottom on desktop only; mobile footer lives inside each page scroll area */}
-      <div className="hidden md:block md:fixed md:bottom-0 md:left-0 md:right-0 z-50">
-        <SiteFooter />
       </div>
     </div>
   );
